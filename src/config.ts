@@ -65,6 +65,6 @@ export class Config {
     }
 
     public transformColumnName (columnName: string) {
-        return this.config.camelCaseTypes ? camelCase(columnName) : columnName
+        return this.config.camelCaseTypes ? camelCase(columnName) : columnName.toLowerCase()
     }
 }
