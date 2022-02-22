@@ -1,37 +1,57 @@
-import { Config, ConfigValues, CommandOptions } from "./config";
+import { Config } from "./config";
 import {
-  BuildContext,
+  Schema,
+  EnumDefinitions,
   Coreferences,
   Database,
   Relationships,
-} from "./adapter";
-import {
-  EnumDefinition,
-  TableDefinitions,
-  CustomTypes,
-} from "./adapter";
-import { typescriptOfSchema } from "./backends/typescript/typescript";
-import { typedbOfSchema } from "./backends/typedb/typedb";
-import { jsonOfSchema } from "./backends/json/json";
+} from "./adapters/types";
+import { TableDefinitions, CustomTypes } from "./adapters/types";
+import { typescriptOfSchema } from "./backends/typescript";
+import { typedbOfSchema } from "./backends/typedb";
+import { jsonOfSchema } from "./backends/json";
+import { keyBy } from "lodash";
 
-const backends = ["typescript", "typedb", "json"];
+export interface BuildContext {
+  schema: Schema;
+  config: Config;
+  tables: TableDefinitions;
+  enums: EnumDefinitions;
+  relationships: Relationships;
+  customTypes: CustomTypes;
+  coreferences: Coreferences;
+}
+
+export type DBTypeMap = Record<string, string>;
+
+const ALL_BACKENDS = ["typescript", "json", "typedb"] as const;
+
+export type Backends = typeof ALL_BACKENDS;
+
+// export type Backend = "typescript" | "json" | "typedb";
+export type Backend = string;
 
 export async function generate(config: Config, db: Database): Promise<string> {
   const context = await build(config, db);
-  return await formatter(context);
+
+  const backend = context.config.backend;
+
+  return await render(context, backend);
 }
 
 const build = async (config: Config, db: Database): Promise<BuildContext> => {
   const schema = config.schema || (await db.getDefaultSchema());
-  const tableList = config.tables || (await db.getSchemaTableNames(schema));
+  const tableNames = config.tables || (await db.getTableNames(schema));
   const enums = await db.getEnumDefinitions(schema);
   // const command = config.getCLICommand(db.getConnectionString())
 
   // let customTypes = new Set<string>()
   let customTypes: CustomTypes = [];
-  const tables = await Promise.all(
-    tableList.map((table) => db.getTableDefinition(schema, table))
+  const tableList = await Promise.all(
+    tableNames.map((tableName) => db.getTableDefinition(schema, tableName))
   );
+
+  const tables = keyBy(tableList, 'name')
 
   const relationships: Relationships = [];
   const coreferences: Coreferences = {
@@ -50,9 +70,7 @@ const build = async (config: Config, db: Database): Promise<BuildContext> => {
   };
 };
 
-const formatter = async (context: BuildContext) => {
-  const { backend } = context.config;
-
+const render = async (context: BuildContext, backend: Backend) => {
   if (backend === "typescript") {
     return await typescriptOfSchema(context);
   }
@@ -62,8 +80,7 @@ const formatter = async (context: BuildContext) => {
   if (backend === "typedb") {
     return await typedbOfSchema(context);
   }
-
-  throw `Invalid backend: ${backend} must be one of: ${backends.join(", ")}`;
+  throw `Invalid backend: ${backend} must be one of: ${ALL_BACKENDS.join(
+    ", "
+  )}`;
 };
-
-export { Config, ConfigValues, CommandOptions, backends };

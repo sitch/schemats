@@ -1,8 +1,10 @@
 import { version } from "../package.json";
-
 import { inflect } from "./formatters";
+import { relpath } from "./utils";
+
 export interface ConfigValues {
-  output?: string;
+  output?: string | undefined;
+  outputPath: string | undefined;
   typedbEntityTemplate: string;
   typedbRelationTemplate: string;
   typedbAttributeTemplate: string;
@@ -12,7 +14,7 @@ export interface ConfigValues {
   connection: string;
   tables: string[];
   enums?: boolean;
-  ignoreFieldCollisions?: string[];
+  ignoreFieldCollisions: string[];
 
   writeHeader?: boolean;
   typesFile?: boolean;
@@ -23,10 +25,10 @@ export interface ConfigValues {
   columnFormatter?: string;
 }
 
-
 export type CommandOptions = Partial<ConfigValues> &
   Pick<
     ConfigValues,
+    | "output"
     | "schema"
     | "tables"
     | "backend"
@@ -38,30 +40,62 @@ export type CommandOptions = Partial<ConfigValues> &
     | "typedbAttributeTemplate"
   >;
 
+export type ConfigOptions = Partial<ConfigValues> &
+  Pick<
+    ConfigValues,
+    | "output"
+    | "schema"
+    | "tables"
+    | "backend"
+    | "database"
+    | "connection"
+    | "ignoreFieldCollisions"
+    | "typedbEntityTemplate"
+    | "typedbRelationTemplate"
+    | "typedbAttributeTemplate"
+  >;
+
+// const applyDefaults = (
+//   config: CommandOptions,
+//   argv: string[]
+// ): ConfigOptions => ({
+//   // ignoreFieldCollisions: [],
+//   writeHeader: true,
+//   throwOnMissingType: true,
+//   enums: false,
+//   ...config,
+//   ignoreFieldCollisions: (config.ignoreFieldCollisions || []).filter(
+//     (x) => !!x
+//   ),
+//   outputPath: config.output ? relpath(config.output) : config.output,
+// });
+
 export class Config {
-  constructor(connection: string, public config: CommandOptions) {
+  public readonly config: ConfigOptions;
+  public readonly timestamp: string;
+
+  constructor(
+    private readonly argv: string[],
+    public readonly connection: string,
+    config: CommandOptions,
+  ) {
+    this.timestamp = new Date().toUTCString();
+    this.argv = argv;
     this.config = {
-      ignoreFieldCollisions: [],
+      // ignoreFieldCollisions: [],
       writeHeader: true,
       throwOnMissingType: true,
       enums: false,
       ...config,
-      connection,
+      ignoreFieldCollisions: (config.ignoreFieldCollisions || []).filter(
+        (x) => !!x
+      ),
+      outputPath: config.output ? relpath(config.output) : config.output,
     };
   }
 
-  public getCLICommand(dbConnection: string): string {
-    const commands = ["schemats", "generate", dbConnection];
-    // if (this.config.camelCase) {
-    //     commands.push('-C')
-    // }
-    if (this.config.tables?.length > 0) {
-      commands.push("-t", this.config.tables.join(" "));
-    }
-    if (this.config.schema) {
-      commands.push(`-s ${this.config.schema}`);
-    }
-    return commands.join(" ");
+  public get commandFromCLI() {
+    return ["ts-node", "schemats", ...this.argv.slice(2)].join(" ");
   }
 
   public get version() {
@@ -69,11 +103,12 @@ export class Config {
   }
 
   public get ignoreFieldCollisions(): string[] {
-    return (this.config.ignoreFieldCollisions || []).filter((x) => !!x);
+    return this.config.ignoreFieldCollisions;
+    // return (this.config.ignoreFieldCollisions || []).filter((x) => !!x);
   }
 
-  public get connection() {
-    return this.config.connection;
+  public get outputPath() {
+    return this.config.outputPath;
   }
 
   public get database() {
@@ -118,5 +153,19 @@ export class Config {
 
   public formatColumnName(name: string) {
     return inflect(name, this.config.columnFormatter);
+  }
+
+  public getCLICommand(dbConnection: string): string {
+    const commands = ["schemats", "generate", dbConnection];
+    // if (this.config.camelCase) {
+    //     commands.push('-C')
+    // }
+    if (this.config.tables?.length > 0) {
+      commands.push("-t", this.config.tables.join(" "));
+    }
+    if (this.config.schema) {
+      commands.push(`-s ${this.config.schema}`);
+    }
+    return commands.join(" ");
   }
 }

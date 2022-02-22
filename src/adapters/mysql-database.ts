@@ -1,4 +1,4 @@
-import { Config } from "../generator";
+import { Config } from "../config";
 import { Connection, createConnection, RowDataPacket } from "mysql2/promise";
 import {
   Database,
@@ -9,9 +9,9 @@ import {
   ColumnDefinition,
   CustomType,
   CustomTypes,
-} from "../adapter";
+} from "./types";
 
-import { translateMySQLToTypescript} from "../backends/typescript/typemap"
+import { translateMySQLToTypescript} from "../typemaps/typescript-typemap"
 
 const parseMysqlEnumeration = (mysqlEnum: string): string[] => {
   return mysqlEnum.replace(/(^(enum|set)\('|'\)$)/gi, "").split(`','`);
@@ -42,11 +42,11 @@ export class MysqlDatabase implements Database {
     return this.connectionString;
   }
 
-  public getDefaultSchema(): string {
+  public async getDefaultSchema(): Promise<string> {
     return "public";
   }
 
-  public async getSchemaTableNames(schemaName: string): Promise<string[]> {
+  public async getTableNames(schemaName: string): Promise<string[]> {
     const tables = await this.query<{ TABLE_NAME: string }>(
       `
             SELECT TABLE_NAME
@@ -125,10 +125,10 @@ export class MysqlDatabase implements Database {
           isArray: false,
           hasDefault: COLUMN_DEFAULT !== null,
         };
-        tableDefinition.columns.push(columnDefinition);
+            tableDefinition.columns[COLUMN_NAME] = columnDefinition
         return tableDefinition;
       },
-      { name: tableName, columns: [] }
+      { name: tableName, columns: {}}
     );
   }
 

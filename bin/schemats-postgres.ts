@@ -1,15 +1,10 @@
-import * as commander from 'commander'
-import { Config, CommandOptions, generate } from '../src/generator'
-import { PostgresDatabase } from '../src/adapters/schema-postgres'
-import { promises } from 'fs'
-import { relative } from 'path'
+import {Command} from 'commander'
+import { generate } from '../src/generator'
+import { PostgresDatabase } from '../src/adapters/postgres-database'
+import { Config, CommandOptions } from '../src/config'
+import { writeRelFileAsync } from '../src/utils'
 
-// work-around for:
-// TS4023: Exported variable 'command' has or is using name 'local.Command'
-// from external module "node_modules/commander/typings/index" but cannot be named.
-export type Command = commander.Command
-
-export const postgres = async (program: Command): Promise<void> => {
+export const postgres = async (program: Command, argv: string[]): Promise<void> => {
     program
         .command('postgres')
         .description('Generate a schema from postgres')
@@ -19,7 +14,7 @@ export const postgres = async (program: Command): Promise<void> => {
         .option('-s, --schema <schema>', 'the schema to use', 'public')
         .option('-o, --output <filePath>', 'where to save the generated file relative to the current working directory')
         .option('-F, --backend <backend>', 'the output format', 'typescript')
-        .option('-e, --enums', 'use enums instead of types', false)
+        .option('-e, --enums', 'use enums instead of types')
         .option('-t, --tables <tables...>', 'the tables within the schema')
         .option('-f, --typesFile <typesFile>', 'the file where jsonb types can be imported from')
         .option('-E, --enum-formatter <enumFormatterter>', 'Formatter for enum names')
@@ -31,20 +26,21 @@ export const postgres = async (program: Command): Promise<void> => {
         .option('--no-header', 'don\'t generate a header')
         .option('--no-throw-on-missing-type', 'don\'t throw an error when pg type cannot be mapped to ts type')
         .action(async (connection: string, options: CommandOptions) => {
-            const config = new Config(connection, options)
+            const config = new Config(argv, connection, options)
             const db = new PostgresDatabase(config, connection)
             await db.isReady()
             const schema = await generate(config, db)
 
-            if (options?.output) {
-                const outputPath = relative(process.cwd(), options.output)
-                await promises.writeFile(outputPath, schema, 'utf8')
-                console.log(`Written ${options.backend} schema to ${outputPath}`)
+            if (config.outputPath) {
+              await writeRelFileAsync(schema, config.outputPath);
+              console.log(`Written ${config.backend} schema to ${config.outputPath}`);
             } else {
-                console.log(schema)
+              console.log(schema);
             }
-            await db.close()
+            await db.close();
         })
 
     program.action(program.help)
 }
+
+

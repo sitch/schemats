@@ -1,10 +1,6 @@
 import inflection from "inflection";
 import camelCase from "camelcase";
 
-
-export const pretty = (data: any) => JSON.stringify(data,  null, 2)
-
-
 export const inflect = (name: string, format: string | undefined): string => {
   if (!format) {
     return name;
@@ -23,3 +19,5 @@ export const inflect = (name: string, format: string | undefined): string => {
   }
   throw `Unsupported formatter: ${format}`;
 };
+
+export const pretty = (data: any) => JSON.stringify(data, null, 2);

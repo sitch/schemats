@@ -1,18 +1,22 @@
-import { Config } from "./config"
+
+import { Config } from "../config";
+
 
 export interface Database {
     version: string
     getConnectionString: () => string
     isReady(): Promise<void>
     close(): Promise<void>
-    getDefaultSchema(): string
-    getSchemaTableNames(schemaName: string): Promise<string[]>
+    getDefaultSchema(): Promise<Schema>
+    getTableNames(schemaName: string): Promise<string[]>
     getEnumDefinitions(schemaName: string): Promise<EnumDefinitions>
     getTableDefinition(schemaName: string, tableName: string): Promise<TableDefinition>
 
     // getTableComments(schemaName: string, tableName: string): Promise<TableComments>
-    // getForeignKeys(schemaName: string, tableName: string): Promise<ForeignKeys>
+
+
     // getTableKeys(schemaName: string, tableName: string): Promise<TableKeys>
+    // getForeignKeys(schemaName: string, tableName: string): Promise<ForeignKeys>
 
     // getTableDefinition(schemaName: string, tableName: string, customTypes: CustomType[]): Promise<TableDefinition>
     // getTableDefinitions(schemaName: string, customTypes: CustomType[]): Promise<TableDefinitions>
@@ -45,19 +49,27 @@ export interface ColumnDefinition {
     hasDefault: boolean
 }
 
+export type ColumnName = string
+export type ColumnDefinitions = Record<ColumnName,ColumnDefinition>
+
 
 export type TableKeys = Record<string, string>
 export type ForeignKeys = Record<string, { [columnName: string]: ForeignKey }>
-export type TableComments = Record<string, string>
+export type TableComments = Record<string, TableComment>
 export type ColumnComments = Record<string, Record<string, string>>
 
+export interface TableComment {
+  table_name: string;
+  description: string;
+}
 
 export interface TableDefinition {
     name: string,
-    columns: ColumnDefinition[],
+    columns: ColumnDefinitions,
 
 }
-export type TableDefinitions = TableDefinition[]
+export type TableName = string
+export type TableDefinitions = Record<TableName,TableDefinition>
 
 export interface ParameterizedEnumDefinition<T> {
     name: string,
@@ -89,15 +101,20 @@ export type Relationships = Relationship[]
 
 
 export interface BuildContext {
-    schema: Schema,
-    config: Config,
-    tables: TableDefinitions,
-    enums: EnumDefinitions,
-    relationships: Relationships,
-    customTypes: CustomTypes,
-    coreferences: Coreferences,
+  schema: Schema;
+  config: Config;
+  tables: TableDefinitions;
+  enums: EnumDefinitions;
+  relationships: Relationships;
+  customTypes: CustomTypes;
+  coreferences: Coreferences;
 }
 
-export type DBTypeMap = Record<string, string>
+export type DBTypeMap = Record<string, string>;
 
-export type Backend = "typescript" | "json" | "typedb";
+const ALL_BACKENDS = ["typescript", "json", "typedb"] as const;
+
+export type Backends = typeof ALL_BACKENDS;
+
+// export type Backend = "typescript" | "json" | "typedb";
+export type Backend = string;

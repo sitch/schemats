@@ -1,7 +1,7 @@
 
-import { DBTypeMap } from "../../adapter";
+import { DBTypeMap } from "../adapters/types";
 
-import { Config } from "../../generator";
+import { Config } from "../config";
 import { Connection, createConnection, RowDataPacket } from "mysql2/promise";
 import {
   Database,
@@ -12,7 +12,7 @@ import {
   ColumnDefinition,
   CustomType,
   CustomTypes,
-} from "../../adapter";
+} from "../adapters/types";
 
 export const TYPEDB_RESERVED_WORDS = new Set([
   // datatypes
@@ -205,7 +205,7 @@ export const translateMySQLToTypescript = (config: Config, tableDefinition: Tabl
               }
       }
       // result[columnName] = column
-      result.columns.push(column)
+      result.columns[columnName] = column
       return result
-  }, {name: tableDefinition.name} as TableDefinition)
+  }, {name: tableDefinition.name, columns: {}} as TableDefinition)
 }

@@ -1,5 +1,5 @@
-import { pretty } from "../../formatters";
-import { BuildContext } from "../../adapter";
+import { pretty } from "../formatters";
+import { BuildContext } from "../generator";
 
 export const build = (context: BuildContext) => ({
   // schema: context.config.schema,

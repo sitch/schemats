@@ -1,15 +1,10 @@
-import * as commander from 'commander'
-import { Config, CommandOptions, generate } from '../src/generator'
-import { MysqlDatabase } from '../src/adapters/schema-mysql'
-import { promises } from 'fs'
-import { relative } from 'path'
+import {Command} from 'commander'
+import {  generate } from '../src/generator'
+import { MysqlDatabase } from '../src/adapters/mysql-database'
+import { Config, CommandOptions } from '../src/config'
+import { writeRelFileAsync } from '../src/utils'
 
-// work-around for:
-// TS4023: Exported variable 'command' has or is using name 'local.Command'
-// from external module "node_modules/commander/typings/index" but cannot be named.
-export type Command = commander.Command
-
-export const mysql = async (program: Command): Promise<void> => {
+export const mysql = async (program: Command, argv: string[]): Promise<void> => {
     program
         .command('mysql')
         .description('Generate a typescript schema from mysql')
@@ -31,20 +26,20 @@ export const mysql = async (program: Command): Promise<void> => {
         .option('--no-header', 'don\'t generate a header')
         .option('--no-throw-on-missing-type', 'don\'t throw an error when pg type cannot be mapped to ts type')
         .action(async (connection: string, options: CommandOptions) => {
-            const config = new Config(connection, options)
+            const config = new Config(argv, connection, options)
             const db = new MysqlDatabase(config, connection)
             await db.isReady()
             const schema = await generate(config, db)
 
-            if (options?.output) {
-                const outputPath = relative(process.cwd(), options.output)
-                await promises.writeFile(outputPath, schema, 'utf8')
-                console.log(`Written ${options.backend} schema to ${outputPath}`)
+            if (config.outputPath) {
+              await writeRelFileAsync(schema, config.outputPath);
+              console.log(`Written ${config.backend} schema to ${config.outputPath}`);
             } else {
-                console.log(schema)
+              console.log(schema);
             }
-            await db.close()
-        })
+            await db.close();
+      })
 
     program.action(program.help)
 }
+

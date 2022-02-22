@@ -1,9 +1,13 @@
 import { Client } from 'pg'
-import { Config } from '../generator'
-import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from '../adapter'
+import { Config } from '../config'
+import { Database, TableDefinition,
+
+  TableComment,
+  TableComments,
+  TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from './types'
 
 const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumType: Set<string>, customTypes: CustomTypes, columnDescriptions: Record<string, string>): TableDefinition => {
-    return tableDefinition.columns.reduce((result, column) => {
+    return Object.values(tableDefinition.columns).reduce((result, column) => {
         switch (column.udtName) {
             case 'bpchar':
             case 'char':
@@ -69,9 +73,9 @@ const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: Table
                     break
                 }
         }
-        result.columns.push(column)
+        result.columns[column.name] = column
         return result
-    }, {name: tableDefinition.name} as TableDefinition)
+    }, {name: tableDefinition.name, columns: {}} as TableDefinition)
 }
 
 export class PostgresDatabase implements Database {
@@ -97,11 +101,11 @@ export class PostgresDatabase implements Database {
         return this.connectionString!
     }
 
-    public getDefaultSchema(): string {
-        return 'public'
+    public async getDefaultSchema(): Promise<string> {
+      return "public";
     }
 
-    public async getSchemaTableNames(schemaName: string): Promise<string[]> {
+    public async getTableNames(schemaName: string): Promise<string[]> {
         const result = await this.db.query(`
             SELECT table_name
             FROM information_schema.columns
@@ -212,10 +216,75 @@ export class PostgresDatabase implements Database {
                 isArray: udt_name.startsWith('_'),
                 hasDefault: has_default,
             }
-            tableDefinition.columns.push(columnDefinition)
+            tableDefinition.columns[column_name] = columnDefinition
             return tableDefinition
-        }, {name: tableName, columns: []})
+        }, {name: tableName, columns: {}})
     }
+
+
+
+  // public async getTableComments(schemaName: string, tableName: string): Promise<TableComments> {
+  //   // public async getTableComments(schemaName: string, tableName: string) {
+  //     // See https://stackoverflow.com/a/4946306/388951
+  //     const commentsResult = await this.db.query<{
+  //         column: string;
+  //         description: string;
+  //     }>(
+  //         `
+  //           SELECT
+  //             c.column_name AS column,
+  //             pgd.description AS description
+  //           FROM
+  //             pg_catalog.pg_statio_all_tables AS st
+  //             INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
+  //             INNER JOIN information_schema.columns c ON (
+  //               pgd.objsubid = c.ordinal_position
+  //               AND c.table_schema = st.schemaname
+  //               AND c.table_name = st.relname
+  //             )
+  //           WHERE
+  //             c.table_schema = $1
+  //             and c.table_name = $2
+
+  //         `,
+  //         [schemaName, tableName],
+  //     );
+  //     return commentsResult.rows.reduce((result, { column, description }) => {
+  //         result[column] = description
+  //         return result
+  //     }, {} as Record<string, string>)
+  // }
+
+  // public async getTableComments(schemaName: string, tableName: string): Promise<TableComments> {
+
+  //     const comments: TableComment[] = await this.db.query(
+  //         `
+  //             SELECT
+  //                 t.table_name,
+  //                 pgd.description
+  //             FROM pg_catalog.pg_statio_all_tables AS st
+  //             INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid=st.relid)
+  //             INNER JOIN information_schema.tables t ON (
+  //                 t.table_schema=st.schemaname AND
+  //                 t.table_name=st.relname
+  //             )
+  //             WHERE pgd.objsubid = 0
+  //                 AND t.table_schema = $1;
+  //         `,
+  //         [schemaName],
+  //     );
+
+  //     return _.fromPairs(comments.map((c) => [c.table_name, c.description]));
+  // }
+
+
+
+
+
+
+
+
+
 
     // public async getTableType(tableSchema: string, tableName: string, customTypes: CustomTypes) :  Promise<TableType> {
     //     const enumType = await this.getEnumDefinitions(tableSchema)
@@ -265,147 +334,93 @@ export class PostgresDatabase implements Database {
     }
     **/
 
-    public async getTableComments(schemaName: string, tableName: string) {
-        // See https://stackoverflow.com/a/4946306/388951
-        const commentsResult = await this.db.query<{
-            table_name: string;
-            column_name: string;
-            description: string;
-        }>(
-            `
-                SELECT
-                    c.table_name,
-                    c.column_name,
-                    pgd.description
-                FROM pg_catalog.pg_statio_all_tables AS st
-                INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid=st.relid)
-                INNER JOIN information_schema.columns c ON (
-                    pgd.objsubid=c.ordinal_position AND
-                    c.table_schema=st.schemaname AND
-                    c.table_name=st.relname
-                )
-                WHERE c.table_schema = $1 and c.table_name = $2
-            `,
-            [schemaName, tableName],
-        );
-        return commentsResult.rows.reduce((result, { column_name, description }) => {
-            result[column_name] = description
-            return result
-        }, {} as Record<string, string>)
-    }
 
-        /**
-    public async getTableComments(schemaName: string) {
-        interface TableComment {
-            table_name: string;
-            description: string;
-        }
-        const comments: TableComment[] = await this.db.query(
-            `
-                SELECT
-                    t.table_name,
-                    pgd.description
-                FROM pg_catalog.pg_statio_all_tables AS st
-                INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid=st.relid)
-                INNER JOIN information_schema.tables t ON (
-                    t.table_schema=st.schemaname AND
-                    t.table_name=st.relname
-                )
-                WHERE pgd.objsubid = 0
-                    AND t.table_schema = $1;
-            `,
-            [schemaName],
-        );
 
-        return _.fromPairs(comments.map((c) => [c.table_name, c.description]));
-    }
+    // async getForeignKeys(schemaName: string) {
+    //     interface ForeignKey {
+    //         table_name: string;
+    //         column_name: string;
+    //         foreign_table_name: string;
+    //         foreign_column_name: string;
+    //         conname: string;
+    //     }
+    //     // See https://stackoverflow.com/a/10950402/388951
+    //     const fkeys: ForeignKey[] = await this.db.query(
+    //         `
+    //         SELECT
+    //             cl2.relname AS table_name,
+    //             att2.attname AS column_name,
+    //             cl.relname AS foreign_table_name,
+    //             att.attname AS foreign_column_name,
+    //             conname
+    //         FROM
+    //             (SELECT
+    //                 unnest(con1.conkey) AS "parent",
+    //                 unnest(con1.confkey) AS "child",
+    //                 con1.confrelid,
+    //                 con1.conrelid,
+    //                 con1.conname
+    //             FROM pg_class cl
+    //             JOIN pg_namespace ns ON cl.relnamespace = ns.oid
+    //             JOIN pg_constraint con1 ON con1.conrelid = cl.oid
+    //             WHERE ns.nspname = $1 AND con1.contype = 'f'
+    //             ) con
+    //         JOIN pg_attribute att ON att.attrelid = con.confrelid and att.attnum = con.child
+    //         JOIN pg_class cl ON cl.oid = con.confrelid
+    //         JOIN pg_class cl2 ON cl2.oid = con.conrelid
+    //         JOIN pg_attribute att2 ON att2.attrelid = con.conrelid AND att2.attnum = con.parent
+    //         `,
+    //         [schemaName],
+    //     );
 
-    async getForeignKeys(schemaName: string) {
-        interface ForeignKey {
-            table_name: string;
-            column_name: string;
-            foreign_table_name: string;
-            foreign_column_name: string;
-            conname: string;
-        }
-        // See https://stackoverflow.com/a/10950402/388951
-        const fkeys: ForeignKey[] = await this.db.query(
-            `
-            SELECT
-                cl2.relname AS table_name,
-                att2.attname AS column_name,
-                cl.relname AS foreign_table_name,
-                att.attname AS foreign_column_name,
-                conname
-            FROM
-                (SELECT
-                    unnest(con1.conkey) AS "parent",
-                    unnest(con1.confkey) AS "child",
-                    con1.confrelid,
-                    con1.conrelid,
-                    con1.conname
-                FROM pg_class cl
-                JOIN pg_namespace ns ON cl.relnamespace = ns.oid
-                JOIN pg_constraint con1 ON con1.conrelid = cl.oid
-                WHERE ns.nspname = $1 AND con1.contype = 'f'
-                ) con
-            JOIN pg_attribute att ON att.attrelid = con.confrelid and att.attnum = con.child
-            JOIN pg_class cl ON cl.oid = con.confrelid
-            JOIN pg_class cl2 ON cl2.oid = con.conrelid
-            JOIN pg_attribute att2 ON att2.attrelid = con.conrelid AND att2.attnum = con.parent
-            `,
-            [schemaName],
-        );
+    //     // Multi-column foreign keys are harder to model.
+    //     // To get consistent outputs, just ignore them for now.
+    //     const countKey = (fk: ForeignKey) => `${fk.table_name},${fk.conname}`;
+    //     const colCounts = _.countBy(fkeys, countKey);
 
-        // Multi-column foreign keys are harder to model.
-        // To get consistent outputs, just ignore them for now.
-        const countKey = (fk: ForeignKey) => `${fk.table_name},${fk.conname}`;
-        const colCounts = _.countBy(fkeys, countKey);
+    //     return _(fkeys)
+    //         .filter((c) => colCounts[countKey(c)] < 2)
+    //         .groupBy((c) => c.table_name)
+    //         .mapValues((tks) =>
+    //             _.fromPairs(
+    //                 tks.map((ck) => [
+    //                     ck.column_name,
+    //                     { table: ck.foreign_table_name, column: ck.foreign_column_name },
+    //                 ]),
+    //             ),
+    //         )
+    //         .value();
+    // }
 
-        return _(fkeys)
-            .filter((c) => colCounts[countKey(c)] < 2)
-            .groupBy((c) => c.table_name)
-            .mapValues((tks) =>
-                _.fromPairs(
-                    tks.map((ck) => [
-                        ck.column_name,
-                        { table: ck.foreign_table_name, column: ck.foreign_column_name },
-                    ]),
-                ),
-            )
-            .value();
-    }
+    // async getMeta(schemaName: string): Promise<Metadata> {
+    //     if (this.metadata && schemaName === this.metadata.schema) {
+    //         return this.metadata;
+    //     }
 
-    async getMeta(schemaName: string): Promise<Metadata> {
-        if (this.metadata && schemaName === this.metadata.schema) {
-            return this.metadata;
-        }
+    //     const [
+    //         EnumDefinition,
+    //         tableToKeys,
+    //         foreignKeys,
+    //         columnComments,
+    //         tableComments,
+    //     ] = await Promise.all([
+    //         this.getEnumDefinition(),
+    //         this.getPrimaryKeys(schemaName),
+    //         this.getForeignKeys(schemaName),
+    //         this.getTableComments(schemaName),
+    //         this.getTableComments(schemaName),
+    //     ]);
 
-        const [
-            EnumDefinition,
-            tableToKeys,
-            foreignKeys,
-            columnComments,
-            tableComments,
-        ] = await Promise.all([
-            this.getEnumDefinition(),
-            this.getPrimaryKeys(schemaName),
-            this.getForeignKeys(schemaName),
-            this.getTableComments(schemaName),
-            this.getTableComments(schemaName),
-        ]);
+    //     const metadata: Metadata = {
+    //         schema: schemaName,
+    //         EnumDefinition,
+    //         tableToKeys,
+    //         foreignKeys,
+    //         columnComments,
+    //         tableComments,
+    //     };
 
-        const metadata: Metadata = {
-            schema: schemaName,
-            EnumDefinition,
-            tableToKeys,
-            foreignKeys,
-            columnComments,
-            tableComments,
-        };
-
-        this.metadata = metadata;
-        return metadata;
-    }
-    */
+    //     this.metadata = metadata;
+    //     return metadata;
+    // }
 }

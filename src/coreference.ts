@@ -12,11 +12,11 @@ import {
   TableDefinitions,
   CustomType,
   CustomTypes,
-} from "./adapter";
+} from "./adapters/types";
 
 
 
-import { TYPEDB_TYPEMAP } from "./backends/typedb/typemap";
+import { TYPEDB_TYPEMAP } from "./typemaps/typedb-typemap";
 
 
 
@@ -38,21 +38,24 @@ export const findTableColumnType = (
   tableName: string,
   columnName: string
 ) => {
-  const table = tableDefinitions.find(({ name }) => name === tableName);
-  const column = table?.columns.find(({ name }) => name === columnName);
+  // const table = tableDefinitions.find(({ name }) => name === tableName);
+  const table = tableDefinitions[tableName]
+  const column = Object.values(table?.columns).find(({ name }) => name === columnName);
   return column?.udtName;
 };
 
 export const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
+  const tableList = Object.values(tableDefinitions)
+
   const tableColumnNames = uniq(
     flatMap(
-      tableDefinitions.map(({ columns }) => columns.map(({ name }) => name))
+      tableList.map(({ columns }) => Object.values(columns).map(({ name }) => name))
     )
   );
 
   const pairs = tableColumnNames.map((columnName) => {
-    const tables = tableDefinitions.filter(({ columns }) =>
-      columns.map(({ name }) => name).includes(columnName)
+    const tables = tableList.filter(({ columns }) =>
+      Object.values(columns).map(({ name }) => name).includes(columnName)
     );
     const tableNames = tables.map(({ name }) =>
       [findTableColumnType(tableDefinitions, name, columnName), name].join("::")
