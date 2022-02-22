@@ -23,6 +23,7 @@ export const jsonOfSchema = async (
     tables: tableDefinitions,
     relationships: [],
     overlaps: attributeOverlapGrouping(tableDefinitions),
+    ignoreFieldCollisions: config.ignoreFieldCollisions,
   };
 
   return JSON.stringify(data, null, 2);
