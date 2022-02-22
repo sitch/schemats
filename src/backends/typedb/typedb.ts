@@ -1,5 +1,5 @@
 import { Config } from "../../config";
-import { Database } from "../../schema-interfaces";
+import { Database } from "../../adapter";
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
 import {
   BuildContext,
@@ -11,7 +11,7 @@ import {
   CustomType,
   CustomTypes,
   Coreferences,
-} from "../../schema-interfaces";
+} from "../../adapter";
 import {TYPEDB_TYPEMAP, isReservedWord} from "../typedb/typemap"
 
 import {

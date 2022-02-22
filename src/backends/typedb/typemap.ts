@@ -1,5 +1,5 @@
 
-import { DBTypeMap } from "../../schema-interfaces";
+import { DBTypeMap } from "../../adapter";
 
 
 export const TYPEDB_RESERVED_WORDS = new Set([

@@ -4,12 +4,12 @@ import {
   Coreferences,
   Database,
   Relationships,
-} from "./schema-interfaces";
+} from "./adapter";
 import {
   EnumDefinition,
   TableDefinitions,
   CustomTypes,
-} from "./schema-interfaces";
+} from "./adapter";
 import { typescriptOfSchema } from "./backends/typescript/typescript";
 import { typedbOfSchema } from "./backends/typedb/typedb";
 import { jsonOfSchema } from "./backends/json/json";

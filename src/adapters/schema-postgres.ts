@@ -1,6 +1,6 @@
 import { Client } from 'pg'
 import { Config } from '../generator'
-import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from '../schema-interfaces'
+import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from '../adapter'
 
 const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumType: Set<string>, customTypes: CustomTypes, columnDescriptions: Record<string, string>): TableDefinition => {
     return tableDefinition.columns.reduce((result, column) => {
@@ -119,7 +119,7 @@ export class PostgresDatabase implements Database {
 // n.nspname as nspname
 // n.nspowner as nspowner
 // n.nspacl as nspacl
-    
+
 // t.oid as oid
 // t.typname as typname
 // t.typnamespace as typnamespace
@@ -152,7 +152,7 @@ export class PostgresDatabase implements Database {
 // t.typdefaultbin as typdefaultbin
 // t.typdefault as typdefault
 // t.typacl as typacl
-    
+
 // e.oid as oid
 // e.enumtypid as enumtypid
 // e.enumsortorder as enumsortorder
@@ -160,9 +160,9 @@ export class PostgresDatabase implements Database {
 
     public async getEnumDefinitions(schema: string): Promise<EnumDefinitions> {
         const results = await this.db.query<{ name: string, value: string }>(`
-            SELECT 
-                n.nspname AS schema, 
-                t.typname AS name, 
+            SELECT
+                n.nspname AS schema,
+                t.typname AS name,
                 e.enumlabel AS value
             FROM pg_type t
             JOIN pg_enum e ON t.oid = e.enumtypid
@@ -210,7 +210,7 @@ export class PostgresDatabase implements Database {
                 udtName: udt_name.replace(/^_/, ''),
                 nullable: is_nullable === 'YES',
                 isArray: udt_name.startsWith('_'),
-                hasDefault: has_default,     
+                hasDefault: has_default,
             }
             tableDefinition.columns.push(columnDefinition)
             return tableDefinition
@@ -221,9 +221,9 @@ export class PostgresDatabase implements Database {
     //     const enumType = await this.getEnumDefinitions(tableSchema)
     //     const columnComments = await this.getTableComments(tableSchema, tableName)
     //     return mapPostgresTableDefinitionToType(
-    //         this.config, 
-    //         await this.getTableDefinition(tableSchema, tableName), 
-    //         new Set(Object.keys(enumType)), 
+    //         this.config,
+    //         await this.getTableDefinition(tableSchema, tableName),
+    //         new Set(Object.keys(enumType)),
     //         customTypes,
     //         columnComments
     //     )

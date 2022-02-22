@@ -9,7 +9,7 @@ import {
   ColumnDefinition,
   CustomType,
   CustomTypes,
-} from "../schema-interfaces";
+} from "../adapter";
 
 import { translateMySQLToTypescript} from "../backends/typescript/typemap"
 

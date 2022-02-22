@@ -12,7 +12,7 @@ import {
   TableDefinitions,
   CustomType,
   CustomTypes,
-} from "./schema-interfaces";
+} from "./adapter";
 
 
 

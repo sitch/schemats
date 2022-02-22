@@ -1,5 +1,5 @@
 
-import { DBTypeMap } from "../../schema-interfaces";
+import { DBTypeMap } from "../../adapter";
 
 import { Config } from "../../generator";
 import { Connection, createConnection, RowDataPacket } from "mysql2/promise";
@@ -12,7 +12,7 @@ import {
   ColumnDefinition,
   CustomType,
   CustomTypes,
-} from "../../schema-interfaces";
+} from "../../adapter";
 
 export const TYPEDB_RESERVED_WORDS = new Set([
   // datatypes
