@@ -16,6 +16,7 @@ export const jsonOfSchema = async (
   customTypes: CustomTypes
 ) => {
   const data = {
+    generated_on: new Date(),
     version: config.version,
     schema,
     enums: enumDefinitions,

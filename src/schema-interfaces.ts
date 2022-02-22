@@ -57,17 +57,11 @@ export interface TableDefinition {
 }
 export type TableDefinitions = TableDefinition[]
 
-// export interface TableDefinition {
-//     table: string,
-//     column: string,
-//     values: Set<T>
-// }
-
 export interface ParameterizedEnumDefinition<T> {
     name: string,
-    table: string,
+    table?: string | undefined | null,
     column: string,
-    values: Set<T>
+    values: T[]
 }
 
 // export type EnumDefinition = Record<string, string[]>

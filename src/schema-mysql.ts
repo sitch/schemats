@@ -139,20 +139,13 @@ export class MysqlDatabase implements Database {
             //     )
             // }
             return {
-                table: `MISSING TABLE ${enumName}`,
+                // table: `MISSING TABLE ${enumName}`,
                 name: enumName,
                 column: COLUMN_NAME,
-                values: new Set(enumValues)
+                // values: new Set(enumValues)
+                values: enumValues
             } 
         })
-
-
-        // return rawEnumRecords.rows.map(({name, value}) : EnumDefinition =>  ({
-        //     table: `MISSING ${name}`,
-        //     column: name,
-        //     values: new Set([value]),
-        // }
-    // ))        
     }
 
     public async getTableDefinition(tableSchema: string, tableName: string) :  Promise<TableDefinition> {

@@ -29,6 +29,8 @@ const RESERVED_WORDS = new Set([
   // "STD",
   // "SUM",
 
+  "type",
+
   // query
   "match",
   "get",
@@ -138,7 +140,8 @@ const typing = (config: Config, { udtName }: ColumnDefinition, enumDefinitions: 
 
   const enumDefinition = enumDefinitions.find(column => column.name === udtName)
   if(enumDefinition ) {
-    return config.formatEnumName(enumDefinition.name)
+    const enumType = config.formatEnumName(enumDefinition.name)
+    return `string; # enum: ${enumType}`
   }
 
   const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;

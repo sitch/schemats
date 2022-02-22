@@ -231,9 +231,9 @@ export const typescriptOfSchema = async (
 
   return [
     header,
-    customs.join("\n\n"),
-    enums.join("\n\n"),
-    interfaces.join("\n\n"),
+    customs,
+    enums,
+    interfaces,
     lookup,
-  ].join("\n\n");
+  ].flat().join("\n\n");
 };
