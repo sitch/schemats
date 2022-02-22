@@ -1,6 +1,6 @@
 import { Config } from "../config";
 import { Database } from "../schema-interfaces";
-import { flatMap, fromPairs, uniq, sortBy, omit, size } from "lodash";
+import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
 import {
   EnumDefinition,
   TableDefinition,
@@ -132,6 +132,8 @@ const POSTGRES_TYPES: Record<string, string> = {
 
 const TYPES = { ...MYSQL_TYPES, ...POSTGRES_TYPES };
 
+const inferType = (udtName: string): string => TYPES[udtName] || udtName;
+
 const typing = (
   config: Config,
   { udtName }: ColumnDefinition,
@@ -234,7 +236,6 @@ const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
       columns.map(({ name }) => name).includes(columnName)
     );
     const tableNames = tables.map(({ name }) =>
-      // name
       [findTableColumnType(tableDefinitions, name, columnName), name].join("::")
     );
     return [columnName, tableNames.sort()];
@@ -243,15 +244,62 @@ const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
   return sortBy(pairs, ([key, values]) => values.length);
 };
 
-export const attributeOverlapGrouping = (tableDefinitions: TableDefinitions) => {
+export const attributeOverlapGrouping = (
+  tableDefinitions: TableDefinitions
+) => {
   const groupingPairs = attributeGroupingPairs(tableDefinitions);
   return fromPairs(groupingPairs.filter(([key, values]) => values.length > 1));
 };
 
+export const invalidOverlaps = (overlaps: Record<string, string[]>) => {
+  return fromPairs(
+    toPairs(overlaps)
+      .filter(([key, values]) => values.length > 1)
+      .filter(
+        ([key, values]) =>
+          uniq(values.map((value) => value.split("::")[0])).length > 1
+      )
+  );
+};
+
+const withTypeDBType = (value: string): string => {
+  const [udtName, table] = value.split("::");
+  return [inferType(udtName), udtName, table].join("::");
+};
+
+export const invalidTypeDBOverlaps = (overlaps: Record<string, string[]>) => {
+  return fromPairs(
+    toPairs(overlaps)
+      .filter(([key, values]) => values.length > 1)
+      .map(([key, values]): [string, string[]] => [
+        key,
+        values.map(withTypeDBType),
+      ])
+      .filter(
+        ([key, values]) =>
+          uniq(values.map((value) => value.split("::")[0])).length > 1
+      )
+  );
+};
+
 const castOverlapHeader = (overlaps: Record<string, string[]>) => `
 ################################################################################
-# Overlapping keys
+# ERRORS: INVALID TYPEDB COLLISIONS
 ################################################################################
+${JSON.stringify(invalidTypeDBOverlaps(overlaps), null, 2)
+  .split("\n")
+  .map((line) => `# ${line}`)
+  .join("\n")}
+#===============================================================================
+# WARNING: INVALID TYPE COLLISIONS
+#===============================================================================
+${JSON.stringify(invalidOverlaps(overlaps), null, 2)
+  .split("\n")
+  .map((line) => `# ${line}`)
+  .join("\n")}
+#-------------------------------------------------------------------------------
+# Overlapping keys
+#-------------------------------------------------------------------------------
 ${JSON.stringify(overlaps, null, 2)
   .split("\n")
   .map((line) => `# ${line}`)
@@ -267,7 +315,7 @@ const overlapHeader = (config: Config, tableDefinitions: TableDefinitions) => {
   }
   return `
 #-------------------------------------------------------------------------------
-  `;
+`;
 };
 
 export const typedbOfSchema = async (

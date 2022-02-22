@@ -1,6 +1,6 @@
 import { Config } from "../config";
 import { Database } from "../schema-interfaces";
-import { attributeOverlapGrouping } from "./typedb";
+import { attributeOverlapGrouping, invalidOverlaps, invalidTypeDBOverlaps } from "./typedb";
 import {
   EnumDefinitions,
   TableDefinitions,
@@ -15,14 +15,17 @@ export const jsonOfSchema = async (
   enumDefinitions: EnumDefinitions,
   customTypes: CustomTypes
 ) => {
+  const overlaps = attributeOverlapGrouping(tableDefinitions)
   const data = {
     generated_on: new Date(),
     version: config.version,
     schema,
+    invalidTypeDBOverlaps: invalidTypeDBOverlaps(overlaps),
     enums: enumDefinitions,
     tables: tableDefinitions,
     relationships: [],
-    overlaps: attributeOverlapGrouping(tableDefinitions),
+    overlaps,
+    invalidOverlaps: invalidOverlaps(overlaps),
     ignoreFieldCollisions: config.ignoreFieldCollisions,
   };
 

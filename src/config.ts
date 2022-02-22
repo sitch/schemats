@@ -57,7 +57,7 @@ export class Config {
     }
 
     public get ignoreFieldCollisions () : string[] {
-        return this.config.ignoreFieldCollisions || [] 
+        return (this.config.ignoreFieldCollisions || []).filter(x => !!x)
     }
 
     public get database () {
