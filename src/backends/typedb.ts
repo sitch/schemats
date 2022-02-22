@@ -243,7 +243,7 @@ const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
   return sortBy(pairs, ([key, values]) => values.length);
 };
 
-const attributeOverlapGrouping = (tableDefinitions: TableDefinitions) => {
+export const attributeOverlapGrouping = (tableDefinitions: TableDefinitions) => {
   const groupingPairs = attributeGroupingPairs(tableDefinitions);
   return fromPairs(groupingPairs.filter(([key, values]) => values.length > 1));
 };

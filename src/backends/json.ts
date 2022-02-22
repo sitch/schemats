@@ -1,5 +1,6 @@
 import { Config } from "../config";
 import { Database } from "../schema-interfaces";
+import { attributeOverlapGrouping } from "./typedb";
 import {
   EnumDefinitions,
   TableDefinitions,
@@ -21,6 +22,7 @@ export const jsonOfSchema = async (
     enums: enumDefinitions,
     tables: tableDefinitions,
     relationships: [],
+    overlaps: attributeOverlapGrouping(tableDefinitions),
   };
 
   return JSON.stringify(data, null, 2);
