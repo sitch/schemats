@@ -222,10 +222,6 @@ export const typescriptOfSchema = async (
   enumDefinitions: EnumDefinitions,
   customTypes: CustomTypes
 ) => {
-
-  console.log(tableDefinitions)
-
-
   const header = await castHeader(config, db);
   const customs = flatMap(customTypes, castCustom(config));
   const enums = flatMap(enumDefinitions, castEnum(config));

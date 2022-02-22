@@ -27,20 +27,11 @@ export async function generate(config: Config, db: Database) : Promise<string>  
     const schema = config.schema || await db.getDefaultSchema()
     const tables = config.tables || await db.getSchemaTableNames(schema)
     const enumDefinitions = await db.getEnumDefinitions(schema)
-    const command = config.getCLICommand(db.getConnectionString())
-
-
-    console.log('schema', schema)
-    console.log('tables', tables)
-    console.log('enumDefinitions', enumDefinitions)
-    console.log('command', command)
+    // const command = config.getCLICommand(db.getConnectionString())
 
     // let customTypes = new Set<string>()
     let customTypes: CustomTypes = []
     const tableDefinitions = await Promise.all(tables.map(table => db.getTableDefinition(schema, table)))
-
-    console.log('tableDefinitions', tableDefinitions)
-
 
     return await formatter(config, db, schema, tableDefinitions, enumDefinitions, customTypes)
 }
