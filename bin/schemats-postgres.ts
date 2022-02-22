@@ -1,6 +1,6 @@
 import * as commander from 'commander'
 import { Config, CommandOptions, generate } from '../src/generator'
-import { PostgresDatabase } from '../src/schema-postgres'
+import { PostgresDatabase } from '../src/adapters/schema-postgres'
 import { promises } from 'fs'
 import { relative } from 'path'
 
@@ -25,6 +25,9 @@ export const postgres = async (program: Command): Promise<void> => {
         .option('-E, --enum-formatter <enumFormatterter>', 'Formatter for enum names')
         .option('-T, --table-formatter <tableFormatterter>', 'Formatter for table names')
         .option('-C, --column-formatter <columnFormatterter>', 'Formatter for column names')
+        .option('--typedb-entity-template <typedbEntityTemplate>', 'Formatter for typedb entity names', '{{entity}}')
+        .option('--typedb-relation-template <typedbRelationTemplate>', 'Formatter for typedb relation names', '{{relation}}')
+        .option('--typedb-attribute-template <typedbAttributeTemplate>', 'Formatter for typedb attribute names', '{{attribute}}')
         .option('--no-header', 'don\'t generate a header')
         .option('--no-throw-on-missing-type', 'don\'t throw an error when pg type cannot be mapped to ts type')
         .action(async (connection: string, options: CommandOptions) => {

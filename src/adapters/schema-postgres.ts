@@ -1,6 +1,6 @@
 import { Client } from 'pg'
-import { Config } from './generator'
-import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from './schema-interfaces'
+import { Config } from '../generator'
+import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from '../schema-interfaces'
 
 const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumType: Set<string>, customTypes: CustomTypes, columnDescriptions: Record<string, string>): TableDefinition => {
     return tableDefinition.columns.reduce((result, column) => {

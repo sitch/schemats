@@ -1,3 +1,5 @@
+import { Config } from "./config"
+
 export interface Database {
     version: string
     getConnectionString: () => string
@@ -29,7 +31,7 @@ export interface Metadata {
     tableComments: TableComments
 }
 
-export type CustomType = Set<string> 
+export type CustomType = Set<string>
 export type CustomTypes = CustomType[]
 
 export interface ColumnDefinition {
@@ -67,3 +69,35 @@ export interface ParameterizedEnumDefinition<T> {
 // export type EnumDefinition = Record<string, string[]>
 export type EnumDefinition = ParameterizedEnumDefinition<string>
 export type EnumDefinitions = EnumDefinition[]
+
+
+export type Coreference = Record<string, string>
+
+export interface Coreferences {
+    all: Coreference,
+    user: Coreference,
+}
+
+export type Schema = string
+export type RelationshipType = string
+export interface Relationship {
+    source: TableDefinition,
+    sink: TableDefinition,
+    type: RelationshipType,
+}
+export type Relationships = Relationship[]
+
+
+export interface BuildContext {
+    schema: Schema,
+    config: Config,
+    tables: TableDefinitions,
+    enums: EnumDefinitions,
+    relationships: Relationships,
+    customTypes: CustomTypes,
+    coreferences: Coreferences,
+}
+
+export type DBTypeMap = Record<string, string>
+
+export type Backend = "typescript" | "json" | "typedb";
