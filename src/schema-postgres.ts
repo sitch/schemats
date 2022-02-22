@@ -1,9 +1,9 @@
 import { Client } from 'pg'
 import { Config } from './generator'
-import { TableDefinition, Database, EnumTypes } from './schema-interfaces'
+import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from './schema-interfaces'
 
-const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumTypes: Set<string>, customTypes: Set<string>, columnDescriptions: Record<string, string>): TableDefinition => {
-    return Object.entries(tableDefinition).reduce((result, [columnName, column]) => {
+const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumType: Set<string>, customTypes: CustomTypes, columnDescriptions: Record<string, string>): TableDefinition => {
+    return tableDefinition.columns.reduce((result, column) => {
         switch (column.udtName) {
             case 'bpchar':
             case 'char':
@@ -37,16 +37,16 @@ const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: Table
                 column.tsType = 'boolean'
                 break
             case 'json':
-            case 'jsonb':
-                column.tsType = 'unknown'
-                if (columnDescriptions[columnName]) {
-                    const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
-                    if (type) {
-                        column.tsType = type[1].trim()
-                        customTypes.add(column.tsType)
-                    }
-                }
-                break
+            // case 'jsonb':
+            //     column.tsType = 'unknown'
+            //     if (columnDescriptions[columnName]) {
+            //         const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
+            //         if (type) {
+            //             column.tsType = type[1].trim()
+            //             // customTypes.add(column.tsType)
+            //         }
+            //     }
+            //     break
             case 'date':
             case 'timestamp':
             case 'timestamptz':
@@ -56,8 +56,8 @@ const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: Table
                 column.tsType = '{ x: number, y: number }'
                 break
             default:
-                if (enumTypes.has(column.udtName)) {
-                    column.tsType = config.transformTypeName(column.udtName)
+                if (enumType.has(column.udtName)) {
+                    column.tsType = config.formatTableName(column.udtName)
                     break
                 } else {
                     const warning = `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`
@@ -69,9 +69,9 @@ const mapPostgresTableDefinitionToType = (config: Config, tableDefinition: Table
                     break
                 }
         }
-        result[columnName] = column
+        result.columns.push(column)
         return result
-    }, {} as TableDefinition)
+    }, {name: tableDefinition.name} as TableDefinition)
 }
 
 export class PostgresDatabase implements Database {
@@ -101,56 +101,7 @@ export class PostgresDatabase implements Database {
         return 'public'
     }
 
-    public async getEnums(schema: string): Promise<EnumTypes> {
-        const results = await this.db.query<{ name: string, value: string }>(`
-            SELECT n.nspname as schema, t.typname as name, e.enumlabel as value
-            FROM pg_type t
-            JOIN pg_enum e ON t.oid = e.enumtypid
-            JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-            WHERE n.nspname = $1
-        `, [schema])
-        return results.rows.reduce((result, { name, value }) => {
-            let values = result[name] || []
-            values.push(value)
-            result[name] = values
-            return result
-        }, {} as EnumTypes)
-    }
-
-    public async getTableDefinition(tableSchema: string, tableName: string) {
-        const result = await this.db.query<{ column_name: string, udt_name: string, is_nullable: string, has_default: boolean }>(`
-            SELECT column_name, udt_name, is_nullable, column_default IS NOT NULL as has_default
-            FROM information_schema.columns
-            WHERE table_name = $1 and table_schema = $2
-        `, [tableName, tableSchema])
-        if (result.rows.length === 0) {
-            console.error(`Missing table: ${tableSchema}.${tableName}`)
-        }
-        // https://www.developerfiles.com/adding-and-retrieving-comments-on-postgresql-tables/
-        return result.rows.reduce((result, { column_name, udt_name, is_nullable, has_default }) => {
-            result[column_name] = {
-                udtName: udt_name.replace(/^_/, ''),
-                nullable: is_nullable === 'YES',
-                isArray: udt_name.startsWith('_'),
-                hasDefault: has_default,
-            }
-            return result
-        }, {} as TableDefinition)
-    }
-
-    public async getTableTypes(tableSchema: string, tableName: string, customTypes: Set<string>) {
-        const enumTypes = await this.getEnums(tableSchema)
-        const columnComments = await this.getColumnComments(tableSchema, tableName)
-        return mapPostgresTableDefinitionToType(
-            this.config, 
-            await this.getTableDefinition(tableSchema, tableName), 
-            new Set(Object.keys(enumTypes)), 
-            customTypes,
-            columnComments
-        )
-    }
-
-    public async getSchemaTables(schemaName: string): Promise<string[]> {
+    public async getSchemaTableNames(schemaName: string): Promise<string[]> {
         const result = await this.db.query(`
             SELECT table_name
             FROM information_schema.columns
@@ -162,6 +113,121 @@ export class PostgresDatabase implements Database {
         }
         return result.rows.map(({ table_name }) => table_name)
     }
+
+
+// n.oid as oid
+// n.nspname as nspname
+// n.nspowner as nspowner
+// n.nspacl as nspacl
+    
+// t.oid as oid
+// t.typname as typname
+// t.typnamespace as typnamespace
+// t.typowner as typowner
+// t.typlen as typlen
+// t.typbyval as typbyval
+// t.typtype as typtype
+// t.typcategory as typcategory
+// t.typispreferred as typispreferred
+// t.typisdefined as typisdefined
+// t.typdelim as typdelim
+// t.typrelid as typrelid
+// t.typsubscript as typsubscript
+// t.typelem as typelem
+// t.typarray as typarray
+// t.typinput as typinput
+// t.typoutput as typoutput
+// t.typreceive as typreceive
+// t.typsend as typsend
+// t.typmodin as typmodin
+// t.typmodout as typmodout
+// t.typanalyze as typanalyze
+// t.typalign as typalign
+// t.typstorage as typstorage
+// t.typnotnull as typnotnull
+// t.typbasetype as typbasetype
+// t.typtypmod as typtypmod
+// t.typndims as typndims
+// t.typcollation as typcollation
+// t.typdefaultbin as typdefaultbin
+// t.typdefault as typdefault
+// t.typacl as typacl
+    
+// e.oid as oid
+// e.enumtypid as enumtypid
+// e.enumsortorder as enumsortorder
+// e.enumlabel as enumlabel
+
+    public async getEnumDefinitions(schema: string): Promise<EnumDefinitions> {
+        const results = await this.db.query<{ name: string, value: string }>(`
+            SELECT 
+                n.nspname AS schema, 
+                t.typname AS name, 
+                e.enumlabel AS value
+            FROM pg_type t
+            JOIN pg_enum e ON t.oid = e.enumtypid
+            JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+            WHERE n.nspname = $1
+        `, [schema])
+        // return results.rows.reduce((result, { name, value }) => {
+        //     let values = result[name] || []
+        //     values.push(value)
+        //     result[name] = values
+        //     return result
+        // }, {} as EnumDefinition)
+
+
+        return results.rows.map(({name, value}) : EnumDefinition =>  ({
+                table: `MISSING ${name}`,
+                column: name,
+                values: new Set([value]),
+            }
+        ))
+
+
+
+    }
+
+    public async getTableDefinition(tableSchema: string, tableName: string) :  Promise<TableDefinition> {
+        const result = await this.db.query<{ column_name: string, udt_name: string, is_nullable: string, has_default: boolean }>(`
+            SELECT
+                column_name,
+                udt_name,
+                is_nullable,
+                column_default IS NOT NULL AS has_default
+            FROM information_schema.columns
+            WHERE table_name = $1 AND table_schema = $2
+        `, [tableName, tableSchema])
+        if (result.rows.length === 0) {
+            console.error(`Missing table: ${tableSchema}.${tableName}`)
+        }
+        // https://www.developerfiles.com/adding-and-retrieving-comments-on-postgresql-tables/
+        return result.rows.reduce((tableDefinition: TableDefinition, { column_name, udt_name, is_nullable, has_default }) : TableDefinition =>  {
+            const columnDefinition : ColumnDefinition = {
+                name: column_name,
+                udtName: udt_name.replace(/^_/, ''),
+                nullable: is_nullable === 'YES',
+                isArray: udt_name.startsWith('_'),
+                hasDefault: has_default,     
+            }
+            tableDefinition.columns.push(columnDefinition)
+            return tableDefinition
+        }, {name: tableName, columns: []})
+    }
+
+    // public async getTableType(tableSchema: string, tableName: string, customTypes: CustomTypes) :  Promise<TableType> {
+    //     const enumType = await this.getEnumDefinitions(tableSchema)
+    //     const columnComments = await this.getTableComments(tableSchema, tableName)
+    //     return mapPostgresTableDefinitionToType(
+    //         this.config, 
+    //         await this.getTableDefinition(tableSchema, tableName), 
+    //         new Set(Object.keys(enumType)), 
+    //         customTypes,
+    //         columnComments
+    //     )
+    // }
+
+
 
     /**
         public async getPrimaryKeys(schemaName: string) {
@@ -197,7 +263,7 @@ export class PostgresDatabase implements Database {
     }
     **/
 
-    public async getColumnComments(schemaName: string, tableName: string) {
+    public async getTableComments(schemaName: string, tableName: string) {
         // See https://stackoverflow.com/a/4946306/388951
         const commentsResult = await this.db.query<{
             table_name: string;
@@ -314,22 +380,22 @@ export class PostgresDatabase implements Database {
         }
 
         const [
-            enumTypes,
+            EnumDefinition,
             tableToKeys,
             foreignKeys,
             columnComments,
             tableComments,
         ] = await Promise.all([
-            this.getEnumTypes(),
+            this.getEnumDefinition(),
             this.getPrimaryKeys(schemaName),
             this.getForeignKeys(schemaName),
-            this.getColumnComments(schemaName),
+            this.getTableComments(schemaName),
             this.getTableComments(schemaName),
         ]);
 
         const metadata: Metadata = {
             schema: schemaName,
-            enumTypes,
+            EnumDefinition,
             tableToKeys,
             foreignKeys,
             columnComments,

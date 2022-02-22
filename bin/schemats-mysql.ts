@@ -1,5 +1,5 @@
 import * as commander from 'commander'
-import { Config, typescriptOfSchema } from '../src/generator'
+import { Config, CommandOptions, generate } from '../src/generator'
 import { MysqlDatabase } from '../src/schema-mysql'
 import { promises } from 'fs'
 import { relative } from 'path'
@@ -13,27 +13,37 @@ export const mysql = async (program: Command): Promise<void> => {
     program
         .command('mysql')
         .description('Generate a typescript schema from mysql')
-        .argument('[connection]', 'The connection string to use, if left empty will use env variables')
+        .argument('<connection>', 'The connection string to use, if left empty will use env variables')
+        .option('-d, --database <database>', 'the database to use')
+        .option('-I, --ignore-field-collisions <field...>', 'fields to ignore when generating tql')
         .option('-s, --schema <schema>', 'the schema to use', 'public')
-        .option('-t, --tables <tables...>', 'the tables within the schema')
-        .option('-c, --camelCase', 'use camel case for enums, table names, and column names')
+        .option('-o, --output <filePath>', 'where to save the generated file relative to the current working directory')
+        .option('-F, --backend <backend>', 'the output format', 'typescript')
         .option('-e, --enums', 'use enums instead of types')
-        .option('-o, --output <output>', 'where to save the generated file relative to the current working directory')
+        .option('-t, --tables <tables...>', 'the tables within the schema')
+        .option('-f, --typesFile <typesFile>', 'the file where jsonb types can be imported from')
+        .option('-E, --enum-formatter <enumFormatterter>', 'Formatter for enum names')
+        .option('-T, --table-formatter <tableFormatterter>', 'Formatter for table names')
+        .option('-C, --column-formatter <columnFormatterter>', 'Formatter for column names')
         .option('--no-header', 'don\'t generate a header')
-        .action(async (connection, rest) => {
-            const config = new Config(rest)
-            const database = new MysqlDatabase(config, connection)
-            await database.isReady()
-            const schema = await typescriptOfSchema(config, database)
-            if (rest.output) {
-                const outputPath = relative(process.cwd(), rest.output)
+        .option('--no-throw-on-missing-type', 'don\'t throw an error when pg type cannot be mapped to ts type')
+        .action(async (connection: string, options: CommandOptions) => {
+            const config = new Config(connection, options)
+            const db = new MysqlDatabase(config, connection)
+            await db.isReady()
+            const schema = await generate(config, db)
+
+            const output = options?.output
+
+            if (output) {
+                const outputPath = relative(process.cwd(), output)
                 await promises.writeFile(outputPath, schema, 'utf8')
-                console.log(`Written schema to ${outputPath}`)
+                console.log(`Written ${options.backend} schema to ${outputPath}`)
             } else {
                 console.log(schema)
             }
-            await database.close()
+            await db.close()
         })
 
-  program.action(program.help)
+    program.action(program.help)
 }

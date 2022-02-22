@@ -1,32 +1,48 @@
+import inflection from 'inflection'
 import camelCase from 'camelcase'
+import { version } from '../package.json'
+
 
 export interface ConfigValues {
+    output?: string
+    // format:  'typescript' | 'json' | 'typedb'
+    backend:  string
     schema: string
+    database: string
+    connection: string
     tables: string[]
-    camelCase?: boolean
-    camelCaseTypes?: boolean
+    enums?: boolean
+    ignoreFieldCollisions?: string[]
+
     writeHeader?: boolean
     typesFile?: boolean
     throwOnMissingType?: boolean
-    enums?: boolean
+    
+    enumFormatter?: string
+    tableFormatter?: string
+    columnFormatter?: string    
 }
 
+export type CommandOptions = Partial<ConfigValues> & Pick<ConfigValues, 'schema' | 'tables' | 'backend' | 'database' | 'ignoreFieldCollisions' >
+
+
 export class Config {
-    constructor (public config: Partial<ConfigValues> & Pick<ConfigValues, 'schema' | 'tables'>) {
+    constructor (connection: string, public config: CommandOptions) {
         this.config = {
+            ignoreFieldCollisions: [],
             writeHeader: true,
-            camelCase: false,
+            // camelCase: false,
             throwOnMissingType: true,
             enums: false,
-            ...config
+            ...config,
         }
     }
 
     public getCLICommand (dbConnection: string): string {
         const commands = ['schemats', 'generate', dbConnection]
-        if (this.config.camelCase) {
-            commands.push('-C')
-        }
+        // if (this.config.camelCase) {
+        //     commands.push('-C')
+        // }
         if (this.config.tables?.length > 0) {
             commands.push('-t', this.config.tables.join(' '))
         }
@@ -34,6 +50,22 @@ export class Config {
             commands.push(`-s ${this.config.schema}`)
         }
         return commands.join(' ')
+    }
+
+    public get version () {
+        return version
+    }
+
+    public get ignoreFieldCollisions () : string[] {
+        return this.config.ignoreFieldCollisions || [] 
+    }
+
+    public get database () {
+        return this.config.database
+    }
+
+    public get backend () {
+        return this.config.backend
     }
 
     public get enums () {
@@ -60,11 +92,34 @@ export class Config {
         return this.config.throwOnMissingType
     }
 
-    public transformTypeName (typename: string) {
-        return (this.config.camelCase || this.config.camelCaseTypes) ? camelCase(typename, { pascalCase: true }) : typename
+    public formatEnumName (name: string) {
+        return inflect(name, this.config.enumFormatter)
+    }
+    
+    public formatTableName (name: string) {
+        return inflect(name, this.config.tableFormatter)
     }
 
-    public transformColumnName (columnName: string) {
-        return this.config.camelCaseTypes ? camelCase(columnName) : columnName.toLowerCase()
+    public formatColumnName (name: string) {
+        return inflect(name, this.config.columnFormatter)
     }
+}
+
+export const inflect = (name: string, format: string | undefined) : string => {
+    if (!format) {
+        return name
+    }
+    if (['camel', 'camelcase'].includes(format)) {
+        return camelCase(name, { pascalCase: false })
+    } 
+    if (['pascal'].includes(format)) {
+        return camelCase(name, { pascalCase: true })
+    }   
+    if (['snakecase', 'underscore'].includes(format)) {
+        return inflection.underscore(name)
+    }  
+    if (['lower', 'lowercase', 'downcase'].includes(format)) {
+        return name.toLowerCase()
+    }      
+    throw `Unsupported formatter: ${format}`
 }

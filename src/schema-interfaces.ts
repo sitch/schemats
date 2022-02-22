@@ -1,9 +1,39 @@
+export interface Database {
+    version: string
+    getConnectionString: () => string
+    isReady(): Promise<void>
+    close(): Promise<void>
+    getDefaultSchema(): string
+    getSchemaTableNames(schemaName: string): Promise<string[]>
+    getEnumDefinitions(schemaName: string): Promise<EnumDefinitions>
+    getTableDefinition(schemaName: string, tableName: string): Promise<TableDefinition>
+
+    // getTableComments(schemaName: string, tableName: string): Promise<TableComments>
+    // getForeignKeys(schemaName: string, tableName: string): Promise<ForeignKeys>
+    // getTableKeys(schemaName: string, tableName: string): Promise<TableKeys>
+
+    // getTableDefinition(schemaName: string, tableName: string, customTypes: CustomType[]): Promise<TableDefinition>
+    // getTableDefinitions(schemaName: string, customTypes: CustomType[]): Promise<TableDefinitions>
+}
 export interface ForeignKey {
     table: string;
     column: string;
 }
 
+export interface Metadata {
+    schema: string;
+    enumTypes: any
+    foreignKeys: ForeignKeys
+    tableToKeys: TableKeys
+    columnComments: ColumnComments
+    tableComments: TableComments
+}
+
+export type CustomType = Set<string> 
+export type CustomTypes = CustomType[]
+
 export interface ColumnDefinition {
+    name: string,
     udtName: string,
     nullable: boolean,
     tsType?: string
@@ -13,26 +43,32 @@ export interface ColumnDefinition {
     hasDefault: boolean
 }
 
-export interface Metadata {
-    schema: string;
-    enumTypes: any
-    foreignKeys: Record<string, { [columnName: string]: ForeignKey }>
-    tableToKeys: Record<string, string>
-    columnComments: Record<string, Record<string, string>>
-    tableComments: Record<string, string>
+
+export type TableKeys = Record<string, string>
+export type ForeignKeys = Record<string, { [columnName: string]: ForeignKey }>
+export type TableComments = Record<string, string>
+export type ColumnComments = Record<string, Record<string, string>>
+
+
+export interface TableDefinition {
+    name: string,
+    columns: ColumnDefinition[],
+
+}
+export type TableDefinitions = TableDefinition[]
+
+// export interface TableDefinition {
+//     table: string,
+//     column: string,
+//     values: Set<T>
+// }
+
+export interface ParameterizedEnumDefinition<T> {
+    table: string,
+    column: string,
+    values: Set<T>
 }
 
-export type EnumTypes = Record<string, string[]>
-export type TableDefinition = Record<string, ColumnDefinition>
-
-export interface Database {
-    version: string
-    getConnectionString: () => string
-    isReady(): Promise<void>
-    close(): Promise<void>
-    getDefaultSchema(): string
-    getEnums(schemaName: string): Promise<EnumTypes>
-    getTableDefinition(schemaName: string, tableName: string): Promise<TableDefinition>
-    getTableTypes(schemaName: string, tableName: string, types: Set<string>): Promise<TableDefinition>
-    getSchemaTables(schemaName: string): Promise<string[]>
-}
+// export type EnumDefinition = Record<string, string[]>
+export type EnumDefinition = ParameterizedEnumDefinition<string>
+export type EnumDefinitions = EnumDefinition[]

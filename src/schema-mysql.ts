@@ -1,9 +1,9 @@
 import { Config } from './generator'
-import { TableDefinition, Database, EnumTypes } from './schema-interfaces'
 import { Connection, createConnection, RowDataPacket } from 'mysql2/promise'
+import { Database, TableDefinition, TableDefinitions,  EnumDefinition, EnumDefinitions, ColumnDefinition,  CustomType, CustomTypes } from './schema-interfaces'
 
 // uses the type mappings from https://github.com/mysqljs/ where sensible
-const mapTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumTypes: Set<string>, customTypes: Set<string>, columnDescriptions: Record<string, string>): TableDefinition => {
+const mapTableDefinitionToType = (config: Config, tableDefinition: TableDefinition, enumType: Set<string>, customTypes: CustomTypes, columnDescriptions: Record<string, string>): TableDefinition => {
     return Object.entries(tableDefinition).reduce((result, [columnName, column]) => {
         switch (column.udtName) {
             case 'char':
@@ -34,16 +34,16 @@ const mapTableDefinitionToType = (config: Config, tableDefinition: TableDefiniti
             case 'tinyint':
                 column.tsType = 'boolean'
                 break
-            case 'json':
-                column.tsType = 'unknown'
-                if (columnDescriptions[columnName]) {
-                    const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
-                    if (type) {
-                        column.tsType = type[1].trim()
-                        customTypes.add(column.tsType)
-                    }
-                }
-                break
+            // case 'json':
+            //     column.tsType = 'unknown'
+            //     if (columnDescriptions[columnName]) {
+            //         const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
+            //         if (type) {
+            //             column.tsType = type[1].trim()
+            //             // customTypes.add(column.tsType)
+            //         }
+            //     }
+            //     break
             case 'date':
             case 'datetime':
             case 'timestamp':
@@ -59,8 +59,8 @@ const mapTableDefinitionToType = (config: Config, tableDefinition: TableDefiniti
                 column.tsType = 'Buffer'
                 break
             default:
-                if (enumTypes.has(column.udtName)) {
-                    column.tsType = config.transformTypeName(column.udtName)
+                if (enumType.has(column.udtName)) {
+                    column.tsType = config.formatTableName(column.udtName)
                     break
                 } else {
                     const warning = `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`
@@ -72,9 +72,10 @@ const mapTableDefinitionToType = (config: Config, tableDefinition: TableDefiniti
                     break
                 }
         }
-        result[columnName] = column
+        // result[columnName] = column
+        result.columns.push(column)
         return result
-    }, {} as TableDefinition)
+    }, {name: tableDefinition.name} as TableDefinition)
 }
 
 const parseMysqlEnumeration = (mysqlEnum: string): string[] => {
@@ -108,71 +109,73 @@ export class MysqlDatabase implements Database {
         return 'public'
     }
 
-    public async getEnums(schema: string): Promise<EnumTypes> {
-        const rawEnumRecords = await this.query<{ COLUMN_NAME: string, COLUMN_TYPE: string, DATA_TYPE: string }>(`
-            SELECT COLUMN_NAME, COLUMN_TYPE, DATA_TYPE
-            FROM information_schema.columns
-            WHERE data_type IN ('enum', 'set') and table_schema = ?
-        `, [schema])
-        return rawEnumRecords.reduce((result, { COLUMN_NAME, COLUMN_TYPE, DATA_TYPE }) => {
-            const enumName = getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME)
-            const enumValues = parseMysqlEnumeration(COLUMN_TYPE)
-            if (result[enumName] && JSON.stringify(result[enumName]) !== JSON.stringify(enumValues)) {
-                throw new Error(
-                    `Multiple enums with the same name and contradicting types were found: ${COLUMN_NAME}: ${JSON.stringify(result[enumName])} and ${JSON.stringify(enumValues)}`
-                )
-            }
-            result[enumName] = enumValues
-            return result
-        }, {} as EnumTypes)
-    }
 
-    public async getTableDefinition (tableSchema: string, tableName: string): Promise<TableDefinition> {
-        const tableColumns = await this.query<{ COLUMN_NAME: string, DATA_TYPE: string, IS_NULLABLE: string, COLUMN_DEFAULT: string }>(`
-            SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
-            FROM information_schema.columns
-            WHERE table_name = ? and table_schema = ?`,
-            [tableName, tableSchema]
-        )
-        const tableDefinition = tableColumns.reduce((result, schemaItem) => {
-            const columnName = schemaItem.COLUMN_NAME
-            const dataType = schemaItem.DATA_TYPE
-            result[columnName] = {
-                udtName: /^(enum|set)$/i.test(dataType) ? getEnumNameFromColumn(dataType, columnName) : dataType,
-                nullable: schemaItem.IS_NULLABLE === 'YES',
-                isArray: false,
-                hasDefault: schemaItem.COLUMN_DEFAULT !== null
-            }
-            return result
-        }, {} as TableDefinition)
-        return tableDefinition
-    }
-
-    public async getTableTypes (tableSchema: string, tableName: string, customTypes: Set<string>) {
-        const enumTypes = await this.getEnums(tableSchema)
-        const columnComments = await this.getColumnComments(tableSchema, tableName)
-        return mapTableDefinitionToType(
-            this.config, 
-            await this.getTableDefinition(tableSchema, tableName), 
-            new Set(Object.keys(enumTypes)), 
-            customTypes,
-            columnComments
-        )
-    }
-
-    public async getSchemaTables (schemaName: string): Promise<string[]> {
-        const schemaTables = await this.query<{ TABLE_NAME: string }>(`
-            SELECT TABLE_NAME
+    public async getSchemaTableNames (schemaName: string): Promise<string[]> {
+        const schemaTables = await this.query<{ table_name: string }>(`
+            SELECT table_name
             FROM information_schema.columns
             WHERE table_schema = ?
             GROUP BY table_name
         `,
             [schemaName]
         )
-        return schemaTables.map((schemaItem: { TABLE_NAME: string }) => schemaItem.TABLE_NAME)
+        return schemaTables.map(( { table_name }) => table_name)
     }
 
-    public async getColumnComments(schemaName: string, tableName: string) {
+    public async getEnumDefinitions(schema: string): Promise<EnumDefinitions> {
+        return []
+        // const rawEnumRecords = await this.query<{ column_name: string, column_type: string, data_type: string }>(`
+        //     SELECT column_name, column_type, data_type
+        //     FROM information_schema.columns
+        //     WHERE data_type IN ('enum', 'set') and table_schema = ?
+        // `, [schema])
+        // return rawEnumRecords.reduce((result, { column_name, column_type, data_type }) => {
+        //     const enumName = getEnumNameFromColumn(data_type, column_name)
+        //     const enumValues = parseMysqlEnumeration(column_type)
+        //     if (result[enumName] && JSON.stringify(result[enumName]) !== JSON.stringify(enumValues)) {
+        //         throw new Error(
+        //             `Multiple enums with the same name and contradicting types were found: ${column_name}: ${JSON.stringify(result[enumName])} and ${JSON.stringify(enumValues)}`
+        //         )
+        //     }
+        //     result[enumName] = enumValues
+        //     return result
+        // }, {} as EnumDefinition)
+    }
+
+    public async getTableDefinition(tableSchema: string, tableName: string) :  Promise<TableDefinition> {
+        const tableColumns = await this.query<{ column_name: string, data_type: string, is_nullable: string, column_default: string }>(`
+            SELECT column_name, data_type, is_nullable, column_default
+            FROM information_schema.columns
+            WHERE table_name = ? and table_schema = ?`,
+            [tableName, tableSchema]
+        )
+        return tableColumns.reduce((tableDefinition: TableDefinition, { column_name, data_type, is_nullable, column_default }) : TableDefinition =>  {
+            const columnDefinition : ColumnDefinition = {
+                name: column_name,
+                udtName: /^(enum|set)$/i.test(data_type) ? getEnumNameFromColumn(data_type, column_name) : data_type,
+                nullable: is_nullable === 'YES',
+                isArray: false,
+                hasDefault: column_default !== null                  
+            }
+            tableDefinition.columns.push(columnDefinition)
+            return tableDefinition
+        }, {name: tableName, columns: []})        
+    }
+
+    public async getTableDefinitions (tableSchema: string, tableName: string, customTypes: CustomTypes) {
+        const enumType = await this.getEnumDefinitions(tableSchema)
+        const columnComments = await this.getTableComments(tableSchema, tableName)
+        return mapTableDefinitionToType(
+            this.config, 
+            await this.getTableDefinition(tableSchema, tableName), 
+            new Set(Object.keys(enumType)), 
+            customTypes,
+            columnComments
+        )
+    }
+
+
+    public async getTableComments(schemaName: string, tableName: string) {
         // See https://stackoverflow.com/a/4946306/388951
         const commentsResult = await this.query<{
             table_name: string;
