@@ -130,11 +130,17 @@ const POSTGRES_TYPES: Record<string, string> = {
 
 const TYPES = { ...MYSQL_TYPES, ...POSTGRES_TYPES };
 
-const typing = (config: Config, { udtName }: ColumnDefinition): string => {
+const typing = (config: Config, { udtName }: ColumnDefinition, enumDefinitions: EnumDefinitions): string => {
   const type = TYPES[udtName];
   if (type && !["unknown"].includes(type)) {
     return type;
   }
+
+  const enumDefinition = enumDefinitions.find(column => column.name === udtName)
+  if(enumDefinition ) {
+    return config.formatEnumName(enumDefinition.name)
+  }
+
   const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
   if (config.throwOnMissingType) {
     throw new Error(warning);
@@ -177,14 +183,14 @@ const Entity = {
     `${config.database.toLowerCase()}-entity`,
 };
 
-const castEntity = (config: Config) => (record: TableDefinition) => {
+const castEntity = (config: Config, enumDefinitions: EnumDefinitions) => (record: TableDefinition) => {
   const name = Entity.name(config, record);
   const attributes = record.columns.map(
     (column) =>
       `${Attribute.name(config, column)} sub ${Attribute.type(
         config,
         column
-      )}, value ${typing(config, column)};`
+      )}, value ${typing(config, column, enumDefinitions)};`
   );
   const fields = record.columns.map(
     (column) => `  , owns ${Attribute.name(config, column)}`
@@ -262,7 +268,7 @@ export const typedbOfSchema = async (
   customTypes: CustomTypes
 ) => {
   const header = await castHeader(config, db);
-  const entities = flatMap(tableDefinitions, castEntity(config));
+  const entities = flatMap(tableDefinitions, castEntity(config, enumDefinitions));
   const overlaps = overlapHeader(config, tableDefinitions);
 
   // assertUniqEntities(config, tableDefinitions)

@@ -111,51 +111,64 @@ export class MysqlDatabase implements Database {
 
 
     public async getSchemaTableNames (schemaName: string): Promise<string[]> {
-        const schemaTables = await this.query<{ table_name: string }>(`
-            SELECT table_name
+        const schemaTables = await this.query<{ TABLE_NAME: string }>(`
+            SELECT TABLE_NAME
             FROM information_schema.columns
             WHERE table_schema = ?
-            GROUP BY table_name
+            GROUP BY TABLE_NAME
         `,
             [schemaName]
         )
-        return schemaTables.map(( { table_name }) => table_name)
+        return schemaTables.map(( { TABLE_NAME }) => TABLE_NAME)
     }
 
     public async getEnumDefinitions(schema: string): Promise<EnumDefinitions> {
-        return []
-        // const rawEnumRecords = await this.query<{ column_name: string, column_type: string, data_type: string }>(`
-        //     SELECT column_name, column_type, data_type
-        //     FROM information_schema.columns
-        //     WHERE data_type IN ('enum', 'set') and table_schema = ?
-        // `, [schema])
-        // return rawEnumRecords.reduce((result, { column_name, column_type, data_type }) => {
-        //     const enumName = getEnumNameFromColumn(data_type, column_name)
-        //     const enumValues = parseMysqlEnumeration(column_type)
-        //     if (result[enumName] && JSON.stringify(result[enumName]) !== JSON.stringify(enumValues)) {
-        //         throw new Error(
-        //             `Multiple enums with the same name and contradicting types were found: ${column_name}: ${JSON.stringify(result[enumName])} and ${JSON.stringify(enumValues)}`
-        //         )
-        //     }
-        //     result[enumName] = enumValues
-        //     return result
-        // }, {} as EnumDefinition)
+        const rawEnumRecords = await this.query<{ COLUMN_NAME: string, COLUMN_TYPE: string, DATA_TYPE: string }>(`
+            SELECT COLUMN_NAME, COLUMN_TYPE, DATA_TYPE
+            FROM information_schema.columns
+            WHERE DATA_TYPE IN ('enum', 'set') and table_schema = ?
+        `, [schema])
+
+        return rawEnumRecords.map(
+            ({ COLUMN_NAME, COLUMN_TYPE, DATA_TYPE }) : EnumDefinition => {
+            const enumName = getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME)
+            const enumValues = parseMysqlEnumeration(COLUMN_TYPE)
+            // if (result[enumName] && JSON.stringify(result[enumName]) !== JSON.stringify(enumValues)) {
+            //     throw new Error(
+            //         `Multiple enums with the same name and contradicting types were found: ${COLUMN_NAME}: ${JSON.stringify(result[enumName])} and ${JSON.stringify(enumValues)}`
+            //     )
+            // }
+            return {
+                table: `MISSING TABLE ${enumName}`,
+                name: enumName,
+                column: COLUMN_NAME,
+                values: new Set(enumValues)
+            } 
+        })
+
+
+        // return rawEnumRecords.rows.map(({name, value}) : EnumDefinition =>  ({
+        //     table: `MISSING ${name}`,
+        //     column: name,
+        //     values: new Set([value]),
+        // }
+    // ))        
     }
 
     public async getTableDefinition(tableSchema: string, tableName: string) :  Promise<TableDefinition> {
-        const tableColumns = await this.query<{ column_name: string, data_type: string, is_nullable: string, column_default: string }>(`
-            SELECT column_name, data_type, is_nullable, column_default
+        const tableColumns = await this.query<{ COLUMN_NAME: string, DATA_TYPE: string, IS_NULLABLE: string, COLUMN_DEFAULT: string }>(`
+            SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
             FROM information_schema.columns
-            WHERE table_name = ? and table_schema = ?`,
+            WHERE TABLE_NAME = ? and table_schema = ?`,
             [tableName, tableSchema]
         )
-        return tableColumns.reduce((tableDefinition: TableDefinition, { column_name, data_type, is_nullable, column_default }) : TableDefinition =>  {
+        return tableColumns.reduce((tableDefinition: TableDefinition, { COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT }) : TableDefinition =>  {
             const columnDefinition : ColumnDefinition = {
-                name: column_name,
-                udtName: /^(enum|set)$/i.test(data_type) ? getEnumNameFromColumn(data_type, column_name) : data_type,
-                nullable: is_nullable === 'YES',
+                name: COLUMN_NAME,
+                udtName: /^(enum|set)$/i.test(DATA_TYPE) ? getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME) : DATA_TYPE,
+                nullable: IS_NULLABLE === 'YES',
                 isArray: false,
-                hasDefault: column_default !== null                  
+                hasDefault: COLUMN_DEFAULT !== null                  
             }
             tableDefinition.columns.push(columnDefinition)
             return tableDefinition
@@ -178,19 +191,19 @@ export class MysqlDatabase implements Database {
     public async getTableComments(schemaName: string, tableName: string) {
         // See https://stackoverflow.com/a/4946306/388951
         const commentsResult = await this.query<{
-            table_name: string;
-            column_name: string;
-            description: string;
+            TABLE_NAME: string;
+            COLUMN_NAME: string;
+            DESCRIPTION: string;
         }>(
             `
-            select column_name, column_type, column_default, column_comment
+            select COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, column_comment
             from information_schema.COLUMNS
-            where table_schema = ? and table_name = ?;
+            where table_schema = ? and TABLE_NAME = ?;
             `,
             [schemaName, tableName],
         );
-        return commentsResult.reduce((result, { column_name, description }) => {
-            result[column_name] = description
+        return commentsResult.reduce((result, { COLUMN_NAME, DESCRIPTION }) => {
+            result[COLUMN_NAME] = DESCRIPTION
             return result
         }, {} as Record<string, string>)
     }

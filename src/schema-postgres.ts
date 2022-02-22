@@ -178,7 +178,8 @@ export class PostgresDatabase implements Database {
 
 
         return results.rows.map(({name, value}) : EnumDefinition =>  ({
-                table: `MISSING ${name}`,
+                table: `MISSING TABLE ${name}`,
+                name: name,
                 column: name,
                 values: new Set([value]),
             }

@@ -64,6 +64,7 @@ export type TableDefinitions = TableDefinition[]
 // }
 
 export interface ParameterizedEnumDefinition<T> {
+    name: string,
     table: string,
     column: string,
     values: Set<T>

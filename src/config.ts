@@ -113,6 +113,8 @@ export const inflect = (name: string, format: string | undefined) : string => {
         return camelCase(name, { pascalCase: false })
     } 
     if (['pascal'].includes(format)) {
+        console.log('inflect', name)
+
         return camelCase(name, { pascalCase: true })
     }   
     if (['snakecase', 'underscore'].includes(format)) {
