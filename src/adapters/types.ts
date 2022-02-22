@@ -40,6 +40,9 @@ export interface ColumnDefinition {
   nullable: boolean;
   hasDefault: boolean;
   foreignKey?: ForeignKey;
+
+  // TODO: Remove
+  tsType?: string
 }
 export type ColumnComments = Record<string, Record<string, string>>;
 export type ColumnDefinitions = Record<ColumnName, ColumnDefinition>;
