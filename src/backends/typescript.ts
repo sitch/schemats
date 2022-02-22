@@ -80,8 +80,8 @@ const POSTGRES_TYPES: Record<string, string> = {
   money: "number",
   oid: "number",
   bool: "boolean",
-  'json': 'JSON',
-  'jsonb': 'JSONB',
+  json: "JSON",
+  jsonb: "JSONB",
   date: "Date",
   timestamp: "Date",
   timestamptz: "Date",
@@ -90,16 +90,21 @@ const POSTGRES_TYPES: Record<string, string> = {
 
 const TYPES = { ...MYSQL_TYPES, ...POSTGRES_TYPES };
 
-
-const typing = (config: Config, { name, udtName }: ColumnDefinition, enumDefinitions: EnumDefinitions): string => {
+const typing = (
+  config: Config,
+  { name, udtName }: ColumnDefinition,
+  enumDefinitions: EnumDefinitions
+): string => {
   const type = TYPES[udtName];
-  if (type && !['unknown'].includes(type)) {
+  if (type && !["unknown"].includes(type)) {
     return type;
   }
 
-  const enumDefinition = enumDefinitions.find(column => column.name === udtName)
-  if(enumDefinition ) {
-    return config.formatEnumName(enumDefinition.name)
+  const enumDefinition = enumDefinitions.find(
+    (column) => column.name === udtName
+  );
+  if (enumDefinition) {
+    return config.formatEnumName(enumDefinition.name);
   }
 
   const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
@@ -110,7 +115,11 @@ const typing = (config: Config, { name, udtName }: ColumnDefinition, enumDefinit
   return "any";
 };
 
-const translateType = (config: Config, record: ColumnDefinition, enumDefinitions: EnumDefinitions): string => {
+const translateType = (
+  config: Config,
+  record: ColumnDefinition,
+  enumDefinitions: EnumDefinitions
+): string => {
   const type = typing(config, record, enumDefinitions);
   return `${type}${record.isArray ? "[]" : ""}${
     record.nullable ? " | null" : ""
@@ -132,21 +141,17 @@ const castHeader = async (config: Config, db: Database): Promise<string> => `
 
 const Enums = {
   name: (config: Config, { table, name, column }: EnumDefinition): string =>
-    // config.formatEnumName(normalizeName(`${table}_${name}`)),
-    config.formatEnumName(normalizeName(`${name}`)),
+    normalizeName(config.formatEnumName(`${name}`)),
 
-  key: (config: Config, value: string): string =>
-    // `${config.formatColumnName(normalizeName(name))}${nullable ? "?" : ""}`,
-    value,
+  key: (config: Config, value: string): string => value,
 
-  value: (config: Config, value: string): string =>
-    // config.formatEnumName(value),
-    value
+  value: (config: Config, value: string): string => value,
 };
 
 const castEnumAsEnum = (config: Config) => (record: EnumDefinition) => {
   const entries = Array.from(record.values).map(
-    (value: string) => `  '${Enums.key(config, value)}' = '${Enums.value(config, value)}'`
+    (value: string) =>
+      `  '${Enums.key(config, value)}' = '${Enums.value(config, value)}'`
   );
   return `export enum ${Enums.name(config, record)} {\n${entries.join(
     ",\n"
@@ -173,23 +178,32 @@ const castEnum =
 
 const Interface = {
   name: (config: Config, { name }: TableDefinition): string =>
-    config.formatTableName(normalizeName(name)),
+    normalizeName(config.formatTableName(name)),
 
   key: (config: Config, { name, nullable }: ColumnDefinition): string =>
-    `${config.formatColumnName(normalizeName(name))}${nullable ? "?" : ""}`,
+    `${normalizeName(config.formatColumnName(name))}${nullable ? "?" : ""}`,
 
-  value: (config: Config, record: ColumnDefinition, enumDefinitions: EnumDefinitions): string =>
-    translateType(config, record, enumDefinitions),
+  value: (
+    config: Config,
+    record: ColumnDefinition,
+    enumDefinitions: EnumDefinitions
+  ): string => translateType(config, record, enumDefinitions),
 };
 
-const castInterface = (config: Config, enumDefinitions: EnumDefinitions) => (record: TableDefinition) => {
-  const name = Interface.name(config, record);
-  const fields = record.columns.map(
-    (column) =>
-      `  ${Interface.key(config, column)}: ${Interface.value(config, column, enumDefinitions)}`
-  );
-  return `export interface ${name} {\n${fields.join("\n")}\n}`;
-};
+const castInterface =
+  (config: Config, enumDefinitions: EnumDefinitions) =>
+  (record: TableDefinition) => {
+    const name = Interface.name(config, record);
+    const fields = record.columns.map(
+      (column) =>
+        `  ${Interface.key(config, column)}: ${Interface.value(
+          config,
+          column,
+          enumDefinitions
+        )}`
+    );
+    return `export interface ${name} {\n${fields.join("\n")}\n}`;
+  };
 
 //------------------------------------------------------------------------------
 
@@ -207,7 +221,7 @@ export const castLookup = (
   records: TableDefinitions
 ): string => {
   const types = records.map(
-    ({ name }) => `  ${name}: ${config.formatTableName(normalizeName(name))}`
+    ({ name }) => `  ${name}: ${normalizeName(config.formatTableName(name))}`
   );
   return `export interface Tables {\n${types.join(",\n")}\n}`;
 };
@@ -225,15 +239,11 @@ export const typescriptOfSchema = async (
   const header = await castHeader(config, db);
   const customs = flatMap(customTypes, castCustom(config));
   const enums = flatMap(enumDefinitions, castEnum(config));
-  const interfaces = flatMap(tableDefinitions, castInterface(config, enumDefinitions));
+  const interfaces = flatMap(
+    tableDefinitions,
+    castInterface(config, enumDefinitions)
+  );
   const lookup = castLookup(config, tableDefinitions);
 
-
-  return [
-    header,
-    customs,
-    enums,
-    interfaces,
-    lookup,
-  ].flat().join("\n\n");
+  return [header, customs, enums, interfaces, lookup].flat().join("\n\n");
 };

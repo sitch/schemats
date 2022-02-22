@@ -132,16 +132,22 @@ const POSTGRES_TYPES: Record<string, string> = {
 
 const TYPES = { ...MYSQL_TYPES, ...POSTGRES_TYPES };
 
-const typing = (config: Config, { udtName }: ColumnDefinition, enumDefinitions: EnumDefinitions): string => {
+const typing = (
+  config: Config,
+  { udtName }: ColumnDefinition,
+  enumDefinitions: EnumDefinitions
+): string => {
   const type = TYPES[udtName];
   if (type && !["unknown"].includes(type)) {
     return type;
   }
 
-  const enumDefinition = enumDefinitions.find(column => column.name === udtName)
-  if(enumDefinition ) {
-    const enumType = config.formatEnumName(enumDefinition.name)
-    return `string; # enum: ${enumType}`
+  const enumDefinition = enumDefinitions.find(
+    (column) => column.name === udtName
+  );
+  if (enumDefinition) {
+    const enumType = config.formatEnumName(enumDefinition.name);
+    return `string; # enum: ${enumType}`;
   }
 
   const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
@@ -172,7 +178,7 @@ ${config.database}-attribute sub attribute, abstract;`;
 
 const Attribute = {
   name: (config: Config, { name }: ColumnDefinition): string =>
-    config.formatColumnName(normalizeName(name)),
+    normalizeName(config.formatColumnName(name)),
 
   type: (config: Config, record: ColumnDefinition): string =>
     `${config.database.toLowerCase()}-attribute`,
@@ -180,28 +186,30 @@ const Attribute = {
 
 const Entity = {
   name: (config: Config, { name }: TableDefinition): string =>
-    config.formatTableName(normalizeName(name)),
+    normalizeName(config.formatTableName(name)),
 
   type: (config: Config, record: TableDefinition): string =>
     `${config.database.toLowerCase()}-entity`,
 };
 
-const castEntity = (config: Config, enumDefinitions: EnumDefinitions) => (record: TableDefinition) => {
-  const name = Entity.name(config, record);
-  const attributes = record.columns.map(
-    (column) =>
-      `${Attribute.name(config, column)} sub ${Attribute.type(
-        config,
-        column
-      )}, value ${typing(config, column, enumDefinitions)};`
-  );
-  const fields = record.columns.map(
-    (column) => `  , owns ${Attribute.name(config, column)}`
-  );
-  return `${name} sub ${Entity.type(config, record)}\n${fields.join(
-    "\n"
-  )}\n;\n${attributes.join("\n")}`;
-};
+const castEntity =
+  (config: Config, enumDefinitions: EnumDefinitions) =>
+  (record: TableDefinition) => {
+    const name = Entity.name(config, record);
+    const attributes = record.columns.map(
+      (column) =>
+        `${Attribute.name(config, column)} sub ${Attribute.type(
+          config,
+          column
+        )}, value ${typing(config, column, enumDefinitions)};`
+    );
+    const fields = record.columns.map(
+      (column) => `  , owns ${Attribute.name(config, column)}`
+    );
+    return `${name} sub ${Entity.type(config, record)}\n${fields.join(
+      "\n"
+    )}\n;\n${attributes.join("\n")}`;
+  };
 
 //------------------------------------------------------------------------------
 const findTableColumnType = (
@@ -271,7 +279,10 @@ export const typedbOfSchema = async (
   customTypes: CustomTypes
 ) => {
   const header = await castHeader(config, db);
-  const entities = flatMap(tableDefinitions, castEntity(config, enumDefinitions));
+  const entities = flatMap(
+    tableDefinitions,
+    castEntity(config, enumDefinitions)
+  );
   const overlaps = overlapHeader(config, tableDefinitions);
 
   // assertUniqEntities(config, tableDefinitions)

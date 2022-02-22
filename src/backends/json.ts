@@ -6,7 +6,6 @@ import {
   CustomTypes,
 } from "../schema-interfaces";
 
-
 export const jsonOfSchema = async (
   config: Config,
   db: Database,

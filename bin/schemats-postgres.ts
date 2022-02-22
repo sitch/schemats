@@ -33,10 +33,8 @@ export const postgres = async (program: Command): Promise<void> => {
             await db.isReady()
             const schema = await generate(config, db)
 
-            const output = options?.output
-
-            if (output) {
-                const outputPath = relative(process.cwd(), output)
+            if (options?.output) {
+                const outputPath = relative(process.cwd(), options.output)
                 await promises.writeFile(outputPath, schema, 'utf8')
                 console.log(`Written ${options.backend} schema to ${outputPath}`)
             } else {

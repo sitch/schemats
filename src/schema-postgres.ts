@@ -254,9 +254,9 @@ export class PostgresDatabase implements Database {
                     and kcu.constraint_schema = tco.constraint_schema
                     and kcu.constraint_name = tco.constraint_name
                 WHERE tco.constraint_type = 'PRIMARY KEY'
-                  AND kcu.table_schema = $1
+                    AND kcu.table_schema = $1
                 ORDER BY kcu.table_name,
-                         position;
+                        position;
             `,
             [schemaName],
         );
@@ -312,7 +312,7 @@ export class PostgresDatabase implements Database {
                     t.table_name=st.relname
                 )
                 WHERE pgd.objsubid = 0
-                  AND t.table_schema = $1;
+                    AND t.table_schema = $1;
             `,
             [schemaName],
         );
