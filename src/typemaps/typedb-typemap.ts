@@ -1,5 +1,5 @@
 
-import { DBTypeMap } from "../adapters/types";
+import { DBTypeMap , ColumnDefinition, BuildContext} from "../adapters/types";
 
 
 export const TYPEDB_RESERVED_WORDS = new Set([
@@ -119,3 +119,28 @@ export const TYPEDB_POSTGRES_TYPEMAP: DBTypeMap = {
 export const TYPEDB_TYPEMAP :DBTypeMap = { ...TYPEDB_MYSQL_TYPEMAP, ...TYPEDB_POSTGRES_TYPEMAP };
 
 export const isReservedWord = (name: string) : boolean => TYPEDB_RESERVED_WORDS.has(name)
+
+
+
+export const castTypeDBType = (
+  { config, enums }: BuildContext,
+  { udtName }: ColumnDefinition
+): string => {
+  const type = TYPEDB_TYPEMAP[udtName];
+  if (type && !["unknown"].includes(type)) {
+    return type;
+  }
+
+  const enumDefinition = enums.find(({ name }) => name === udtName);
+  if (enumDefinition) {
+    const enumType = config.formatEnumName(enumDefinition.name);
+    return `string; # enum: ${enumType}`;
+  }
+
+  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
+  if (config.throwOnMissingType) {
+    throw new Error(warning);
+  }
+  console.warn(warning);
+  return "any";
+};

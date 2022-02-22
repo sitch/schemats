@@ -1,7 +1,6 @@
 import { Config } from "../config";
 import { flatMap } from "lodash";
 import {
-
   EnumDefinition,
   TableDefinition,
   ColumnDefinition,
@@ -102,9 +101,7 @@ const typing = (
     return type;
   }
 
-  const enumDefinition = enums.find(
-    (column) => column.name === udtName
-  );
+  const enumDefinition = enums.find((column) => column.name === udtName);
   if (enumDefinition) {
     return config.formatEnumName(enumDefinition.name);
   }
@@ -130,7 +127,7 @@ const translateType = (
 
 //------------------------------------------------------------------------------
 
-const castHeader = async ({config}: BuildContext): Promise<string> => `
+const castHeader = async ({ config }: BuildContext): Promise<string> => `
 /**
  * AUTO-GENERATED FILE @ ${config.timestamp} - DO NOT EDIT!
  *
@@ -141,15 +138,16 @@ const castHeader = async ({config}: BuildContext): Promise<string> => `
 
 //------------------------------------------------------------------------------
 
-
-
 const Enums = {
-  name: ({config}: BuildContext, { table, name, column }: EnumDefinition): string =>
-    normalizeName(config.formatEnumName(`${name}`)),
-
-  key: ({config}: BuildContext, value: string): string => value,
-
-  value: ({config}: BuildContext, value: string): string => value,
+  name: ({ config }: BuildContext, { name }: EnumDefinition): string => {
+    return normalizeName(config.formatEnumName(`${name}`));
+  },
+  key: (_context: BuildContext, value: string): string => {
+    return value;
+  },
+  value: (_context: BuildContext, value: string): string => {
+    return value;
+  },
 };
 
 const castEnumAsEnum = (context: BuildContext) => (record: EnumDefinition) => {
@@ -170,8 +168,7 @@ const castEnumAsType = (context: BuildContext) => (record: EnumDefinition) => {
 };
 
 const castEnum =
-(context: BuildContext) =>
-
+  (context: BuildContext) =>
   (record: EnumDefinition): string => {
     if (context.config.enums) {
       return castEnumAsEnum(context)(record);
@@ -182,46 +179,48 @@ const castEnum =
 //------------------------------------------------------------------------------
 
 const Interface = {
-  name: ({config}: BuildContext, { name }: TableDefinition): string =>
-    normalizeName(config.formatTableName(name)),
-
-  key: ({config}: BuildContext, { name, nullable }: ColumnDefinition): string =>
-    `${normalizeName(config.formatColumnName(name))}${nullable ? "?" : ""}`,
-
+  name: ({ config }: BuildContext, { name }: TableDefinition): string => {
+    return normalizeName(config.formatTableName(name));
+  },
+  key: (
+    { config }: BuildContext,
+    { name, nullable }: ColumnDefinition
+  ): string => {
+    return `${normalizeName(config.formatColumnName(name))}${
+      nullable ? "?" : ""
+    }`;
+  },
   value: (
-    {config, enums}: BuildContext,
+    { config, enums }: BuildContext,
     record: ColumnDefinition
-  ): string => translateType(config, record, enums),
+  ): string => {
+    return translateType(config, record, enums);
+  },
 };
 
-const castInterface =
-(context: BuildContext)=>
-  (record: TableDefinition) => {
-    const name = Interface.name(context, record);
-    const fields = Object.values(record.columns).map(
-      (column) =>
-        `  ${Interface.key(context, column)}: ${Interface.value(
-          context,
-          column
-        )}`
-    );
-    return `export interface ${name} {\n${fields.join("\n")}\n}`;
-  };
+const castInterface = (context: BuildContext) => (record: TableDefinition) => {
+  const name = Interface.name(context, record);
+  const fields = Object.values(record.columns).map((column) => {
+    const key = Interface.key(context, column);
+    const value = Interface.value(context, column);
+    return `  ${key}: ${value}`;
+  });
+  return `export interface ${name} {\n${fields.join("\n")}\n}`;
+};
 
 //------------------------------------------------------------------------------
 
 const castCustom =
-({config, tables}: BuildContext)  =>
-  (record: CustomType): string =>
-    `import { ${Array.from(record).join(", ")} } from '${
+  ({ config, tables }: BuildContext) =>
+  (record: CustomType): string => {
+    return `import { ${Array.from(record).join(", ")} } from '${
       config.typesFile
     }'\n\n`;
+  };
 
 //------------------------------------------------------------------------------
 
-export const castLookup = (
-  {config, tables}: BuildContext
-): string => {
+export const castLookup = ({ config, tables }: BuildContext): string => {
   const types = Object.values(tables).map(
     ({ name }) => `  ${name}: ${normalizeName(config.formatTableName(name))}`
   );
@@ -230,9 +229,7 @@ export const castLookup = (
 
 //------------------------------------------------------------------------------
 
-export const typescriptOfSchema = async (
-  context: BuildContext,
-  ) => {
+export const typescriptOfSchema = async (context: BuildContext) => {
   const header = await castHeader(context);
   const customs = flatMap(context.customTypes, castCustom(context));
   const enums = flatMap(context.enums, castEnum(context));

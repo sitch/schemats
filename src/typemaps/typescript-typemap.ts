@@ -209,3 +209,76 @@ export const translateMySQLToTypescript = (config: Config, tableDefinition: Tabl
       return result
   }, {name: tableDefinition.name, columns: {}} as TableDefinition)
 }
+
+
+export const translatePostgresToTypescript = (config: Config, tableDefinition: TableDefinition, enumType: Set<string>, customTypes: CustomTypes, columnDescriptions: Record<string, string>): TableDefinition => {
+  return Object.values(tableDefinition.columns).reduce((result, column) => {
+      switch (column.udtName) {
+          case 'bpchar':
+          case 'char':
+          case 'varchar':
+          case 'text':
+          case 'citext':
+          case 'uuid':
+          case 'bytea':
+          case 'inet':
+          case 'time':
+          case 'timetz':
+          case 'interval':
+          case 'tsvector':
+          case 'mol':
+          case 'bfp':
+          case 'bit':
+          case 'name':
+              column.tsType = 'string'
+              break
+          case 'int2':
+          case 'int4':
+          case 'int8':
+          case 'float4':
+          case 'float8':
+          case 'numeric':
+          case 'money':
+          case 'oid':
+              column.tsType = 'number'
+              break
+          case 'bool':
+              column.tsType = 'boolean'
+              break
+          case 'json':
+          // case 'jsonb':
+          //     column.tsType = 'unknown'
+          //     if (columnDescriptions[columnName]) {
+          //         const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
+          //         if (type) {
+          //             column.tsType = type[1].trim()
+          //             // customTypes.add(column.tsType)
+          //         }
+          //     }
+          //     break
+          case 'date':
+          case 'timestamp':
+          case 'timestamptz':
+              column.tsType = 'Date'
+              break
+          case 'point':
+              column.tsType = '{ x: number, y: number }'
+              break
+          default:
+              if (enumType.has(column.udtName)) {
+                  column.tsType = config.formatTableName(column.udtName)
+                  break
+              } else {
+                  const warning = `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`
+                  if (config.throwOnMissingType) {
+                      throw new Error(warning)
+                  }
+                  console.log(`Type [${column.udtName} has been mapped to [any] because no specific type has been found.`)
+                  column.tsType = 'any'
+                  break
+              }
+      }
+      result.columns[column.name] = column
+      return result
+  }, {name: tableDefinition.name, columns: {}} as TableDefinition)
+}

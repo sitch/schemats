@@ -2,6 +2,11 @@ import { version } from "../package.json";
 import { inflect } from "./formatters";
 import { relpath } from "./utils";
 
+export const ALL_BACKENDS = ["typescript", "json", "typedb"] as const;
+export type Backends = typeof ALL_BACKENDS;
+// export type Backend = "typescript" | "json" | "typedb";
+export type Backend = string;
+
 export interface ConfigValues {
   output?: string | undefined;
   outputPath: string | undefined;
@@ -77,7 +82,7 @@ export class Config {
   constructor(
     private readonly argv: string[],
     public readonly connection: string,
-    config: CommandOptions,
+    config: CommandOptions
   ) {
     this.timestamp = new Date().toUTCString();
     this.argv = argv;
@@ -155,17 +160,17 @@ export class Config {
     return inflect(name, this.config.columnFormatter);
   }
 
-  public getCLICommand(dbConnection: string): string {
-    const commands = ["schemats", "generate", dbConnection];
-    // if (this.config.camelCase) {
-    //     commands.push('-C')
-    // }
-    if (this.config.tables?.length > 0) {
-      commands.push("-t", this.config.tables.join(" "));
-    }
-    if (this.config.schema) {
-      commands.push(`-s ${this.config.schema}`);
-    }
-    return commands.join(" ");
-  }
+  // public getCLICommand(dbConnection: string): string {
+  //   const commands = ["schemats", "generate", dbConnection];
+  //   // if (this.config.camelCase) {
+  //   //     commands.push('-C')
+  //   // }
+  //   if (this.config.tables?.length > 0) {
+  //     commands.push("-t", this.config.tables.join(" "));
+  //   }
+  //   if (this.config.schema) {
+  //     commands.push(`-s ${this.config.schema}`);
+  //   }
+  //   return commands.join(" ");
+  // }
 }

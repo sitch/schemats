@@ -1,9 +1,7 @@
-
-
-
 import { Config } from "./config";
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
 import {
+  BuildContext,
   EnumDefinition,
   TableDefinition,
   ColumnDefinition,
@@ -12,26 +10,32 @@ import {
   TableDefinitions,
   CustomType,
   CustomTypes,
+  Coreferences,
 } from "./adapters/types";
-
-
 
 import { TYPEDB_TYPEMAP } from "./typemaps/typedb-typemap";
 
+export const getCoreferences = (
+  config: Config,
+  tables: TableDefinitions
+): Coreferences => {
+  return {
+    all: {},
+    user: {},
+  };
+};
 
+const inferType = (types: DBTypeMap, udtName: string): string =>
+  types[udtName] || udtName;
 
-
-const inferType = (types: DBTypeMap, udtName: string): string => types[udtName] || udtName;
-
-
-export const applyConfigToCoreference = (config: Config, tableDefinitions: TableDefinitions) => {
-  const overlaps = attributeOverlapGrouping(tableDefinitions);
+export const applyConfigToCoreference = ({ config, tables }: BuildContext) => {
+  const overlaps = attributeOverlapGrouping(tables);
   const userOverlaps = omit(overlaps, config.ignoreFieldCollisions);
   if (config.ignoreFieldCollisions.includes("*")) {
-    return {}
+    return {};
   }
-    return userOverlaps
-}
+  return userOverlaps;
+};
 
 export const findTableColumnType = (
   tableDefinitions: TableDefinitions,
@@ -39,23 +43,29 @@ export const findTableColumnType = (
   columnName: string
 ) => {
   // const table = tableDefinitions.find(({ name }) => name === tableName);
-  const table = tableDefinitions[tableName]
-  const column = Object.values(table?.columns).find(({ name }) => name === columnName);
+  const table = tableDefinitions[tableName];
+  const column = Object.values(table?.columns).find(
+    ({ name }) => name === columnName
+  );
   return column?.udtName;
 };
 
 export const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
-  const tableList = Object.values(tableDefinitions)
+  const tableList = Object.values(tableDefinitions);
 
   const tableColumnNames = uniq(
     flatMap(
-      tableList.map(({ columns }) => Object.values(columns).map(({ name }) => name))
+      tableList.map(({ columns }) =>
+        Object.values(columns).map(({ name }) => name)
+      )
     )
   );
 
   const pairs = tableColumnNames.map((columnName) => {
     const tables = tableList.filter(({ columns }) =>
-      Object.values(columns).map(({ name }) => name).includes(columnName)
+      Object.values(columns)
+        .map(({ name }) => name)
+        .includes(columnName)
     );
     const tableNames = tables.map(({ name }) =>
       [findTableColumnType(tableDefinitions, name, columnName), name].join("::")
@@ -85,7 +95,6 @@ export const invalidOverlaps = (overlaps: Record<string, string[]>) => {
 };
 
 const withTypeDBType = (value: string): string => {
-
   const [udtName, table] = value.split("::");
   return [inferType(TYPEDB_TYPEMAP, udtName), udtName, table].join("::");
 };
@@ -105,14 +114,11 @@ export const invalidTypeDBOverlaps = (overlaps: Record<string, string[]>) => {
   );
 };
 
+// const overlaps = attributeOverlapGrouping(tableDefinitions)
+// ignoreFieldCollisions: config.ignoreFieldCollisions,
+// overlaps,
+// invalidOverlaps: invalidOverlaps(overlaps),
+// invalidTypeDBOverlaps: invalidTypeDBOverlaps(overlaps),
 
-
-    // const overlaps = attributeOverlapGrouping(tableDefinitions)
-    // ignoreFieldCollisions: config.ignoreFieldCollisions,
-    // overlaps,
-    // invalidOverlaps: invalidOverlaps(overlaps),
-    // invalidTypeDBOverlaps: invalidTypeDBOverlaps(overlaps),
-
-
-      // assertUniqEntities(config, tableDefinitions)
-  // assertUniqAttributesAndTypes( config, overlaps)
+// assertUniqEntities(config, tableDefinitions)
+// assertUniqAttributesAndTypes( config, overlaps)

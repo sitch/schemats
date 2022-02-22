@@ -86,9 +86,9 @@ export class MysqlDatabase implements Database {
         // }
         return {
           // table: `MISSING TABLE ${enumName}`,
-          name: enumName,
-          column: COLUMN_NAME,
           // values: new Set(enumValues)
+          column: COLUMN_NAME,
+          name: enumName,
           values: enumValues,
         };
       }

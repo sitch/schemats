@@ -1,13 +1,10 @@
-
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
 import {
-
   EnumDefinition,
   TableDefinition,
   ColumnDefinition,
-
 } from "../adapters/types";
-import {TYPEDB_TYPEMAP, isReservedWord} from "../typemaps/typedb-typemap"
+import { castTypeDBType, isReservedWord } from "../typemaps/typedb-typemap";
 import { BuildContext } from "../generator";
 
 import {
@@ -20,36 +17,8 @@ import { pretty } from "../formatters";
 
 //------------------------------------------------------------------------------
 
-
 const normalizeName = (name: string): string =>
-isReservedWord(name) ? `${name}_` : name;
-
-//------------------------------------------------------------------------------
-
-
-
-const typing = (
-  { config, enums }: BuildContext,
-  { udtName }: ColumnDefinition
-): string => {
-  const type = TYPEDB_TYPEMAP[udtName];
-  if (type && !["unknown"].includes(type)) {
-    return type;
-  }
-
-  const enumDefinition = enums.find(({ name }) => name === udtName);
-  if (enumDefinition) {
-    const enumType = config.formatEnumName(enumDefinition.name);
-    return `string; # enum: ${enumType}`;
-  }
-
-  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
-  if (config.throwOnMissingType) {
-    throw new Error(warning);
-  }
-  console.warn(warning);
-  return "any";
-};
+  isReservedWord(name) ? `${name}_` : name;
 
 //------------------------------------------------------------------------------
 
@@ -69,42 +38,7 @@ ${config.database}-attribute sub attribute, abstract;`;
 
 //------------------------------------------------------------------------------
 
-const Attribute = {
-  name: ({ config }: BuildContext, { name }: ColumnDefinition): string =>
-    normalizeName(config.formatColumnName(name)),
-
-  type: ({ config }: BuildContext, record: ColumnDefinition): string =>
-    `${config.database.toLowerCase()}-attribute`,
-};
-
-const Entity = {
-  name: ({ config }: BuildContext, { name }: TableDefinition): string =>
-    normalizeName(config.formatTableName(name)),
-
-  type: ({ config }: BuildContext, record: TableDefinition): string =>
-    `${config.database.toLowerCase()}-entity`,
-};
-
-const castEntity = (context: BuildContext) => (record: TableDefinition) => {
-  const name = Entity.name(context, record);
-  const attributes = Object.values(record.columns).map(
-    (column) =>
-      `${Attribute.name(context, column)} sub ${Attribute.type(
-        context,
-        column
-      )}, value ${typing(context, column)};`
-  );
-  const fields = Object.values(record.columns).map(
-    (column) => `  , owns ${Attribute.name(context, column)}`
-  );
-  return `${name} sub ${Entity.type(context, record)}\n${fields.join(
-    "\n"
-  )}\n;\n${attributes.join("\n")}`;
-};
-
-//------------------------------------------------------------------------------
-
-const castOverlapHeader = (overlaps: Record<string, string[]>) => `
+const castCoreferenceHeader = (overlaps: Record<string, string[]>) => `
 ################################################################################
 # ERRORS: INVALID TYPEDB COLLISIONS
 ################################################################################
@@ -129,20 +63,70 @@ ${pretty(overlaps)
 ################################################################################
 `;
 
-const overlapHeader = ({ config, tables }: BuildContext) => {
-  const userOverlaps = applyConfigToCoreference(config, tables);
-  if (!config.ignoreFieldCollisions.includes("*") && size(userOverlaps) > 0) {
-    return castOverlapHeader(userOverlaps);
-  }
-  return `
-#-------------------------------------------------------------------------------
-`;
+//------------------------------------------------------------------------------
+
+const Attribute = {
+  name: ({ config }: BuildContext, { name }: ColumnDefinition): string =>
+    normalizeName(config.formatColumnName(name)),
+
+  type: ({ config }: BuildContext, record: ColumnDefinition): string =>
+    `${config.database.toLowerCase()}-attribute`,
 };
 
-export const typedbOfSchema = async (context: BuildContext) => {
-  const header = await castHeader(context);
-  const entities = flatMap(Object.values(context.tables), castEntity(context));
-  const overlaps = overlapHeader(context);
+const castAttribute = (context: BuildContext) => (column: ColumnDefinition) => {
+  const name = Attribute.name(context, column);
+  const type = Attribute.type(context, column);
+  const value = castTypeDBType(context, column);
+  return `${name} sub ${type}, value ${value};`;
+};
 
-  return [header, overlaps, entities.join("\n\n")].join("\n");
+//------------------------------------------------------------------------------
+
+const Entity = {
+  name: ({ config }: BuildContext, { name }: TableDefinition): string =>
+    normalizeName(config.formatTableName(name)),
+
+  type: ({ config }: BuildContext, table: TableDefinition): string =>
+    `${config.database.toLowerCase()}-entity`,
+
+  field:
+    (context: BuildContext) =>
+    (column: ColumnDefinition): string =>
+      `  , owns ${Attribute.name(context, column)}`,
+};
+
+const castEntity = (context: BuildContext) => (record: TableDefinition) => {
+  const name = Entity.name(context, record);
+  const type = Entity.type(context, record);
+  const columns = Object.values(record.columns);
+
+  const fields = columns.map(Entity.field(context));
+  const attributes = columns.map(castAttribute(context));
+
+  return `${name} sub ${type}\n${fields.join("\n")}\n;\n${attributes.join(
+    "\n"
+  )}`;
+};
+
+//------------------------------------------------------------------------------
+
+const divider = () => `
+
+#-------------------------------------------------------------------------------
+`;
+
+export const typedbOfSchema = async (context: BuildContext) => {
+  const tables = Object.values(context.tables);
+  const header = await castHeader(context);
+  const entities = flatMap(tables, castEntity(context));
+
+  const userOverlaps = applyConfigToCoreference(context);
+
+  return [
+    header,
+
+    size(userOverlaps) > 0 ? castCoreferenceHeader(userOverlaps) : divider(),
+
+    entities.join("\n\n"),
+  ].join("\n");
 };
