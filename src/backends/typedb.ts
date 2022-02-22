@@ -58,40 +58,41 @@ const normalizeName = (name: string): string =>
   RESERVED_WORDS.has(name) ? `${name}_` : name;
 
 //------------------------------------------------------------------------------
+
 const MYSQL_TYPES: Record<string, string> = {
-char: 'string',
-varchar: 'string',
-text: 'string',
-tinytext: 'string',
-mediumtext: 'string',
-longtext: 'string',
-time: 'string',
-geometry: 'string',
-set: 'string',
-enum: 'string',
-integer: 'long',
-int: 'long',
-smallint: 'long',
-mediumint: 'long',
-bigint: 'long',
-double: 'double',
-decimal: 'double',
-numeric: 'double',
-float: 'double',
-year: 'long',
-tinyint: 'boolean',
-  json: 'JSON',
-date: 'datetime',
-datetime: 'datetime',
-timestamp: 'datetime',
-tinyblob: 'string',
-mediumblob: 'string',
-longblob: 'string',
-blob: 'string',
-binary: 'string',
-varbinary: 'string',
-bit: 'string',
-}
+  char: "string",
+  varchar: "string",
+  text: "string",
+  tinytext: "string",
+  mediumtext: "string",
+  longtext: "string",
+  time: "string",
+  geometry: "string",
+  set: "string",
+  enum: "string",
+  integer: "long",
+  int: "long",
+  smallint: "long",
+  mediumint: "long",
+  bigint: "long",
+  double: "double",
+  decimal: "double",
+  numeric: "double",
+  float: "double",
+  year: "long",
+  tinyint: "boolean",
+  json: "JSON",
+  date: "datetime",
+  datetime: "datetime",
+  timestamp: "datetime",
+  tinyblob: "string",
+  mediumblob: "string",
+  longblob: "string",
+  blob: "string",
+  binary: "string",
+  varbinary: "string",
+  bit: "string",
+};
 
 const POSTGRES_TYPES: Record<string, string> = {
   bpchar: "string",
@@ -106,6 +107,9 @@ const POSTGRES_TYPES: Record<string, string> = {
   timetz: "datetime",
   interval: "string",
   tsvector: "string",
+  mol: "string",
+  bit: "string",
+  bfp: "string",
   name: "string",
   int2: "long",
   int4: "long",
@@ -124,7 +128,7 @@ const POSTGRES_TYPES: Record<string, string> = {
   // point: "{ x: number, y: number }",
 };
 
-const TYPES = {...MYSQL_TYPES, ...POSTGRES_TYPES}
+const TYPES = { ...MYSQL_TYPES, ...POSTGRES_TYPES };
 
 const typing = (config: Config, { udtName }: ColumnDefinition): string => {
   const type = TYPES[udtName];
@@ -260,8 +264,6 @@ export const typedbOfSchema = async (
   const header = await castHeader(config, db);
   const entities = flatMap(tableDefinitions, castEntity(config));
   const overlaps = overlapHeader(config, tableDefinitions);
-
-console.log(tableDefinitions)
 
   // assertUniqEntities(config, tableDefinitions)
   // assertUniqAttributesAndTypes( config, overlaps)
