@@ -24,12 +24,16 @@ export interface TableDefinition {
 export type TableDefinitions = Record<TableName, TableDefinition>;
 
 export interface TableComment {
-  table_name: TableName;
+  column: TableName;
   description: string;
 }
 export type TableKeys = Record<string, string>;
-export type TableComments = Record<string, TableComment>;
+// export type TableComments = Record<string, TableComment>;
 
+export interface TableComments {
+  table: TableName;
+  columns: Record<string, TableComment>
+}
 //------------------------------------------------------------------------------
 
 export interface ColumnDefinition {
@@ -92,6 +96,7 @@ export interface BuildContext {
   schema: Schema;
   config: Config;
   tables: TableDefinitions;
+  tableComments: TableComments;
   enums: EnumDefinitions;
   relationships: Relationships;
   customTypes: CustomTypes;
@@ -117,14 +122,14 @@ export interface Database {
   isReady(): Promise<void>;
   close(): Promise<void>;
   getDefaultSchema(): Promise<Schema>;
-  getTableNames(schemaName: string): Promise<string[]>;
-  getEnumDefinitions(schemaName: string): Promise<EnumDefinitions>;
+  getTableNames(schemaName: Schema): Promise<TableName[]>;
+  getEnumDefinitions(schemaName: Schema): Promise<EnumDefinitions>;
   getTableDefinition(
-    schemaName: string,
-    tableName: string
+    schemaName: Schema,
+    tableName: TableName
   ): Promise<TableDefinition>;
 
-  // getTableComments(schemaName: string, tableName: string): Promise<TableComments>
+  getTableComments(schemaName: Schema, tableName: TableName): Promise<TableComments>
 
   // getTableKeys(schemaName: string, tableName: string): Promise<TableKeys>
   // getForeignKeys(schemaName: string, tableName: string): Promise<ForeignKeys>

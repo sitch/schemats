@@ -11,6 +11,7 @@ import {
   ColumnDefinitions,
   CustomType,
   CustomTypes,
+  TableComments,
 } from "./types";
 import { translateMySQLToTypescript } from "../typemaps/typescript-typemap";
 
@@ -204,10 +205,11 @@ export class MysqlDatabase implements Database {
             `,
       [schemaName, tableName]
     );
+
     return result.reduce((result, { COLUMN_NAME, DESCRIPTION }) => {
-      result[COLUMN_NAME] = DESCRIPTION;
+      result.columns[COLUMN_NAME] = {column: COLUMN_NAME, description: DESCRIPTION};
       return result;
-    }, {} as Record<string, string>);
+    }, {table: tableName, columns: {}} as TableComments);
   }
 
   private async query<T>(query: string, args: any[]): Promise<T[]> {

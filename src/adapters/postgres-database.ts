@@ -176,36 +176,38 @@ export class PostgresDatabase implements Database {
     );
   }
 
-  // public async getTableComments(schemaName: string, tableName: string): Promise<TableComments> {
-  //   // public async getTableComments(schemaName: string, tableName: string) {
-  //     // See https://stackoverflow.com/a/4946306/388951
-  //     const commentsResult = await this.db.query<{
-  //         column: string;
-  //         description: string;
-  //     }>(
-  //         `
-  //        SELECT
-  //          c.column_name AS column,
-  //          pgd.description AS description
-  //        FROM
-  //          pg_catalog.pg_statio_all_tables AS st
-  //          INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
-  //          INNER JOIN information_schema.columns c ON (
-  //            pgd.objsubid = c.ordinal_position
-  //            AND c.table_schema = st.schemaname
-  //            AND c.table_name = st.relname
-  //          )
-  //        WHERE
-  //          c.table_schema = $1
-  //          and c.table_name = $2
-  //         `,
-  //         [schemaName, tableName],
-  //     );
-  //     return commentsResult.rows.reduce((result, { column, description }) => {
-  //         result[column] = description
-  //         return result
-  //     }, {} as Record<string, string>)
-  // }
+  public async getTableComments(
+    schemaName: string,
+    tableName: string
+  ): Promise<TableComments> {
+    // See https://stackoverflow.com/a/4946306/388951
+    const result = await this.db.query<{
+      column: string;
+      description: string;
+    }>(
+      `
+          SELECT
+            c.column_name AS column,
+            pgd.description AS description
+          FROM
+            pg_catalog.pg_statio_all_tables AS st
+            INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
+            INNER JOIN information_schema.columns c ON (
+              pgd.objsubid = c.ordinal_position
+              AND c.table_schema = st.schemaname
+              AND c.table_name = st.relname
+            )
+          WHERE
+            c.table_schema = $1
+            and c.table_name = $2
+          `,
+      [schemaName, tableName]
+    );
+    return result.rows.reduce((result, { column, description }) => {
+      result.columns[column] = {column, description};
+      return result;
+    }, {table: tableName, columns: {}} as TableComments);
+  }
 
   // public async getTableComments(schemaName: string, tableName: string): Promise<TableComments> {
 
