@@ -40,8 +40,8 @@ ${config.database}-attribute sub attribute, abstract;`;
 
 //------------------------------------------------------------------------------
 
+const banner = (name: string) => `${divider()}# ${name}${divider()}`;
 const divider = () => `
-
 #-------------------------------------------------------------------------------
 `;
 
@@ -135,14 +135,6 @@ const Relation = {
       conname,
     }: ForeignKey
   ): string => {
-    console.log({
-      table_name,
-      column_name,
-      foreign_table_name,
-      foreign_column_name,
-      conname,
-    });
-
     const tableSource = config.formatRelationName(table_name);
     const attributeSource = config.formatRelationName(column_name);
     const tableDest = config.formatRelationName(foreign_table_name);
@@ -155,31 +147,29 @@ const Relation = {
   type: ({ config }: BuildContext, table: ForeignKey): string => {
     return `${prefix(config)}-relation`;
   },
-  field:
-    (context: BuildContext) =>
-    (column: ColumnDefinition): string => {
-      const name = Attribute.name(context, column);
-      return `  , owns ${name}`;
-    },
 };
 
 const castRelation = (context: BuildContext) => (record: ForeignKey) => {
+  const { config } = context;
+  const {
+    table_name,
+    column_name,
+    foreign_table_name,
+    foreign_column_name,
+    conname,
+  } = record;
+
   const name = Relation.name(context, record);
   const type = Relation.type(context, record);
-  // const foreignKeys = Object.values(record.columns);
-
-  // const fields = Relation.field(context)(record)
-  // const attributes = castAttribute(context)(record)
-
-  const comment = `# ${record.conname}`;
+  const comment = `# Source: '${config.schema}.${conname}'`;
   const relations = [
-    `  , owns ${context.config.formatAttributeName(record.column_name)}`,
-    `  , owns ${context.config.formatAttributeName(record.foreign_column_name)}`,
-    `  , relates ${context.config.formatEntityName(record.table_name)}`,
-    `  , relates ${context.config.formatEntityName(record.foreign_table_name)}`,
+    `  , owns ${config.formatAttributeName(column_name)}`,
+    `  , owns ${config.formatAttributeName(foreign_column_name)}`,
+    `  , relates ${config.formatEntityName(table_name)}`,
+    `  , relates ${config.formatEntityName(foreign_table_name)}`,
   ];
 
-  return `${comment}\n${name} sub ${type}\n${relations.join("\n")}\n;`;
+  return `${comment}\n${name} sub ${type}\n${relations.sort().join("\n")}\n;`;
 };
 
 //------------------------------------------------------------------------------
@@ -189,17 +179,17 @@ export const typedbOfSchema = async (context: BuildContext) => {
   const foreignKeys = Object.values(context.foreignKeys).flat();
   const header = await castHeader(context);
   const entities = flatMap(tables, castEntity(context));
-
-  console.log(foreignKeys);
   const relationships = flatMap(foreignKeys, castRelation(context));
 
   const userOverlaps = applyConfigToCoreference(context);
 
   return [
     header,
-    size(userOverlaps) > 0 ? castCoreferenceHeader(userOverlaps) : divider(),
+    size(userOverlaps) > 0 ? castCoreferenceHeader(userOverlaps) : "",
+    banner("Entities"),
     entities.join("\n\n"),
-    divider(),
+    banner("Relations"),
     relationships.join("\n\n"),
+    "",
   ].join("\n");
 };

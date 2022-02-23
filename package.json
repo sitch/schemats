@@ -14,7 +14,10 @@
     "build": "tsc",
     "example:create-db": "ts-node example/create-db.ts",
     "example:generate": "ts-node ./bin/schemats postgres postgres://postgres:password@localhost/schemats -s pet_store -o example/db-types.ts -f ./db-custom-types -c -e",
-    "example": "yarn run example:create-db && yarn run example:generate"
+    "example": "yarn run example:create-db && yarn run example:generate",
+    "tscheck:w": "yarn run tscheck --watch",
+    "tscheck": "tsc --noEmit",
+    "lint": "yarn tscheck"
   },
   "bin": {
     "schemats": "dist/bin/schemats.js"
