@@ -1,6 +1,4 @@
-
-import { DBTypeMap , ColumnDefinition, BuildContext} from "../adapters/types";
-
+import { DBTypeMap, ColumnDefinition, BuildContext } from "../adapters/types";
 
 export const TYPEDB_RESERVED_WORDS = new Set([
   // datatypes
@@ -45,7 +43,6 @@ export const TYPEDB_RESERVED_WORDS = new Set([
   "value",
   "isa",
 ]);
-
 
 export const TYPEDB_MYSQL_TYPEMAP: DBTypeMap = {
   char: "string",
@@ -116,11 +113,13 @@ export const TYPEDB_POSTGRES_TYPEMAP: DBTypeMap = {
   // point: "{ x: number, y: number }",
 };
 
-export const TYPEDB_TYPEMAP :DBTypeMap = { ...TYPEDB_MYSQL_TYPEMAP, ...TYPEDB_POSTGRES_TYPEMAP };
+export const TYPEDB_TYPEMAP: DBTypeMap = {
+  ...TYPEDB_MYSQL_TYPEMAP,
+  ...TYPEDB_POSTGRES_TYPEMAP,
+};
 
-export const isReservedWord = (name: string) : boolean => TYPEDB_RESERVED_WORDS.has(name)
-
-
+export const isReservedWord = (name: string): boolean =>
+  TYPEDB_RESERVED_WORDS.has(name);
 
 export const castTypeDBType = (
   { config, enums }: BuildContext,

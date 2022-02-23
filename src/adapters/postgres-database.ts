@@ -1,20 +1,19 @@
 import { Client } from "pg";
+import { groupBy } from "lodash";
 import { Config } from "../config";
 import {
   Database,
+  EnumDefinition,
+  EnumDefinitions,
   TableDefinition,
   TableComment,
   TableComments,
   TableDefinitions,
-  EnumDefinition,
-  EnumDefinitions,
   ColumnDefinition,
   CustomType,
   CustomTypes,
 } from "./types";
-
 import { translatePostgresToTypescript } from "../typemaps/typescript-typemap";
-import { groupBy } from "lodash";
 
 export class PostgresDatabase implements Database {
   private db: Client;
@@ -46,10 +45,15 @@ export class PostgresDatabase implements Database {
   public async getTableNames(schemaName: string): Promise<string[]> {
     const result = await this.db.query(
       `
-            SELECT table_name
-            FROM information_schema.columns
-            WHERE table_schema = $1
-            GROUP BY table_name
+        SELECT
+          table_name AS table_name
+        FROM
+          information_schema.columns
+        WHERE
+          table_schema = $1
+        GROUP BY
+          table_name
+
         `,
       [schemaName]
     );
@@ -103,19 +107,21 @@ export class PostgresDatabase implements Database {
   // e.enumlabel as enumlabel
 
   public async getEnumDefinitions(schema: string): Promise<EnumDefinitions> {
-    const results = await this.db.query<{ name: string; value: string }>(
+    const result = await this.db.query<{ name: string; value: string }>(
       `
-            SELECT
-                t.typname AS name,
-                e.enumlabel AS value
-            FROM pg_type t
-            JOIN pg_enum e ON t.oid = e.enumtypid
-            JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-            WHERE n.nspname = $1
+        SELECT
+          t.typname AS name,
+          e.enumlabel AS value
+        FROM
+          pg_type t
+          JOIN pg_enum e ON t.oid = e.enumtypid
+          JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
+        WHERE
+          n.nspname = $1
         `,
       [schema]
     );
-    const groups = groupBy(results.rows, "name");
+    const groups = groupBy(result.rows, "name");
     return Object.keys(groups).map(
       (name): EnumDefinition => ({
         // table: `MISSING TABLE ${name}`,
@@ -132,19 +138,23 @@ export class PostgresDatabase implements Database {
   ): Promise<TableDefinition> {
     // https://www.developerfiles.com/adding-and-retrieving-comments-on-postgresql-tables/
     const result = await this.db.query<{
-      name: string;
-      udtName: string;
-      nullable: string;
-      hasDefault: boolean;
+      column_name: string;
+      udt_name: string;
+      is_nullable: string;
+      column_default: boolean;
     }>(
       `
-            SELECT
-                column_name AS name,
-                udt_name AS udtName,
-                is_nullable AS nullable,
-                column_default IS NOT NULL AS hasDefault
-            FROM information_schema.columns
-            WHERE table_name = $1 AND table_schema = $2
+        SELECT
+          column_name AS column_name,
+          udt_name AS udt_name,
+          is_nullable AS is_nullable,
+          column_default IS NOT NULL AS column_default
+        FROM
+          information_schema.columns
+        WHERE
+          table_name = $1
+          AND table_schema = $2
+
         `,
       [tableName, schemaName]
     );
@@ -152,13 +162,13 @@ export class PostgresDatabase implements Database {
       console.error(`Missing table: ${schemaName}.${tableName}`);
     }
     return result.rows.reduce(
-      (table, { name, udtName, nullable, hasDefault }) => {
-        table.columns[name] = {
-          name,
-          hasDefault,
-          nullable: nullable === "YES",
-          udtName: udtName.replace(/^_/, ""),
-          isArray: udtName.startsWith("_"),
+      (table, { column_name, udt_name, is_nullable, column_default }) => {
+        table.columns[column_name] = {
+          name: column_name,
+          hasDefault: column_default,
+          nullable: is_nullable === "YES",
+          udtName: udt_name.replace(/^_/, ""),
+          isArray: udt_name.startsWith("_"),
         };
         return table;
       },
@@ -174,21 +184,20 @@ export class PostgresDatabase implements Database {
   //         description: string;
   //     }>(
   //         `
-  //           SELECT
-  //             c.column_name AS column,
-  //             pgd.description AS description
-  //           FROM
-  //             pg_catalog.pg_statio_all_tables AS st
-  //             INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
-  //             INNER JOIN information_schema.columns c ON (
-  //               pgd.objsubid = c.ordinal_position
-  //               AND c.table_schema = st.schemaname
-  //               AND c.table_name = st.relname
-  //             )
-  //           WHERE
-  //             c.table_schema = $1
-  //             and c.table_name = $2
-
+  //        SELECT
+  //          c.column_name AS column,
+  //          pgd.description AS description
+  //        FROM
+  //          pg_catalog.pg_statio_all_tables AS st
+  //          INNER JOIN pg_catalog.pg_description pgd ON (pgd.objoid = st.relid)
+  //          INNER JOIN information_schema.columns c ON (
+  //            pgd.objsubid = c.ordinal_position
+  //            AND c.table_schema = st.schemaname
+  //            AND c.table_name = st.relname
+  //          )
+  //        WHERE
+  //          c.table_schema = $1
+  //          and c.table_name = $2
   //         `,
   //         [schemaName, tableName],
   //     );
@@ -220,18 +229,6 @@ export class PostgresDatabase implements Database {
   //     return _.fromPairs(comments.map((c) => [c.table_name, c.description]));
   // }
 
-  // public async getTableType(schemaName: string, tableName: string, customTypes: CustomTypes) :  Promise<TableType> {
-  //     const enumType = await this.getEnumDefinitions(schemaName)
-  //     const columnComments = await this.getTableComments(schemaName, tableName)
-  //     return translatePostgresToTypescript(
-  //         this.config,
-  //         await this.getTableDefinition(schemaName, tableName),
-  //         new Set(Object.keys(enumType)),
-  //         customTypes,
-  //         columnComments
-  //     )
-  // }
-
   /**
         public async getPrimaryKeys(schemaName: string) {
         interface PrimaryKeyDefinition {
@@ -244,20 +241,22 @@ export class PostgresDatabase implements Database {
         // https://dataedo.com/kb/query/postgresql/list-all-primary-keys-and-their-columns
         const keysResult: PrimaryKeyDefinition[] = await this.db.query(
             `
-                SELECT
-                    kcu.table_name,
-                    tco.constraint_name,
-                    kcu.ordinal_position as position,
-                    kcu.column_name as key_column
-                FROM information_schema.table_constraints tco
-                JOIN information_schema.key_column_usage kcu
-                    on kcu.constraint_name = tco.constraint_name
-                    and kcu.constraint_schema = tco.constraint_schema
-                    and kcu.constraint_name = tco.constraint_name
-                WHERE tco.constraint_type = 'PRIMARY KEY'
-                    AND kcu.table_schema = $1
-                ORDER BY kcu.table_name,
-                        position;
+        SELECT
+          kcu.table_name,
+          tco.constraint_name,
+          kcu.ordinal_position as position,
+          kcu.column_name as key_column
+        FROM
+          information_schema.table_constraints tco
+          JOIN information_schema.key_column_usage kcu on kcu.constraint_name = tco.constraint_name
+          and kcu.constraint_schema = tco.constraint_schema
+          and kcu.constraint_name = tco.constraint_name
+        WHERE
+          tco.constraint_type = 'PRIMARY KEY'
+          AND kcu.table_schema = $1
+        ORDER BY
+          kcu.table_name,
+          position;
             `,
             [schemaName],
         );

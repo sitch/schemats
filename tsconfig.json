@@ -1,16 +1,16 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "es5",
-        "lib": ["es2020"],
-        "strict": true,
-        "noImplicitAny": true,
-        "declaration": true,
-        "strictNullChecks": true,
-        "sourceMap": true,
-        "outDir": "dist",
-        "esModuleInterop": true,
-        "resolveJsonModule": true
-    },
-    "exclude": ["node_modules"]
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es5",
+    "lib": ["es2020"],
+    "strict": true,
+    "noImplicitAny": true,
+    "declaration": true,
+    "strictNullChecks": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  },
+  "exclude": ["node_modules"]
 }

@@ -1,17 +1,18 @@
 import { Config } from "../config";
+import { jsonEq } from "../utils";
 import { Connection, createConnection, RowDataPacket } from "mysql2/promise";
 import {
   Database,
-  TableDefinition,
-  TableDefinitions,
   EnumDefinition,
   EnumDefinitions,
+  TableDefinition,
+  TableDefinitions,
   ColumnDefinition,
+  ColumnDefinitions,
   CustomType,
   CustomTypes,
 } from "./types";
-
-import { translateMySQLToTypescript} from "../typemaps/typescript-typemap"
+import { translateMySQLToTypescript } from "../typemaps/typescript-typemap";
 
 const parseMysqlEnumeration = (mysqlEnum: string): string[] => {
   return mysqlEnum.replace(/(^(enum|set)\('|'\)$)/gi, "").split(`','`);
@@ -23,6 +24,35 @@ const getEnumNameFromColumn = (
 ): string => {
   return `${dataType}_${columnName}`;
 };
+
+const assertValidEnum = (
+  enumMap: Record<string, string[]>,
+  { name, values }: EnumDefinition,
+  column: string
+) => {
+  if (enumMap[name] && jsonEq(enumMap[name], values)) {
+    throw new Error(
+      `Multiple enums with the same name and contradicting types were found: ${column}: ${JSON.stringify(
+        enumMap[name]
+      )} and ${JSON.stringify(values)}`
+    );
+  }
+};
+
+// const castTableDefinition = ( { COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT }  : {
+//   COLUMN_NAME: string;
+//   DATA_TYPE: string;
+//   IS_NULLABLE: string;
+//   COLUMN_DEFAULT: string;
+// }) => ({
+//   name: COLUMN_NAME,
+//   udtName: /^(enum|set)$/i.test(DATA_TYPE)
+//     ? getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME)
+//     : DATA_TYPE,
+//   nullable: IS_NULLABLE === "YES",
+//   isArray: false,
+//   hasDefault: COLUMN_DEFAULT !== null,
+// })
 
 export class MysqlDatabase implements Database {
   public version: string = "";
@@ -47,50 +77,63 @@ export class MysqlDatabase implements Database {
   }
 
   public async getTableNames(schemaName: string): Promise<string[]> {
-    const tables = await this.query<{ TABLE_NAME: string }>(
+    const result = await this.query<{ TABLE_NAME: string }>(
       `
-            SELECT TABLE_NAME
-            FROM information_schema.columns
-            WHERE table_schema = ?
-            GROUP BY TABLE_NAME
+        SELECT
+          TABLE_NAME AS TABLE_NAME
+        FROM
+          information_schema.columns
+        WHERE
+          table_schema = ?
+        GROUP BY
+          TABLE_NAME
         `,
       [schemaName]
     );
-    return tables.map(({ TABLE_NAME }) => TABLE_NAME);
+    return result.map(({ TABLE_NAME }) => TABLE_NAME);
   }
 
   public async getEnumDefinitions(
     schemaName: string
   ): Promise<EnumDefinitions> {
-    const rawEnumRecords = await this.query<{
+    const result = await this.query<{
       COLUMN_NAME: string;
       COLUMN_TYPE: string;
       DATA_TYPE: string;
     }>(
       `
-            SELECT COLUMN_NAME, COLUMN_TYPE, DATA_TYPE
-            FROM information_schema.columns
-            WHERE DATA_TYPE IN ('enum', 'set') and table_schema = ?
+        SELECT
+          COLUMN_NAME AS COLUMN_NAME,
+          COLUMN_TYPE AS COLUMN_TYPE,
+          DATA_TYPE AS DATA_TYPE
+        FROM
+          information_schema.columns
+        WHERE
+          DATA_TYPE IN ('enum', 'set')
+          AND table_schema = ?
         `,
       [schemaName]
     );
 
-    return rawEnumRecords.map(
+    let enumMap: Record<string, string[]> = {};
+
+    return result.map(
       ({ COLUMN_NAME, COLUMN_TYPE, DATA_TYPE }): EnumDefinition => {
-        const enumName = getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME);
-        const enumValues = parseMysqlEnumeration(COLUMN_TYPE);
-        // if (result[enumName] && JSON.stringify(result[enumName]) !== JSON.stringify(enumValues)) {
-        //     throw new Error(
-        //         `Multiple enums with the same name and contradicting types were found: ${COLUMN_NAME}: ${JSON.stringify(result[enumName])} and ${JSON.stringify(enumValues)}`
-        //     )
-        // }
-        return {
-          // table: `MISSING TABLE ${enumName}`,
-          // values: new Set(enumValues)
+        const name = getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME);
+        const values = parseMysqlEnumeration(COLUMN_TYPE);
+
+        const record = {
+          // table: `MISSING TABLE ${name}`,
+          // values: new Set(values)
           column: COLUMN_NAME,
-          name: enumName,
-          values: enumValues,
+          name,
+          values,
         };
+
+        assertValidEnum(enumMap, record, COLUMN_NAME);
+        enumMap[name] = values;
+
+        return record;
       }
     );
   }
@@ -99,77 +142,76 @@ export class MysqlDatabase implements Database {
     schemaName: string,
     tableName: string
   ): Promise<TableDefinition> {
-    const tableColumns = await this.query<{
+    const result = await this.query<{
       COLUMN_NAME: string;
       DATA_TYPE: string;
       IS_NULLABLE: string;
       COLUMN_DEFAULT: string;
     }>(
       `
-            SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT
-            FROM information_schema.columns
-            WHERE TABLE_NAME = ? and table_schema = ?`,
+        SELECT
+          COLUMN_NAME AS COLUMN_NAME,
+          DATA_TYPE AS DATA_TYPE,
+          IS_NULLABLE AS IS_NULLABLE,
+          COLUMN_DEFAULT AS COLUMN_DEFAULT
+        FROM
+          information_schema.columns
+        WHERE
+          TABLE_NAME = ?
+          and table_schema = ?
+      `,
       [tableName, schemaName]
     );
-    return tableColumns.reduce(
+    return result.reduce(
       (
-        tableDefinition: TableDefinition,
+        table,
         { COLUMN_NAME, DATA_TYPE, IS_NULLABLE, COLUMN_DEFAULT }
       ): TableDefinition => {
         const columnDefinition: ColumnDefinition = {
           name: COLUMN_NAME,
+          isArray: false,
+          nullable: IS_NULLABLE === "YES",
+          hasDefault: COLUMN_DEFAULT !== null,
           udtName: /^(enum|set)$/i.test(DATA_TYPE)
             ? getEnumNameFromColumn(DATA_TYPE, COLUMN_NAME)
             : DATA_TYPE,
-          nullable: IS_NULLABLE === "YES",
-          isArray: false,
-          hasDefault: COLUMN_DEFAULT !== null,
         };
-            tableDefinition.columns[COLUMN_NAME] = columnDefinition
-        return tableDefinition;
+        table.columns[COLUMN_NAME] = columnDefinition;
+        return table;
       },
-      { name: tableName, columns: {}}
-    );
-  }
-
-  public async getTableDefinitions(
-    schemaName: string,
-    tableName: string,
-    customTypes: CustomTypes
-  ) {
-    const enumType = await this.getEnumDefinitions(schemaName);
-    const columnComments = await this.getTableComments(schemaName, tableName);
-    return translateMySQLToTypescript(
-      this.config,
-      await this.getTableDefinition(schemaName, tableName),
-      new Set(Object.keys(enumType)),
-      customTypes,
-      columnComments
+      { name: tableName, columns: {} } as TableDefinition
     );
   }
 
   public async getTableComments(schemaName: string, tableName: string) {
     // See https://stackoverflow.com/a/4946306/388951
-    const commentsResult = await this.query<{
+    const result = await this.query<{
       TABLE_NAME: string;
       COLUMN_NAME: string;
       DESCRIPTION: string;
     }>(
       `
-            select COLUMN_NAME, COLUMN_TYPE, COLUMN_DEFAULT, column_comment
-            from information_schema.COLUMNS
-            where table_schema = ? and TABLE_NAME = ?;
+        SELECT
+          COLUMN_NAME AS COLUMN_NAME,
+          COLUMN_TYPE AS COLUMN_TYPE,
+          COLUMN_DEFAULT AS COLUMN_DEFAULT,
+          COLUMN_COMMENT AS COLUMN_COMMENT
+        FROM
+          information_schema.COLUMNS
+        WHERE
+          table_schema = ?
+          AND TABLE_NAME = ?;
             `,
       [schemaName, tableName]
     );
-    return commentsResult.reduce((result, { COLUMN_NAME, DESCRIPTION }) => {
+    return result.reduce((result, { COLUMN_NAME, DESCRIPTION }) => {
       result[COLUMN_NAME] = DESCRIPTION;
       return result;
     }, {} as Record<string, string>);
   }
 
   private async query<T>(query: string, args: any[]): Promise<T[]> {
-    const [rows, columns] = await this.db.query<RowDataPacket[]>(query, args);
+    const [rows, _columns] = await this.db.query<RowDataPacket[]>(query, args);
     return rows as unknown as T[];
   }
 }
