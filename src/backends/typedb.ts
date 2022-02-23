@@ -189,7 +189,7 @@ export const typedbOfSchema = async (context: BuildContext) => {
     banner("Entities"),
     entities.join("\n\n"),
     banner("Relations"),
-    relationships.join("\n\n"),
+    size(foreignKeys) > 0 ? relationships.join("\n\n") : '',
     "",
   ].join("\n");
 };
