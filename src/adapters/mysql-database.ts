@@ -12,6 +12,7 @@ import {
   CustomType,
   CustomTypes,
   TableComments,
+  ForeignKeys,
 } from "./types";
 import { translateMySQLToTypescript } from "../typemaps/typescript-typemap";
 
@@ -210,6 +211,13 @@ export class MysqlDatabase implements Database {
       result.columns[COLUMN_NAME] = {column: COLUMN_NAME, description: DESCRIPTION};
       return result;
     }, {table: tableName, columns: {}} as TableComments);
+  }
+
+  public async getForeignKeys(schemaName: string) : Promise<ForeignKeys> {
+    return {}
+  }
+
+  public async getMeta(schemaName: string, tableName: string) : Promise<void> {
   }
 
   private async query<T>(query: string, args: any[]): Promise<T[]> {

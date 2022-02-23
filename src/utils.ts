@@ -7,3 +7,6 @@ export const writeRelFileAsync = async (content: string, output: string) => {
   const path = relpath(output);
   await promises.writeFile(path, content, "utf8");
 };
+
+export const jsonEq = (left: any, right: any): boolean =>
+  JSON.stringify(left) === JSON.stringify(right);

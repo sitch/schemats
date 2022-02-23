@@ -1,11 +1,12 @@
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
 import {
+  BuildContext,
   EnumDefinition,
   TableDefinition,
   ColumnDefinition,
+  ForeignKey,
 } from "../adapters/types";
 import { castTypeDBType, isReservedWord } from "../typemaps/typedb-typemap";
-import { BuildContext } from "../generator";
 
 import {
   applyConfigToCoreference,
@@ -38,6 +39,11 @@ ${config.database}-attribute sub attribute, abstract;`;
 
 //------------------------------------------------------------------------------
 
+const divider = () => `
+
+#-------------------------------------------------------------------------------
+`;
+
 const castCoreferenceHeader = (overlaps: Record<string, string[]>) => `
 ################################################################################
 # ERRORS: INVALID TYPEDB COLLISIONS
@@ -63,36 +69,23 @@ ${pretty(overlaps)
 ################################################################################
 `;
 
-//------------------------------------------------------------------------------
 
-const Attribute = {
-  name: ({ config }: BuildContext, { name }: ColumnDefinition): string =>
-    normalizeName(config.formatColumnName(name)),
-
-  type: ({ config }: BuildContext, record: ColumnDefinition): string =>
-    `${config.database.toLowerCase()}-attribute`,
-};
-
-const castAttribute = (context: BuildContext) => (column: ColumnDefinition) => {
-  const name = Attribute.name(context, column);
-  const type = Attribute.type(context, column);
-  const value = castTypeDBType(context, column);
-  return `${name} sub ${type}, value ${value};`;
-};
 
 //------------------------------------------------------------------------------
 
 const Entity = {
-  name: ({ config }: BuildContext, { name }: TableDefinition): string =>
-    normalizeName(config.formatTableName(name)),
-
-  type: ({ config }: BuildContext, table: TableDefinition): string =>
-    `${config.database.toLowerCase()}-entity`,
-
+  name: ({ config }: BuildContext, { name }: TableDefinition): string => {
+    return normalizeName(config.formatTableName(name));
+  },
+  type: ({ config }: BuildContext, table: TableDefinition): string => {
+    return `${config.database.toLowerCase()}-entity`;
+  },
   field:
     (context: BuildContext) =>
-    (column: ColumnDefinition): string =>
-      `  , owns ${Attribute.name(context, column)}`,
+    (column: ColumnDefinition): string => {
+      const name = Attribute.name(context, column);
+      return `  , owns ${name}`;
+    },
 };
 
 const castEntity = (context: BuildContext) => (record: TableDefinition) => {
@@ -110,15 +103,97 @@ const castEntity = (context: BuildContext) => (record: TableDefinition) => {
 
 //------------------------------------------------------------------------------
 
-const divider = () => `
+const Attribute = {
+  name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
+    return normalizeName(config.formatColumnName(name));
+  },
+  type: ({ config }: BuildContext, record: ColumnDefinition): string => {
+    return `${config.database.toLowerCase()}-attribute`;
+  },
+};
 
-#-------------------------------------------------------------------------------
-`;
+const castAttribute = (context: BuildContext) => (column: ColumnDefinition) => {
+  const name = Attribute.name(context, column);
+  const type = Attribute.type(context, column);
+  const value = castTypeDBType(context, column);
+  return `${name} sub ${type}, value ${value};`;
+};
+
+//------------------------------------------------------------------------------
+
+const Relation = {
+  name: (
+    { config }: BuildContext,
+    {
+      table_name,
+      column_name,
+      foreign_table_name,
+      foreign_column_name,
+      conname,
+    }: ForeignKey
+  ): string => {
+
+console.log({
+  table_name,
+  column_name,
+  foreign_table_name,
+  foreign_column_name,
+  conname,
+})
+
+    const tableSource = config.formatRelationName(table_name)
+    const attributeSource = config.formatRelationName(column_name)
+    const tableDest = config.formatRelationName(foreign_table_name)
+    const attributeDest = config.formatRelationName(foreign_column_name)
+
+
+    return normalizeName(
+
+      `${tableSource}-${attributeSource}-${tableDest}-${attributeDest}`
+
+
+      );
+  },
+  type: ({ config }: BuildContext, table: ForeignKey): string => {
+    return `${config.database.toLowerCase()}-relation`;
+  },
+  field:
+    (context: BuildContext) =>
+    (column: ColumnDefinition): string => {
+      const name = Attribute.name(context, column);
+      return `  , owns ${name}`;
+    },
+};
+
+const castRelation = (context: BuildContext) => (record: ForeignKey) => {
+  const name = Relation.name(context, record);
+  const type = Relation.type(context, record);
+  // const foreignKeys = Object.values(record.columns);
+
+  // const fields = Relation.field(context)(record)
+  // const attributes = castAttribute(context)(record)
+
+
+  const comment = `# ${record.conname}`
+  const relations = [
+    `,  owns ${context.config.formatTableName(record.column_name)}`,
+    `,  owns ${context.config.formatTableName(record.foreign_column_name)}`,
+    `,  relates ${context.config.formatTableName(record.table_name)}`,
+    `,  relates ${context.config.formatTableName(record.foreign_table_name)}`,
+  ]
+
+  return `${comment}\n${name} sub ${type}\n${relations.join('\n')}\n;`
+};
+
+//------------------------------------------------------------------------------
 
 export const typedbOfSchema = async (context: BuildContext) => {
   const tables = Object.values(context.tables);
+  const foreignKeys = Object.values(context.foreignKeys);
   const header = await castHeader(context);
   const entities = flatMap(tables, castEntity(context));
+
+  const relationships = flatMap(foreignKeys, castRelation(context));
 
   const userOverlaps = applyConfigToCoreference(context);
 

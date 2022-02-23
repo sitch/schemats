@@ -1,6 +1,7 @@
 import { Config } from "../config";
 import { flatMap } from "lodash";
 import {
+  BuildContext,
   EnumDefinition,
   TableDefinition,
   ColumnDefinition,
@@ -10,7 +11,6 @@ import {
   CustomTypes,
   Coreferences,
 } from "../adapters/types";
-import { BuildContext } from "../generator";
 
 //------------------------------------------------------------------------------
 

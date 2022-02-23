@@ -1,5 +1,6 @@
 import { Client } from "pg";
-import { groupBy } from "lodash";
+import { groupBy, countBy, mapValues, fromPairs } from "lodash";
+import * as lodash from "lodash";
 import { Config } from "../config";
 import {
   Database,
@@ -12,6 +13,8 @@ import {
   ColumnDefinition,
   CustomType,
   CustomTypes,
+  ForeignKey,
+  ForeignKeys,
 } from "./types";
 import { translatePostgresToTypescript } from "../typemaps/typescript-typemap";
 
@@ -203,11 +206,76 @@ export class PostgresDatabase implements Database {
           `,
       [schemaName, tableName]
     );
-    return result.rows.reduce((result, { column, description }) => {
-      result.columns[column] = {column, description};
-      return result;
-    }, {table: tableName, columns: {}} as TableComments);
+    return result.rows.reduce(
+      (result, { column, description }) => {
+        result.columns[column] = { column, description };
+        return result;
+      },
+      { table: tableName, columns: {} } as TableComments
+    );
   }
+
+  // public async getMeta(schemaName: string, tableName: string) : Promise<void> {
+  //   // See https://stackoverflow.com/a/4946306/388951
+  //   const result = await this.db.query<{
+  //     schemaname: string;
+  //     TABLENAME: string;
+  //     field: string;
+  //     type: string;
+  //     len: string;
+  //   }>(
+  //     `
+  //       SELECT
+  //         pg_tables.schemaname,
+  //         pg_tables.TABLENAME,
+  //         pg_attribute.attname AS field,
+  //         format_type(pg_attribute.atttypid, NULL) AS "type",
+  //         pg_attribute.atttypmod AS len,
+  //         (
+  //           SELECT
+  //             col_description(
+  //               pg_attribute.attrelid, pg_attribute.attnum
+  //             )
+  //         ) AS COMMENT,
+  //         CASE pg_attribute.attnotnull WHEN FALSE THEN 1 ELSE 0 END AS "notnull",
+  //         pg_constraint.conname AS "key",
+  //         pc2.conname AS ckey,
+  //         (
+  //           SELECT
+  //             pg_attrdef.adsrc
+  //           FROM
+  //             pg_attrdef
+  //           WHERE
+  //             pg_attrdef.adrelid = pg_class.oid
+  //             AND pg_attrdef.adnum = pg_attribute.attnum
+  //         ) AS def
+  //       FROM
+  //         pg_tables,
+  //         pg_class
+  //         JOIN pg_attribute ON pg_class.oid = pg_attribute.attrelid
+  //         AND pg_attribute.attnum > 0
+  //         LEFT JOIN pg_constraint ON pg_constraint.contype = 'p' :: "char"
+  //         AND pg_constraint.conrelid = pg_class.oid
+  //         AND (
+  //           pg_attribute.attnum = ANY (pg_constraint.conkey)
+  //         )
+  //         LEFT JOIN pg_constraint AS pc2 ON pc2.contype = 'f' :: "char"
+  //         AND pc2.conrelid = pg_class.oid
+  //         AND (
+  //           pg_attribute.attnum = ANY (pc2.conkey)
+  //         )
+  //       WHERE
+  //         pg_class.relname = pg_tables.TABLENAME
+  //         AND pg_tables.schemaname IN ('op', 'im', 'cs', 'usr', 'li') -- AND pg_tables.tableowner = "current_user"()
+  //         AND pg_attribute.atttypid <> 0 :: oid ---AND TABLENAME = $1
+  //       ORDER BY
+  //         pg_tables.schemaname,
+  //         pg_tables.TABLENAME ASC;
+  // `,
+  //     [schemaName, tableName]
+  //   );
+  //   console.log(result.rows);
+  // }
 
   // public async getTableComments(schemaName: string, tableName: string): Promise<TableComments> {
 
@@ -267,61 +335,91 @@ export class PostgresDatabase implements Database {
     }
     **/
 
-  // async getForeignKeys(schemaName: string) {
-  //     interface ForeignKey {
-  //         table_name: string;
-  //         column_name: string;
-  //         foreign_table_name: string;
-  //         foreign_column_name: string;
-  //         conname: string;
-  //     }
-  //     // See https://stackoverflow.com/a/10950402/388951
-  //     const fkeys: ForeignKey[] = await this.db.query(
-  //         `
-  //         SELECT
-  //             cl2.relname AS table_name,
-  //             att2.attname AS column_name,
-  //             cl.relname AS foreign_table_name,
-  //             att.attname AS foreign_column_name,
-  //             conname
-  //         FROM
-  //             (SELECT
-  //                 unnest(con1.conkey) AS "parent",
-  //                 unnest(con1.confkey) AS "child",
-  //                 con1.confrelid,
-  //                 con1.conrelid,
-  //                 con1.conname
-  //             FROM pg_class cl
-  //             JOIN pg_namespace ns ON cl.relnamespace = ns.oid
-  //             JOIN pg_constraint con1 ON con1.conrelid = cl.oid
-  //             WHERE ns.nspname = $1 AND con1.contype = 'f'
-  //             ) con
-  //         JOIN pg_attribute att ON att.attrelid = con.confrelid and att.attnum = con.child
-  //         JOIN pg_class cl ON cl.oid = con.confrelid
-  //         JOIN pg_class cl2 ON cl2.oid = con.conrelid
-  //         JOIN pg_attribute att2 ON att2.attrelid = con.conrelid AND att2.attnum = con.parent
-  //         `,
-  //         [schemaName],
-  //     );
+  public async getForeignKeys(schemaName: string): Promise<ForeignKeys> {
+    // See https://stackoverflow.com/a/10950402/388951
+    const result = await this.db.query<{
+      table_name: string;
+      column_name: string;
+      foreign_table_name: string;
+      foreign_column_name: string;
+      conname: string;
+    }>(
+      `
+          SELECT
+              cl2.relname AS table_name,
+              att2.attname AS column_name,
+              cl.relname AS foreign_table_name,
+              att.attname AS foreign_column_name,
+              conname
+          FROM
+              (SELECT
+                  unnest(con1.conkey) AS "parent",
+                  unnest(con1.confkey) AS "child",
+                  con1.confrelid,
+                  con1.conrelid,
+                  con1.conname
+              FROM pg_class cl
+              JOIN pg_namespace ns ON cl.relnamespace = ns.oid
+              JOIN pg_constraint con1 ON con1.conrelid = cl.oid
+              WHERE ns.nspname = $1 AND con1.contype = 'f'
+              ) con
+          JOIN pg_attribute att ON att.attrelid = con.confrelid and att.attnum = con.child
+          JOIN pg_class cl ON cl.oid = con.confrelid
+          JOIN pg_class cl2 ON cl2.oid = con.conrelid
+          JOIN pg_attribute att2 ON att2.attrelid = con.conrelid AND att2.attnum = con.parent
+          `,
+      [schemaName]
+    );
 
-  //     // Multi-column foreign keys are harder to model.
-  //     // To get consistent outputs, just ignore them for now.
-  //     const countKey = (fk: ForeignKey) => `${fk.table_name},${fk.conname}`;
-  //     const colCounts = _.countBy(fkeys, countKey);
+    // Multi-column foreign keys are harder to model.
+    // To get consistent outputs, just ignore them for now.
+    const countKey = (fk: ForeignKey) => `${fk.table_name},${fk.conname}`;
+    const colCounts = countBy(result.rows, countKey);
 
-  //     return _(fkeys)
-  //         .filter((c) => colCounts[countKey(c)] < 2)
-  //         .groupBy((c) => c.table_name)
-  //         .mapValues((tks) =>
-  //             _.fromPairs(
-  //                 tks.map((ck) => [
-  //                     ck.column_name,
-  //                     { table: ck.foreign_table_name, column: ck.foreign_column_name },
-  //                 ]),
-  //             ),
-  //         )
-  //         .value();
-  // }
+    // console.log(result.rows);
+
+    const groups: Record<string, ForeignKey[]> = groupBy(
+      result.rows,
+      "table_name"
+    );
+
+    return groups;
+
+    // return mapValues(
+
+    // groups,
+
+    //   (fks) => {
+    //     fks.map(
+
+    //       ({table_name, column_name, foreign_table_name, foreign_column_name, conname}) : ForeignKey => ({
+    //         table_name,
+    //         column_name,
+    //         foreign_table_name,
+    //         foreign_column_name,
+    //         conname,
+    //       })
+    //     )
+
+    //   }
+
+    // )
+
+    // return {}
+
+    // return _(result.rows)
+    //     .filter((c) => colCounts[countKey(c)] < 2)
+    //     .groupBy((c) => c.table_name)
+    //     .mapValues((tks) =>
+    //         fromPairs(
+    //             tks.map((ck) => [
+    //                 ck.column_name,
+    //                 { table: ck.foreign_table_name, column: ck.foreign_column_name },
+    //             ]),
+    //         ),
+    //     )
+    //     .value();
+  }
 
   // async getMeta(schemaName: string): Promise<Metadata> {
   //     if (this.metadata && schemaName === this.metadata.schema) {

@@ -32,7 +32,7 @@ export type TableKeys = Record<string, string>;
 
 export interface TableComments {
   table: TableName;
-  columns: Record<string, TableComment>
+  columns: Record<string, TableComment>;
 }
 //------------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ export interface ColumnDefinition {
   foreignKey?: ForeignKey;
 
   // TODO: Remove
-  tsType?: string
+  tsType?: string;
 }
 export type ColumnComments = Record<string, Record<string, string>>;
 export type ColumnDefinitions = Record<ColumnName, ColumnDefinition>;
@@ -54,11 +54,20 @@ export type ColumnDefinitions = Record<ColumnName, ColumnDefinition>;
 //------------------------------------------------------------------------------
 
 export interface ForeignKey {
-  table: string;
-  column: string;
-  // cardinality: Cardinality;
+  table_name: string;
+  column_name: string;
+  foreign_table_name: string;
+  foreign_column_name: string;
+  conname: string;
 }
-export type ForeignKeys = Record<string, { [columnName: string]: ForeignKey }>;
+
+// export interface ForeignKey {
+//   table: string;
+//   column: string;
+//   // cardinality: Cardinality;
+// }
+// export type ForeignKeys = Record<string, { [columnName: string]: ForeignKey }>;
+export type ForeignKeys = Record<TableName, ForeignKey[]>;
 
 export type RelationshipType = string;
 export interface Relationship {
@@ -99,6 +108,7 @@ export interface BuildContext {
   tableComments: TableComments[];
   enums: EnumDefinitions;
   relationships: Relationships;
+  foreignKeys: ForeignKeys;
   customTypes: CustomTypes;
   coreferences: Coreferences;
 }
@@ -129,10 +139,16 @@ export interface Database {
     tableName: TableName
   ): Promise<TableDefinition>;
 
-  getTableComments(schemaName: Schema, tableName: TableName): Promise<TableComments>
+  getTableComments(
+    schemaName: Schema,
+    tableName: TableName
+  ): Promise<TableComments>;
+
+  getForeignKeys(schemaName: string): Promise<ForeignKeys>;
+
+  // getMeta(schemaName: string, tableName: string): Promise<void>;
 
   // getTableKeys(schemaName: string, tableName: string): Promise<TableKeys>
-  // getForeignKeys(schemaName: string, tableName: string): Promise<ForeignKeys>
 
   // getTableDefinition(schemaName: string, tableName: string, customTypes: CustomType[]): Promise<TableDefinition>
   // getTableDefinitions(schemaName: string, customTypes: CustomType[]): Promise<TableDefinitions>

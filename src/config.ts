@@ -160,6 +160,12 @@ export class Config {
     return inflect(name, this.config.columnFormatter);
   }
 
+  public formatRelationName(name: string) {
+    console.warn(name)
+
+    return inflect(name, this.config.columnFormatter);
+  }
+
   // public getCLICommand(dbConnection: string): string {
   //   const commands = ["schemats", "generate", dbConnection];
   //   // if (this.config.camelCase) {

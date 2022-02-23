@@ -17,15 +17,11 @@ import { typescriptOfSchema } from "./backends/typescript";
 import { getCoreferences } from "./coreference";
 import { getRelationships } from "./relationships";
 
-
-
-
 // const mergeComments = (tableDefinitions: TableDefinitions, tableComments: TableComments) : TableDefinitions {
 //   tableDefinitions.map(table => {
 //     const comments = tableComments[table.name]
 //   })
 // }
-
 
 export async function generate(config: Config, db: Database): Promise<string> {
   const context = await build(config, db);
@@ -36,12 +32,18 @@ export async function generate(config: Config, db: Database): Promise<string> {
 const build = async (config: Config, db: Database): Promise<BuildContext> => {
   const schema = config.schema || (await db.getDefaultSchema());
   const tableNames = config.tables || (await db.getTableNames(schema));
+  const foreignKeys = await db.getForeignKeys(schema);
   const enums = await db.getEnumDefinitions(schema);
   const tableDefinitions = await Promise.all(
     tableNames.map((tableName) => db.getTableDefinition(schema, tableName))
   );
 
-  const tableComments : TableComments[] = await Promise.all(
+
+  // await Promise.all(
+  //   tableNames.map((tableName) => db.getMeta(schema, tableName))
+  // );
+
+  const tableComments: TableComments[] = await Promise.all(
     tableNames.map((tableName) => db.getTableComments(schema, tableName))
   );
 
@@ -56,6 +58,7 @@ const build = async (config: Config, db: Database): Promise<BuildContext> => {
     config,
     relationships,
     coreferences,
+    foreignKeys,
     schema,
     tables,
     tableComments,
