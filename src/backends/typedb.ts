@@ -1,4 +1,13 @@
-import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
+import {
+  flatMap,
+  fromPairs,
+  toPairs,
+  uniq,
+  sortBy,
+  omit,
+  size,
+  identity,
+} from "lodash";
 import { Config } from "../config";
 import {
   BuildContext,
@@ -184,12 +193,15 @@ export const typedbOfSchema = async (context: BuildContext) => {
   const userOverlaps = applyConfigToCoreference(context);
 
   return [
-    header,
-    size(userOverlaps) > 0 ? castCoreferenceHeader(userOverlaps) : "",
-    banner("Entities"),
-    entities.join("\n\n"),
-    banner("Relations"),
-    size(foreignKeys) > 0 ? relationships.join("\n\n") : divider(),
-    "",
-  ].join("\n");
+    [header],
+    size(userOverlaps) > 0 ? [castCoreferenceHeader(userOverlaps)] : [],
+    [banner(`Entities (${size(tables)})`)],
+    [entities.join("\n\n")],
+    size(foreignKeys) > 0
+      ? [banner(`Relations (${size(foreignKeys)})`), relationships.join("\n\n")]
+      : [],
+  ]
+    .flat()
+    .filter(identity)
+    .join("\n");
 };
