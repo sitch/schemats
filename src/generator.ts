@@ -41,7 +41,7 @@ const build = async (config: Config, db: Database): Promise<BuildContext> => {
     tableNames.map((tableName) => db.getTableDefinition(schema, tableName))
   );
 
-  const tableComments = await Promise.all(
+  const tableComments : TableComments[] = await Promise.all(
     tableNames.map((tableName) => db.getTableComments(schema, tableName))
   );
 

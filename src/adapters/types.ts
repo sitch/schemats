@@ -96,7 +96,7 @@ export interface BuildContext {
   schema: Schema;
   config: Config;
   tables: TableDefinitions;
-  tableComments: TableComments;
+  tableComments: TableComments[];
   enums: EnumDefinitions;
   relationships: Relationships;
   customTypes: CustomTypes;
