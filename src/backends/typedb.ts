@@ -1,4 +1,5 @@
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
+import { Config } from "../config";
 import {
   BuildContext,
   EnumDefinition,
@@ -69,16 +70,18 @@ ${pretty(overlaps)
 ################################################################################
 `;
 
-
+const prefix = (config: Config) => {
+  return config.database.toLowerCase();
+};
 
 //------------------------------------------------------------------------------
 
 const Entity = {
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
-    return normalizeName(config.formatTableName(name));
+    return normalizeName(config.formatEntityName(name));
   },
   type: ({ config }: BuildContext, table: TableDefinition): string => {
-    return `${config.database.toLowerCase()}-entity`;
+    return `${prefix(config)}-entity`;
   },
   field:
     (context: BuildContext) =>
@@ -105,10 +108,10 @@ const castEntity = (context: BuildContext) => (record: TableDefinition) => {
 
 const Attribute = {
   name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
-    return normalizeName(config.formatColumnName(name));
+    return normalizeName(config.formatAttributeName(name));
   },
   type: ({ config }: BuildContext, record: ColumnDefinition): string => {
-    return `${config.database.toLowerCase()}-attribute`;
+    return `${prefix(config)}-attribute`;
   },
 };
 
@@ -132,30 +135,25 @@ const Relation = {
       conname,
     }: ForeignKey
   ): string => {
+    console.log({
+      table_name,
+      column_name,
+      foreign_table_name,
+      foreign_column_name,
+      conname,
+    });
 
-console.log({
-  table_name,
-  column_name,
-  foreign_table_name,
-  foreign_column_name,
-  conname,
-})
-
-    const tableSource = config.formatRelationName(table_name)
-    const attributeSource = config.formatRelationName(column_name)
-    const tableDest = config.formatRelationName(foreign_table_name)
-    const attributeDest = config.formatRelationName(foreign_column_name)
-
+    const tableSource = config.formatRelationName(table_name);
+    const attributeSource = config.formatRelationName(column_name);
+    const tableDest = config.formatRelationName(foreign_table_name);
+    const attributeDest = config.formatRelationName(foreign_column_name);
 
     return normalizeName(
-
       `${tableSource}-${attributeSource}-${tableDest}-${attributeDest}`
-
-
-      );
+    );
   },
   type: ({ config }: BuildContext, table: ForeignKey): string => {
-    return `${config.database.toLowerCase()}-relation`;
+    return `${prefix(config)}-relation`;
   },
   field:
     (context: BuildContext) =>
@@ -173,35 +171,35 @@ const castRelation = (context: BuildContext) => (record: ForeignKey) => {
   // const fields = Relation.field(context)(record)
   // const attributes = castAttribute(context)(record)
 
-
-  const comment = `# ${record.conname}`
+  const comment = `# ${record.conname}`;
   const relations = [
-    `,  owns ${context.config.formatTableName(record.column_name)}`,
-    `,  owns ${context.config.formatTableName(record.foreign_column_name)}`,
-    `,  relates ${context.config.formatTableName(record.table_name)}`,
-    `,  relates ${context.config.formatTableName(record.foreign_table_name)}`,
-  ]
+    `  , owns ${context.config.formatAttributeName(record.column_name)}`,
+    `  , owns ${context.config.formatAttributeName(record.foreign_column_name)}`,
+    `  , relates ${context.config.formatEntityName(record.table_name)}`,
+    `  , relates ${context.config.formatEntityName(record.foreign_table_name)}`,
+  ];
 
-  return `${comment}\n${name} sub ${type}\n${relations.join('\n')}\n;`
+  return `${comment}\n${name} sub ${type}\n${relations.join("\n")}\n;`;
 };
 
 //------------------------------------------------------------------------------
 
 export const typedbOfSchema = async (context: BuildContext) => {
   const tables = Object.values(context.tables);
-  const foreignKeys = Object.values(context.foreignKeys);
+  const foreignKeys = Object.values(context.foreignKeys).flat();
   const header = await castHeader(context);
   const entities = flatMap(tables, castEntity(context));
 
+  console.log(foreignKeys);
   const relationships = flatMap(foreignKeys, castRelation(context));
 
   const userOverlaps = applyConfigToCoreference(context);
 
   return [
     header,
-
     size(userOverlaps) > 0 ? castCoreferenceHeader(userOverlaps) : divider(),
-
     entities.join("\n\n"),
+    divider(),
+    relationships.join("\n\n"),
   ].join("\n");
 };

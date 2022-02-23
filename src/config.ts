@@ -77,10 +77,12 @@ export type ConfigOptions = Partial<ConfigValues> &
 
 export class Config {
   public readonly config: ConfigOptions;
+
   public readonly timestamp: string;
 
   constructor(
     private readonly argv: string[],
+
     public readonly connection: string,
     config: CommandOptions
   ) {
@@ -160,12 +162,19 @@ export class Config {
     return inflect(name, this.config.columnFormatter);
   }
 
-  public formatRelationName(name: string) {
-    console.warn(name)
+  public formatEntityName(name: string) {
+    return inflect(name, this.config.tableFormatter);
+  }
 
+  public formatAttributeName(name: string) {
     return inflect(name, this.config.columnFormatter);
   }
 
+  public formatRelationName(name: string) {
+    return inflect(name, this.config.columnFormatter);
+  }
+
+  //
   // public getCLICommand(dbConnection: string): string {
   //   const commands = ["schemats", "generate", dbConnection];
   //   // if (this.config.camelCase) {
