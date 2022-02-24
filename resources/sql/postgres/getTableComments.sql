@@ -9,3 +9,5 @@ FROM
 WHERE
     pgd.objsubid = 0
     AND t.table_schema = $1
+    AND pgd.description IS NOT NULL
+    AND pgd.description != ''

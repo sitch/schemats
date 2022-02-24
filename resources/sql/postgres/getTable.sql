@@ -3,6 +3,7 @@ SELECT
     , REGEXP_REPLACE(c.udt_name , '^_' , '') AS "udtName"
     , CAST(c.is_nullable = 'YES' AS boolean) AS "isNullable"
     , c.column_default IS NOT NULL AS "hasDefault"
+    , c.column_default AS "defaultValue"
     , c.udt_name LIKE '^_' AS "isArray"
 FROM
     information_schema.columns AS c

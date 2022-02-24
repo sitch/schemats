@@ -51,4 +51,4 @@ export const divider = (
 };
 
 export const banner = (comment: string, label: string) =>
-  `${divider(comment)} ${label}${divider(comment)}`;
+  `${divider(comment)}${comment} ${label}${divider(comment)}`;

@@ -1,9 +1,9 @@
 import { Config } from "./config";
 import {
+  PrimaryKey,
   ForeignKey,
   TableName,
   TableDefinition,
-  TableDefinitionMap,
 } from "./adapters/types";
 
 //------------------------------------------------------------------------------
@@ -21,8 +21,7 @@ export type RelationshipMap = Record<TableName, Relationship[]>;
 
 export const buildRelationships = (
   config: Config,
-  tables: TableDefinitionMap,
-  foreignKeys: ForeignKey[]
+  tables: TableDefinition[]
 ): Relationship[] => {
   return [];
 };
@@ -33,7 +32,8 @@ export const buildRelationships = (
 // const countKey = (fk: ForeignKey) => `${fk.table_name},${fk.conname}`;
 // const colCounts = countBy(result.rows, countKey);
 export const transformCompoundForeignKeys = (
-  foreignKeys: ForeignKey[]
+  config: Config,
+  tables: TableDefinition[]
 ): ForeignKey[] => {
   // TODO: implement
   throw "not implemented";

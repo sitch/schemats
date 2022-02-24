@@ -10,3 +10,5 @@ FROM
             AND c.table_name = st.relname)
 WHERE
     c.table_schema = $1
+    AND pgd.description IS NOT NULL
+    AND pgd.description != ''

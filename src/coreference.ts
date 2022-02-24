@@ -1,8 +1,8 @@
 import { Config, ENUM_DELIMITER } from "./config";
 import { BuildContext } from "./generator";
-import { flatMap, fromPairs, toPairs, uniq, sortBy, omit } from "lodash";
+import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, keyBy } from "lodash";
 import {
-  TableDefinitionMap,
+  TableDefinition,
   ColumnName,
   TableName,
   UDTName,
@@ -34,14 +34,9 @@ export interface TypeDBCoreferences {
 
 //------------------------------------------------------------------------------
 
-// assertUniqEntities(config, tableDefinitions)
-// assertUniqAttributesAndTypes( config, overlaps)
-
-// const userOverlaps = applyConfigToCoreferenceMap(context);
-
 export const buildCoreferences = (
   { ignoreFieldCollisions }: Config,
-  tables: TableDefinitionMap
+  tables: TableDefinition[]
 ): Coreferences => {
   const all = attributeOverlapGrouping(tables);
 
@@ -67,39 +62,28 @@ export const applyConfigToCoreferenceMap = ({
 };
 
 export const findTableColumnType = (
-  tableDefinitions: TableDefinitionMap,
+  tables: TableDefinition[],
   tableName: TableName,
   columnName: ColumnName
 ) => {
-  // const table = tableDefinitions.find(({ name }) => name === tableName);
-  const table = tableDefinitions[tableName];
-  const column = Object.values(table?.columns).find(
-    ({ name }) => name === columnName
-  );
+  const tableMap = keyBy(tables, "name");
+
+  const table = tableMap[tableName];
+  const column = (table?.columns).find(({ name }) => name === columnName);
   return column?.udtName;
 };
 
-export const attributeGroupingPairs = (
-  tableDefinitions: TableDefinitionMap
-) => {
-  const tableList = Object.values(tableDefinitions);
-
+export const attributeGroupingPairs = (tableList: TableDefinition[]) => {
   const tableColumnNames = uniq(
-    flatMap(
-      tableList.map(({ columns }) =>
-        Object.values(columns).map(({ name }) => name)
-      )
-    )
+    flatMap(tableList.map(({ columns }) => columns.map(({ name }) => name)))
   );
 
   const pairs = tableColumnNames.map((columnName) => {
     const tables = tableList.filter(({ columns }) =>
-      Object.values(columns)
-        .map(({ name }) => name)
-        .includes(columnName)
+      columns.map(({ name }) => name).includes(columnName)
     );
     const tableNames = tables.map(({ name }) =>
-      [findTableColumnType(tableDefinitions, name, columnName), name].join(
+      [findTableColumnType(tableList, name, columnName), name].join(
         ENUM_DELIMITER
       )
     );
@@ -110,9 +94,9 @@ export const attributeGroupingPairs = (
 };
 
 export const attributeOverlapGrouping = (
-  tableDefinitions: TableDefinitionMap
+  tables: TableDefinition[]
 ): CoreferenceMap => {
-  const groupingPairs = attributeGroupingPairs(tableDefinitions);
+  const groupingPairs = attributeGroupingPairs(tables);
   return fromPairs(groupingPairs.filter(([key, values]) => values.length > 1));
 };
 

@@ -1,5 +1,5 @@
 import json5 from "json5";
-import { keyBy } from "lodash";
+import { isEmpty, update } from "lodash";
 import { Connection, createConnection, RowDataPacket } from "mysql2/promise";
 import { Config } from "../config";
 import { readSQL } from "../utils";
@@ -91,15 +91,16 @@ export class MySQLDatabase implements Database {
       column: ColumnName;
       isNullable: boolean;
       hasDefault: boolean;
+      defaultValue: any;
       encodedEnumValues: MySQLEncodedEnumValueString;
     }>(Queries.getEnums, [schema]);
 
-    return result.map(
-      ({ encodedEnumValues, ...rest }): EnumDefinition => ({
+    return result
+      .map(({ hasDefault, isNullable, encodedEnumValues, ...rest }) => ({
         ...rest,
         values: this.parseEnumString(encodedEnumValues),
-      })
-    );
+      }))
+      .map(this.castUnsigned(["hasDefault", "isNullable"]))
   }
 
   public async getTable(
@@ -113,13 +114,16 @@ export class MySQLDatabase implements Database {
       isArray: boolean;
       isNullable: boolean;
       hasDefault: boolean;
+      defaultValue: any;
     }>(Queries.getTable, [schema, table]);
 
     if (result.length === 0) {
       console.error(`[mysql] Missing columns for table: ${schema}.${table}`);
     }
-    // return { name: table, columns: keyBy(result, "name") };
-    return { name: table, columns: result };
+    const columns = result.map(
+      this.castUnsigned(["isArray", "hasDefault", "isNullable"])
+    );
+    return { name: table, columns };
   }
 
   private async query<T>(query: string, args: any[]): Promise<T[]> {
@@ -135,5 +139,10 @@ export class MySQLDatabase implements Database {
     }
     const encoded = `[${value.replace(REGEX_MYSQL_SET_OR_ENUM, "")}]`;
     return json5.parse(encoded);
+  }
+
+  private castUnsigned<T extends object>(keys: string[]) {
+    return (record: T) =>
+      keys.reduce((record, key) => update(record, key, (val) => !!val), record);
   }
 }

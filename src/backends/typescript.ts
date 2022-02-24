@@ -85,7 +85,7 @@ const Interface = {
 
 const castInterface = (context: BuildContext) => (record: TableDefinition) => {
   const name = Interface.name(context, record);
-  const fields = Object.values(record.columns).map((column) => {
+  const fields = record.columns.map((column) => {
     const key = Interface.key(context, column);
     const value = Interface.value(context, column);
     return `  ${key}: ${value}`;
@@ -106,7 +106,7 @@ const castUserImports =
 //------------------------------------------------------------------------------
 
 export const castLookup = ({ config, tables }: BuildContext): string => {
-  const types = Object.values(tables).map(
+  const types = tables.map(
     ({ name }) => `  ${name}: ${normalizeName(config.formatTableName(name))}`
   );
   return `export interface Tables {\n${types.join(",\n")}\n}`;
@@ -117,10 +117,7 @@ export const castLookup = ({ config, tables }: BuildContext): string => {
 export const typescriptOfSchema = async (context: BuildContext) => {
   const enums = flatMap(context.enums, castEnum(context));
   const customImports = flatMap(context.userImports, castUserImports(context));
-  const interfaces = flatMap(
-    Object.values(context.tables),
-    castInterface(context)
-  );
+  const interfaces = flatMap(context.tables, castInterface(context));
   const lookup = castLookup(context);
 
   return [

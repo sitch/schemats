@@ -1,7 +1,7 @@
 import { version } from "../package.json";
 import { inflect, pretty } from "./formatters";
 import { callerRelPath } from "./utils";
-import { TableDefinitionMap } from "./adapters/types";
+import { TableDefinition } from "./adapters/types";
 import chalk from "chalk";
 
 //------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ export type UserImport = Set<string>;
 
 export const getUserImports = (
   config: Config,
-  tables: TableDefinitionMap = {}
+  tables: TableDefinition[] = []
 ): UserImport[] => {
   return [];
 };

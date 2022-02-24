@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { groupBy, keyBy } from "lodash";
+import { groupBy } from "lodash";
 import { Config } from "../config";
 import { readSQL } from "../utils";
 import {
@@ -108,12 +108,12 @@ export class PostgresDatabase implements Database {
       isArray: boolean;
       isNullable: boolean;
       hasDefault: boolean;
+      defaultValue: any;
     }>(Queries.getTable, [schema, table]);
 
     if (result.length === 0) {
       console.error(`[postgres] Missing columns for table: ${schema}.${table}`);
     }
-    // return { name: table, columns: keyBy(result, "name") };
     return { name: table, columns: result };
   }
 

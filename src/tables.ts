@@ -1,10 +1,11 @@
 import { get, keyBy, groupBy, isEmpty } from "lodash";
 import {
+  PrimaryKey,
+  ForeignKey,
   TableComment,
   ColumnComment,
   ColumnDefinition,
   TableDefinition,
-  TableDefinitionMap,
 } from "./adapters/types";
 
 const mergeColumnComment = (
@@ -28,11 +29,11 @@ const mergeTableColumnComments = (
   columnComments: ColumnComment[]
 ): TableDefinition => {
   const commentMap = keyBy(columnComments, "column");
-  const columns = Object.values(table.columns).map((column) =>
-    mergeColumnComment(column, get(commentMap, column.name))
-  );
+  const columns = table.columns.map((column) => {
+    const comment = get(commentMap, column.name);
+    return mergeColumnComment(column, comment);
+  });
   return { ...table, columns };
-  // return { ...table, columns: keyBy(columns, "name") };
 };
 
 export const mergeTableComments = (
@@ -40,26 +41,39 @@ export const mergeTableComments = (
   tableComment: TableComment | undefined,
   columnComments: ColumnComment[]
 ): TableDefinition => {
-  return mergeTableColumnComments(
-    mergeTableComment(table, tableComment),
-    columnComments
-  );
+  const tableWithComment = mergeTableComment(table, tableComment);
+  return mergeTableColumnComments(tableWithComment, columnComments);
+};
+
+export const mergeTableKeys = (
+  tables: TableDefinition[],
+  primaryKeys: PrimaryKey[],
+  foreignKeys: ForeignKey[]
+): TableDefinition[] => {
+  const primaryKeyMap = groupBy(primaryKeys, "table");
+  const foreignKeyMap = groupBy(foreignKeys, "primaryTable");
+
+  return tables.map((table) => {
+    const primaryKeys = get(primaryKeyMap, table.name, []);
+    const foreignKeys = get(foreignKeyMap, table.name, []);
+    return { ...table, primaryKeys, foreignKeys };
+  });
 };
 
 export const mergeTableMeta = (
-  tableDefinitions: TableDefinition[],
+  tables: TableDefinition[],
   tableComments: TableComment[],
-  columnComments: ColumnComment[]
-): TableDefinitionMap => {
+  columnComments: ColumnComment[],
+  primaryKeys: PrimaryKey[],
+  foreignKeys: ForeignKey[]
+): TableDefinition[] => {
   const tableCommentsMap = keyBy(tableComments, "table");
   const columnCommentsMap = groupBy(columnComments, "table");
 
-  const tables = tableDefinitions.map((table) =>
-    mergeTableComments(
-      table,
-      get(tableCommentsMap, table.name),
-      get(columnCommentsMap, table.name, [])
-    )
-  );
-  return keyBy(tables, "name");
+  const tablesWithComments = tables.map((table) => {
+    const comment = get(tableCommentsMap, table.name);
+    const columnComments = get(columnCommentsMap, table.name, []);
+    return mergeTableComments(table, comment, columnComments);
+  });
+  return mergeTableKeys(tablesWithComments, primaryKeys, foreignKeys);
 };

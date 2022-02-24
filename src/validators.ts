@@ -3,7 +3,7 @@ import { Backend, Config } from "./config";
 import { BuildContext } from "./generator";
 import { pretty } from "./formatters";
 import { jsonEq } from "./utils";
-import { EnumDefinition, TableDefinitionMap } from "./adapters/types";
+import { EnumDefinition, TableDefinition } from "./adapters/types";
 
 const enumEq = (left: EnumDefinition, right: EnumDefinition): boolean => {
   if (
@@ -32,7 +32,7 @@ export const validateEnums = (
 
 export const validateTables = (
   config: Config,
-  tables: TableDefinitionMap
+  tables: TableDefinition[]
 ): boolean => {
   if (size(tables) <= 0) {
     console.error(`[tableNames] No tables found: ${config.schema}`);

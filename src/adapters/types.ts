@@ -8,11 +8,11 @@ export type ConstraintName = string;
 
 //------------------------------------------------------------------------------
 
-export type PrimaryKeyMap = Record<TableName, PrimaryKey[]>;
-export type ForeignKeyMap = Record<TableName, ForeignKey[]>;
-export type TableDefinitionMap = Record<TableName, TableDefinition>;
-export type ColumnCommentMap = Record<ColumnName, ColumnComment>;
-export type ColumnDefinitionMap = Record<ColumnName, ColumnDefinition>;
+// export type PrimaryKeyMap = Record<TableName, PrimaryKey[]>;
+// export type ForeignKeyMap = Record<TableName, ForeignKey[]>;
+// export type TableDefinitionMap = Record<TableName, TableDefinition>;
+// export type ColumnCommentMap = Record<ColumnName, ColumnComment>;
+// export type ColumnDefinitionMap = Record<ColumnName, ColumnDefinition>;
 
 //------------------------------------------------------------------------------
 
@@ -21,8 +21,9 @@ export interface ParameterizedEnumDefinition<T> {
   values: T[];
   table?: TableName;
   column?: ColumnName;
-  isNullable?: boolean;
   hasDefault?: boolean;
+  isNullable?: boolean;
+  defaultValue?: any;
 }
 export type EnumDefinition = ParameterizedEnumDefinition<string>;
 
@@ -30,9 +31,10 @@ export type EnumDefinition = ParameterizedEnumDefinition<string>;
 
 export interface TableDefinition {
   name: TableName;
-  // columns: ColumnDefinitionMap;
   columns: ColumnDefinition[];
   comment?: Comment;
+  primaryKeys?: PrimaryKey[];
+  foreignKeys?: ForeignKey[];
 }
 
 //------------------------------------------------------------------------------
@@ -41,11 +43,12 @@ export interface ColumnDefinition {
   name: ColumnName;
   udtName: UDTName;
   comment?: Comment;
-  primaryKey?: PrimaryKey;
-  foreignKey?: ForeignKey;
+  // primaryKey?: PrimaryKey;
+  // foreignKey?: ForeignKey;
   isArray: boolean;
-  isNullable: boolean;
   hasDefault: boolean;
+  isNullable: boolean;
+  defaultValue: any;
 }
 
 //------------------------------------------------------------------------------
@@ -59,10 +62,6 @@ export interface ColumnComment {
   table: TableName;
   column: ColumnName;
   comment: Comment;
-
-  // TODO: look at
-  columnType?: string;
-  columnDefault?: string;
 }
 
 //------------------------------------------------------------------------------

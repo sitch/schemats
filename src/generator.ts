@@ -24,7 +24,7 @@ import {
   TableComment,
   ColumnComment,
   EnumDefinition,
-  TableDefinitionMap,
+  TableDefinition,
 } from "./adapters/types";
 
 //------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ export interface BuildContext {
   tableComments: TableComment[];
   columnComments: ColumnComment[];
   enums: EnumDefinition[];
-  tables: TableDefinitionMap;
+  tables: TableDefinition[];
   relationships: Relationship[];
   coreferences: Coreferences;
   userImports: UserImport[];
@@ -78,26 +78,32 @@ const compile = async (config: Config, db: Database): Promise<BuildContext> => {
   const columnComments = await db.getColumnComments(schema);
   config.log("[db] Fetched columnComments", columnComments);
 
-  const tables = await Promise.all(
+  const tableList = await Promise.all(
     tableNames.map((table) => db.getTable(schema, table))
   );
-  config.log("[db] Fetched tables", tables);
+  config.log("[db] Fetched tables", tableList);
 
   //----------------------------------------------------------------------------
   // Compilation
   //----------------------------------------------------------------------------
 
-  const tablesWithMeta = mergeTableMeta(tables, tableComments, columnComments);
-  validateTables(config, tablesWithMeta);
-  config.log("[build] Transformed tablesWithMeta", tablesWithMeta);
+  const tables = mergeTableMeta(
+    tableList,
+    tableComments,
+    columnComments,
+    primaryKeys,
+    foreignKeys
+  );
+  validateTables(config, tables);
+  config.log("[build] Transformed tables", tables);
 
-  const userImports = getUserImports(config, tablesWithMeta);
+  const userImports = getUserImports(config, tables);
   config.log("[build] Compiled userImports", userImports);
 
-  const coreferences = buildCoreferences(config, tablesWithMeta);
+  const coreferences = buildCoreferences(config, tables);
   config.log("[build] Compiled coreferences", coreferences);
 
-  const relationships = buildRelationships(config, tablesWithMeta, foreignKeys);
+  const relationships = buildRelationships(config, tables);
   config.log("[build] Compiled relationships", relationships);
 
   return {
@@ -111,7 +117,7 @@ const compile = async (config: Config, db: Database): Promise<BuildContext> => {
     schema,
     tableComments,
     userImports,
-    tables: tablesWithMeta,
+    tables,
   };
 };
 

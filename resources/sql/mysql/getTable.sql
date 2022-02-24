@@ -4,6 +4,7 @@ SELECT
     , c.DATA_TYPE AS "udtName"
     , cast(c.IS_NULLABLE = 'YES' AS unsigned) AS "isNullable"
     , CAST(c.COLUMN_DEFAULT IS NOT NULL AS unsigned) AS "hasDefault"
+    , c.COLUMN_DEFAULT AS "defaultValue"
     , CAST(0 AS unsigned) AS "isArray"
 FROM
     information_schema.COLUMNS AS c

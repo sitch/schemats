@@ -77,7 +77,7 @@ const Entity = {
 const castEntity = (context: BuildContext) => (record: TableDefinition) => {
   const name = Entity.name(context, record);
   const type = Entity.type(context, record);
-  const columns = Object.values(record.columns);
+  const columns = record.columns;
 
   const fields = columns.map(Entity.field(context));
   const attributes = columns.map(castAttribute(context));
@@ -158,8 +158,8 @@ const castRelation = (context: BuildContext) => (record: ForeignKey) => {
 //------------------------------------------------------------------------------
 
 export const typedbOfSchema = async (context: BuildContext) => {
-  const tables = Object.values(context.tables);
-  const foreignKeys = Object.values(context.foreignKeys).flat();
+  const tables = context.tables;
+  const foreignKeys = context.foreignKeys.flat();
   const entities = flatMap(tables, castEntity(context));
   const relationships = flatMap(foreignKeys, castRelation(context));
   const typeDBCoreferences = castTypeDBCoreferences(context);
