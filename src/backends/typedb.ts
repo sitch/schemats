@@ -1,30 +1,14 @@
-import {
-  flatMap,
-  fromPairs,
-  toPairs,
-  uniq,
-  sortBy,
-  omit,
-  size,
-  identity,
-} from "lodash";
+import { identity, flatMap, size } from "lodash";
 import { Config } from "../config";
+import { banner, commentLines, pretty } from "../formatters";
+import { BuildContext } from "../generator";
+import { TypeDBCoreferences, castTypeDBCoreferences } from "../coreference";
+import { castTypeDBType, isReservedWord } from "../typemaps/typedb-typemap";
 import {
-  BuildContext,
-  EnumDefinition,
-  TableDefinition,
   ColumnDefinition,
   ForeignKey,
+  TableDefinition,
 } from "../adapters/types";
-import { castTypeDBType, isReservedWord } from "../typemaps/typedb-typemap";
-
-import {
-  applyConfigToCoreference,
-  invalidTypeDBOverlaps,
-  invalidOverlaps,
-  attributeOverlapGrouping,
-} from "../coreference";
-import { pretty } from "../formatters";
 
 //------------------------------------------------------------------------------
 
@@ -33,7 +17,7 @@ const normalizeName = (name: string): string =>
 
 //------------------------------------------------------------------------------
 
-const castHeader = async ({ config }: BuildContext): Promise<string> => `
+const castHeader = ({ config }: BuildContext): string => `
 ################################################################################
 #
 # AUTO-GENERATED FILE @ ${config.timestamp} - DO NOT EDIT!
@@ -49,33 +33,23 @@ ${config.database}-attribute sub attribute, abstract;`;
 
 //------------------------------------------------------------------------------
 
-const banner = (name: string) => `${divider()}# ${name}${divider()}`;
-const divider = () => `
-#-------------------------------------------------------------------------------
-`;
-
-const castCoreferenceHeader = (overlaps: Record<string, string[]>) => `
+const castCoreferenceMapHeader = ({
+  all,
+  error,
+  warning,
+}: TypeDBCoreferences) => `
 ################################################################################
-# ERRORS: INVALID TYPEDB COLLISIONS
+# ⛔ CRITICAL ⛔ - (${size(error)}) - TypeDB Attribute Conflicts
 ################################################################################
-${pretty(invalidTypeDBOverlaps(overlaps))
-  .split("\n")
-  .map((line) => `# ${line}`)
-  .join("\n")}
+${commentLines("#", pretty(error))}
 #===============================================================================
-# WARNING: INVALID TYPE COLLISIONS
+# ⚠️ WARNING ⚠️ - (${size(warning)}) - UDT Conflicts
 #===============================================================================
-${pretty(invalidOverlaps(overlaps))
-  .split("\n")
-  .map((line) => `# ${line}`)
-  .join("\n")}
+${commentLines("#", pretty(warning))}
 #-------------------------------------------------------------------------------
-# Overlapping keys
+# ❎ INFO ❎ - (${size(all)}) - TypeDB Attribute Overlaps
 #-------------------------------------------------------------------------------
-${pretty(overlaps)
-  .split("\n")
-  .map((line) => `# ${line}`)
-  .join("\n")}
+${commentLines("#", pretty(all))}
 ################################################################################
 `;
 
@@ -137,17 +111,17 @@ const Relation = {
   name: (
     { config }: BuildContext,
     {
-      table_name,
-      column_name,
-      foreign_table_name,
-      foreign_column_name,
-      conname,
+      primaryTable,
+      primaryColumn,
+      foreignTable,
+      foreignColumn,
+      constraint,
     }: ForeignKey
   ): string => {
-    const tableSource = config.formatRelationName(table_name);
-    const attributeSource = config.formatRelationName(column_name);
-    const tableDest = config.formatRelationName(foreign_table_name);
-    const attributeDest = config.formatRelationName(foreign_column_name);
+    const tableSource = config.formatRelationName(primaryTable);
+    const attributeSource = config.formatRelationName(primaryColumn);
+    const tableDest = config.formatRelationName(foreignTable);
+    const attributeDest = config.formatRelationName(foreignColumn);
 
     return normalizeName(
       `${tableSource}-${attributeSource}-${tableDest}-${attributeDest}`
@@ -161,21 +135,21 @@ const Relation = {
 const castRelation = (context: BuildContext) => (record: ForeignKey) => {
   const { config } = context;
   const {
-    table_name,
-    column_name,
-    foreign_table_name,
-    foreign_column_name,
-    conname,
+    primaryTable,
+    primaryColumn,
+    foreignTable,
+    foreignColumn,
+    constraint,
   } = record;
 
   const name = Relation.name(context, record);
   const type = Relation.type(context, record);
-  const comment = `# Source: '${config.schema}.${conname}'`;
+  const comment = `# Source: '${config.schema}.${constraint}'`;
   const relations = [
-    `  , owns ${config.formatAttributeName(column_name)}`,
-    `  , owns ${config.formatAttributeName(foreign_column_name)}`,
-    `  , relates ${config.formatEntityName(table_name)}`,
-    `  , relates ${config.formatEntityName(foreign_table_name)}`,
+    `  , owns ${config.formatAttributeName(primaryColumn)}`,
+    `  , owns ${config.formatAttributeName(foreignColumn)}`,
+    `  , relates ${config.formatEntityName(primaryTable)}`,
+    `  , relates ${config.formatEntityName(foreignTable)}`,
   ];
 
   return `${comment}\n${name} sub ${type}\n${relations.sort().join("\n")}\n;`;
@@ -186,19 +160,22 @@ const castRelation = (context: BuildContext) => (record: ForeignKey) => {
 export const typedbOfSchema = async (context: BuildContext) => {
   const tables = Object.values(context.tables);
   const foreignKeys = Object.values(context.foreignKeys).flat();
-  const header = await castHeader(context);
   const entities = flatMap(tables, castEntity(context));
   const relationships = flatMap(foreignKeys, castRelation(context));
-
-  const userOverlaps = applyConfigToCoreference(context);
+  const typeDBCoreferences = castTypeDBCoreferences(context);
 
   return [
-    [header],
-    size(userOverlaps) > 0 ? [castCoreferenceHeader(userOverlaps)] : [],
-    [banner(`Entities (${size(tables)})`)],
+    context.config.writeHeader ? [castHeader(context)] : [],
+    size(typeDBCoreferences.all) > 0
+      ? [castCoreferenceMapHeader(typeDBCoreferences)]
+      : [],
+    [banner("#", `Entities (${size(tables)})`)],
     [entities.join("\n\n")],
     size(foreignKeys) > 0
-      ? [banner(`Relations (${size(foreignKeys)})`), relationships.join("\n\n")]
+      ? [
+          banner("#", `Relations (${size(foreignKeys)})`),
+          relationships.join("\n\n"),
+        ]
       : [],
   ]
     .flat()

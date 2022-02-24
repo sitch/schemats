@@ -1,69 +1,123 @@
-import { Config, Backend, ALL_BACKENDS } from "./config";
-import {
-  BuildContext,
-  Coreferences,
-  CustomTypes,
-  Database,
-  EnumDefinitions,
-  Relationships,
-  Schema,
-  TableComments,
-  TableDefinitions,
-} from "./adapters/types";
-import { keyBy, merge } from "lodash";
+
 import { jsonOfSchema } from "./backends/json";
 import { typedbOfSchema } from "./backends/typedb";
 import { typescriptOfSchema } from "./backends/typescript";
-import { getCoreferences } from "./coreference";
-import { getRelationships } from "./relationships";
+import { Coreferences, buildCoreferences } from "./coreference";
+import { Relationship, buildRelationships } from "./relationships";
+import {
+  mergeTableComments,
 
-// const mergeComments = (tableDefinitions: TableDefinitions, tableComments: TableComments) : TableDefinitions {
-//   tableDefinitions.map(table => {
-//     const comments = tableComments[table.name]
-//   })
-// }
+} from "./tables";
+
+import {
+  validateTableNames,
+  validateEnums,
+  validateTables,
+} from "./validators";
+import {
+  BACKENDS,
+  Backend,
+  Config,
+  UserImport,
+  getUserImports,
+} from "./config";
+import {
+  Database,
+  SchemaName,
+  PrimaryKey,
+  ForeignKey,
+  TableComment,
+  ColumnComment,
+  EnumDefinition,
+  TableDefinitionMap,
+
+} from "./adapters/types";
+
+//------------------------------------------------------------------------------
+
+export interface BuildContext {
+  schema: SchemaName;
+  config: Config;
+  primaryKeys: PrimaryKey[];
+  foreignKeys: ForeignKey[];
+  tableComments: TableComment[];
+  columnComments: ColumnComment[];
+  enums: EnumDefinition[];
+  tables: TableDefinitionMap;
+  relationships: Relationship[];
+  coreferences: Coreferences;
+  userImports: UserImport[];
+}
+
+
+
+//------------------------------------------------------------------------------
+
 
 export async function generate(config: Config, db: Database): Promise<string> {
-  const context = await build(config, db);
+  const context = await compile(config, db);
   const backend = context.config.backend;
   return await render(context, backend);
 }
 
-const build = async (config: Config, db: Database): Promise<BuildContext> => {
+const compile = async (config: Config, db: Database): Promise<BuildContext> => {
   const schema = config.schema || (await db.getDefaultSchema());
+  config.log("[db] Using schema", schema);
+
   const tableNames = config.tables || (await db.getTableNames(schema));
+  validateTableNames(config, tableNames);
+  config.log("[db] Fetched tableNames", tableNames);
+
+  const enums = await db.getEnums(schema);
+  validateEnums(config, enums);
+  config.log("[db] Fetched enums", enums);
+
+  const primaryKeys = await db.getPrimaryKeys(schema);
+  config.log("[db] Fetched primaryKeys", primaryKeys);
+
   const foreignKeys = await db.getForeignKeys(schema);
-  const enums = await db.getEnumDefinitions(schema);
-  const tableDefinitions = await Promise.all(
-    tableNames.map((tableName) => db.getTableDefinition(schema, tableName))
+  config.log("[db] Fetched foreignKeys", foreignKeys);
+
+  const tableComments = await db.getTableComments(schema);
+  config.log("[db] Fetched tableComments", tableComments);
+
+  const columnComments = await db.getColumnComments(schema);
+  config.log("[db] Fetched columnComments", columnComments);
+
+  const tables = await Promise.all(
+    tableNames.map((table) => db.getTable(schema, table))
   );
+  config.log("[db] Fetched tables", tables);
 
-
-  // await Promise.all(
-  //   tableNames.map((tableName) => db.getMeta(schema, tableName))
-  // );
-
-  const tableComments: TableComments[] = await Promise.all(
-    tableNames.map((tableName) => db.getTableComments(schema, tableName))
-  );
-
-  // mergeComments(tableDefinitions, tableComments)
-
-  const tables = keyBy(tableDefinitions, "name");
-  const customTypes = getCustomTypes(config, tables);
-  const relationships = getRelationships(config, tables);
-  const coreferences = getCoreferences(config, tables);
-
-  return {
-    config,
-    relationships,
-    coreferences,
-    foreignKeys,
-    schema,
+  const tablesWithMeta = mergeTableComments(
     tables,
     tableComments,
+    columnComments
+  );
+  validateTables(config, tablesWithMeta);
+  config.log("[build] Transformed tablesWithMeta", tablesWithMeta);
+
+  const userImports = getUserImports(config, tablesWithMeta);
+  config.log("[build] Compiled userImports", userImports);
+
+  const coreferences = buildCoreferences(config, tablesWithMeta);
+  config.log("[build] Compiled coreferences", coreferences);
+
+  const relationships = buildRelationships(config, tablesWithMeta, foreignKeys);
+  config.log("[build] Compiled relationships", relationships);
+
+  return {
+    columnComments,
+    config,
+    coreferences,
     enums,
-    customTypes,
+    foreignKeys,
+    primaryKeys,
+    relationships,
+    schema,
+    tableComments,
+    userImports,
+    tables: tablesWithMeta,
   };
 };
 
@@ -77,13 +131,6 @@ const render = async (context: BuildContext, backend: Backend) => {
   if (backend === "typedb") {
     return await typedbOfSchema(context);
   }
-  const backends = ALL_BACKENDS.join(", ");
+  const backends = BACKENDS.join(", ");
   throw `Invalid backend: ${backend} must be one of: ${backends}`;
-};
-
-export const getCustomTypes = (
-  config: Config,
-  tables: TableDefinitions
-): CustomTypes => {
-  return [];
 };

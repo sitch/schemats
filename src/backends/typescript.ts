@@ -1,133 +1,21 @@
-import { Config } from "../config";
+import {  UserImport } from "../config";
 import { flatMap } from "lodash";
+import { BuildContext } from "../generator";
+import { translateType, isReservedWord } from "../typemaps/typescript-typemap";
 import {
-  BuildContext,
+  ColumnDefinition,
   EnumDefinition,
   TableDefinition,
-  ColumnDefinition,
-  EnumDefinitions,
-  TableDefinitions,
-  CustomType,
-  CustomTypes,
-  Coreferences,
 } from "../adapters/types";
 
 //------------------------------------------------------------------------------
 
-const reservedJSNames = new Set(["string", "number", "package"]);
 const normalizeName = (name: string): string =>
-  reservedJSNames.has(name) ? `${name}_` : name;
+  isReservedWord(name) ? `${name}_` : name;
 
 //------------------------------------------------------------------------------
 
-const MYSQL_TYPES: Record<string, string> = {
-  char: "string",
-  varchar: "string",
-  text: "string",
-  tinytext: "string",
-  mediumtext: "string",
-  longtext: "string",
-  time: "string",
-  geometry: "string",
-  set: "string",
-  enum: "string",
-  integer: "number",
-  int: "number",
-  smallint: "number",
-  mediumint: "number",
-  bigint: "number",
-  double: "number",
-  decimal: "number",
-  numeric: "number",
-  float: "number",
-  year: "number",
-  tinyint: "boolean",
-  json: "JSON",
-  date: "Date",
-  datetime: "Date",
-  timestamp: "Date",
-  tinyblob: "string",
-  mediumblob: "string",
-  longblob: "string",
-  blob: "string",
-  binary: "string",
-  varbinary: "string",
-  bit: "string",
-};
-
-const POSTGRES_TYPES: Record<string, string> = {
-  bpchar: "string",
-  char: "string",
-  varchar: "string",
-  text: "string",
-  citext: "string",
-  uuid: "string",
-  bytea: "string",
-  inet: "string",
-  time: "string",
-  timetz: "string",
-  interval: "string",
-  tsvector: "string",
-  mol: "string",
-  bit: "string",
-  bfp: "string",
-  name: "string",
-  int2: "number",
-  int4: "number",
-  int8: "number",
-  float4: "number",
-  float8: "number",
-  numeric: "number",
-  money: "number",
-  oid: "number",
-  bool: "boolean",
-  json: "JSON",
-  jsonb: "JSONB",
-  date: "Date",
-  timestamp: "Date",
-  timestamptz: "Date",
-  point: "{ x: number, y: number }",
-};
-
-const TYPES = { ...MYSQL_TYPES, ...POSTGRES_TYPES };
-
-const typing = (
-  config: Config,
-  { name, udtName }: ColumnDefinition,
-  enums: EnumDefinitions
-): string => {
-  const type = TYPES[udtName];
-  if (type && !["unknown"].includes(type)) {
-    return type;
-  }
-
-  const enumDefinition = enums.find((column) => column.name === udtName);
-  if (enumDefinition) {
-    return config.formatEnumName(enumDefinition.name);
-  }
-
-  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
-  if (config.throwOnMissingType) {
-    throw new Error(warning);
-  }
-  console.warn(warning);
-  return "any";
-};
-
-const translateType = (
-  config: Config,
-  record: ColumnDefinition,
-  enums: EnumDefinitions
-): string => {
-  const type = typing(config, record, enums);
-  return `${type}${record.isArray ? "[]" : ""}${
-    record.nullable ? " | null" : ""
-  }`;
-};
-
-//------------------------------------------------------------------------------
-
-const castHeader = async ({ config }: BuildContext): Promise<string> => `
+const castHeader = ({ config }: BuildContext): string => `
 /**
  * AUTO-GENERATED FILE @ ${config.timestamp} - DO NOT EDIT!
  *
@@ -184,17 +72,14 @@ const Interface = {
   },
   key: (
     { config }: BuildContext,
-    { name, nullable }: ColumnDefinition
+    { name, isNullable }: ColumnDefinition
   ): string => {
     return `${normalizeName(config.formatColumnName(name))}${
-      nullable ? "?" : ""
+      isNullable ? "?" : ""
     }`;
   },
-  value: (
-    { config, enums }: BuildContext,
-    record: ColumnDefinition
-  ): string => {
-    return translateType(config, record, enums);
+  value: (context: BuildContext, record: ColumnDefinition): string => {
+    return translateType(context, record);
   },
 };
 
@@ -210,9 +95,9 @@ const castInterface = (context: BuildContext) => (record: TableDefinition) => {
 
 //------------------------------------------------------------------------------
 
-const castCustom =
+const castUserImports =
   ({ config, tables }: BuildContext) =>
-  (record: CustomType): string => {
+  (record: UserImport): string => {
     return `import { ${Array.from(record).join(", ")} } from '${
       config.typesFile
     }'\n\n`;
@@ -230,14 +115,21 @@ export const castLookup = ({ config, tables }: BuildContext): string => {
 //------------------------------------------------------------------------------
 
 export const typescriptOfSchema = async (context: BuildContext) => {
-  const header = await castHeader(context);
-  const customs = flatMap(context.customTypes, castCustom(context));
   const enums = flatMap(context.enums, castEnum(context));
+  const customImports = flatMap(context.userImports, castUserImports(context));
   const interfaces = flatMap(
     Object.values(context.tables),
     castInterface(context)
   );
   const lookup = castLookup(context);
 
-  return [header, customs, enums, interfaces, lookup].flat().join("\n\n");
+  return [
+    context.config.writeHeader ? [castHeader(context)] : [],
+    customImports,
+    enums,
+    interfaces,
+    lookup,
+  ]
+    .flat()
+    .join("\n\n");
 };

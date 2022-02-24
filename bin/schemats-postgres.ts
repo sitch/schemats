@@ -33,9 +33,9 @@ export const postgres = async (program: Command, argv: string[]): Promise<void> 
 
             if (config.outputPath) {
               await writeRelFileAsync(schema, config.outputPath);
-              console.log(`Written ${config.backend} schema to ${config.outputPath}`);
+              console.info(`Written ${config.backend} schema to ${config.outputPath}`);
             } else {
-              console.log(schema);
+              console.info(schema);
             }
             await db.close();
         })

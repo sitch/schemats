@@ -1,13 +1,30 @@
 import { version } from "../package.json";
-import { inflect } from "./formatters";
+import { inflect, pretty } from "./formatters";
 import { relpath } from "./utils";
+import { TableDefinitionMap } from "./adapters/types";
 
-export const ALL_BACKENDS = ["typescript", "json", "typedb"] as const;
-export type Backends = typeof ALL_BACKENDS;
+//------------------------------------------------------------------------------
+
+export const BACKENDS = ["typescript", "json", "typedb"] as const;
+export type Backends = typeof BACKENDS;
 // export type Backend = "typescript" | "json" | "typedb";
 export type Backend = string;
 
+//------------------------------------------------------------------------------
+
+export type UserImport = Set<string>;
+
+export const getUserImports = (
+  config: Config,
+  tables: TableDefinitionMap = {}
+): UserImport[] => {
+  return [];
+};
+
+//------------------------------------------------------------------------------
+
 export interface ConfigValues {
+  logLevel: string;
   output?: string | undefined;
   outputPath: string | undefined;
   typedbEntityTemplate: string;
@@ -34,6 +51,7 @@ export type CommandOptions = Partial<ConfigValues> &
   Pick<
     ConfigValues,
     | "output"
+    // | "logLevel"
     | "schema"
     | "tables"
     | "backend"
@@ -50,6 +68,7 @@ export type ConfigOptions = Partial<ConfigValues> &
     ConfigValues,
     | "output"
     | "schema"
+    | "logLevel"
     | "tables"
     | "backend"
     | "database"
@@ -75,20 +94,21 @@ export type ConfigOptions = Partial<ConfigValues> &
 //   outputPath: config.output ? relpath(config.output) : config.output,
 // });
 
+//------------------------------------------------------------------------------
+
 export class Config {
   public readonly config: ConfigOptions;
-
   public readonly timestamp: string;
 
   constructor(
     private readonly argv: string[],
-
     public readonly connection: string,
     config: CommandOptions
   ) {
     this.timestamp = new Date().toUTCString();
     this.argv = argv;
     this.config = {
+      logLevel: "INFO",
       // ignoreFieldCollisions: [],
       writeHeader: true,
       throwOnMissingType: true,
@@ -98,6 +118,7 @@ export class Config {
         (x) => !!x
       ),
       outputPath: config.output ? relpath(config.output) : config.output,
+      // userImports: getUserImports(config)
     };
   }
 
@@ -107,11 +128,6 @@ export class Config {
 
   public get version() {
     return version;
-  }
-
-  public get ignoreFieldCollisions(): string[] {
-    return this.config.ignoreFieldCollisions;
-    // return (this.config.ignoreFieldCollisions || []).filter((x) => !!x);
   }
 
   public get outputPath() {
@@ -150,42 +166,42 @@ export class Config {
     return this.config.throwOnMissingType;
   }
 
-  public formatEnumName(name: string) {
+  public get ignoreFieldCollisions(): string[] {
+    return this.config.ignoreFieldCollisions;
+  }
+
+  public formatEnumName(name: string): string {
     return inflect(name, this.config.enumFormatter);
   }
 
-  public formatTableName(name: string) {
+  public formatTableName(name: string): string {
     return inflect(name, this.config.tableFormatter);
   }
 
-  public formatColumnName(name: string) {
+  public formatColumnName(name: string): string {
     return inflect(name, this.config.columnFormatter);
   }
 
-  public formatEntityName(name: string) {
+  public formatEntityName(name: string): string {
     return inflect(name, this.config.tableFormatter);
   }
 
-  public formatAttributeName(name: string) {
+  public formatAttributeName(name: string): string {
     return inflect(name, this.config.columnFormatter);
   }
 
-  public formatRelationName(name: string) {
+  public formatRelationName(name: string): string {
     return inflect(name, this.config.columnFormatter);
   }
 
-  //
-  // public getCLICommand(dbConnection: string): string {
-  //   const commands = ["schemats", "generate", dbConnection];
-  //   // if (this.config.camelCase) {
-  //   //     commands.push('-C')
-  //   // }
-  //   if (this.config.tables?.length > 0) {
-  //     commands.push("-t", this.config.tables.join(" "));
-  //   }
-  //   if (this.config.schema) {
-  //     commands.push(`-s ${this.config.schema}`);
-  //   }
-  //   return commands.join(" ");
-  // }
+  public log(message: string, data?: any): void {
+    if (!["DEBUG"].includes(this.config.logLevel)) {
+      return;
+    }
+    if (data) {
+      console.info(message, pretty(data));
+      return;
+    }
+    console.info(message);
+  }
 }

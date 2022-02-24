@@ -13,15 +13,15 @@ import { RandomPetFacts } from './db-custom-types'
 
 export enum Animal {
   'Dog' = 'dog',
-  'Cat' = 'cat' 
+  'Cat' = 'cat'
 }
 
-export interface User { 
+export interface User {
   uuid: string
-  name: string 
+  name: string
 }
 
-export interface Pet { 
+export interface Pet {
   uuid: string
   owner?: string | null
   type: Animal
@@ -30,7 +30,7 @@ export interface Pet {
   lastSeenLocation?: { x: number, y: number } | null
   randomFacts?: RandomPetFacts | null
   moreRandomFacts?: unknown | null
-  cuteName?: string | null 
+  cuteName?: string | null
 }
 
 export interface Tables {
@@ -38,4 +38,4 @@ export interface Tables {
   pet: Pet
 }
 
-export type CustomTypes = RandomPetFacts
+export type UserImports = RandomPetFacts

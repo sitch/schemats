@@ -1,16 +1,12 @@
 import { pretty } from "../formatters";
-import { BuildContext } from "../adapters/types";
+import { BuildContext } from "../generator";
 
-export const build = (context: BuildContext) => ({
-  // schema: context.config.schema,
-  // version: context.config.version,
-  // generated_on: new Date(),
-
-  // enums: context.enums,
-  // tables: context.tables,
-  // relationships: context.relationships,
-  // coreferences: context.coreferences,
+export const build = ({
+  config: { timestamp, config },
   ...context
+}: BuildContext) => ({
+  timestamp,
+  ...context,
 });
 
 export const jsonOfSchema = async (context: BuildContext) => {

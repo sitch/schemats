@@ -1,128 +1,93 @@
-import { Config } from "../config";
-
-export type Schema = string;
+export type SchemaName = string;
 export type TableName = string;
 export type ColumnName = string;
+export type Comment = string;
+export type EnumName = string;
+export type UDTName = string;
+export type ConstraintName = string;
+
+//------------------------------------------------------------------------------
+
+export type PrimaryKeyMap = Record<TableName, PrimaryKey[]>;
+export type ForeignKeyMap = Record<TableName, ForeignKey[]>;
+export type TableDefinitionMap = Record<TableName, TableDefinition>;
+export type ColumnCommentMap = Record<ColumnName, ColumnComment>;
+export type ColumnDefinitionMap = Record<ColumnName, ColumnDefinition>;
 
 //------------------------------------------------------------------------------
 
 export interface ParameterizedEnumDefinition<T> {
+  name: EnumName;
   values: T[];
-  name: string;
-  // table?: string;
-  column?: string;
+  table?: TableName;
+  column?: ColumnName;
+  isNullable?: boolean;
+  hasDefault?: boolean;
 }
 export type EnumDefinition = ParameterizedEnumDefinition<string>;
-export type EnumDefinitions = EnumDefinition[];
 
 //------------------------------------------------------------------------------
 
 export interface TableDefinition {
   name: TableName;
-  columns: ColumnDefinitions;
+  columns: ColumnDefinitionMap;
 }
-export type TableDefinitions = Record<TableName, TableDefinition>;
 
-export interface TableComment {
-  column: TableName;
-  description: string;
-}
-export type TableKeys = Record<string, string>;
-// export type TableComments = Record<string, TableComment>;
-
-export interface TableComments {
-  table: TableName;
-  columns: Record<string, TableComment>;
-}
 //------------------------------------------------------------------------------
 
 export interface ColumnDefinition {
   name: ColumnName;
-  udtName: string;
-  comment?: string;
-  isArray: boolean;
-  nullable: boolean;
-  hasDefault: boolean;
+  udtName: UDTName;
+  comment?: Comment;
+  primaryKey?: PrimaryKey;
   foreignKey?: ForeignKey;
-
-  // TODO: Remove
-  tsType?: string;
+  isArray: boolean;
+  isNullable: boolean;
+  hasDefault: boolean;
 }
-export type ColumnComments = Record<string, Record<string, string>>;
-export type ColumnDefinitions = Record<ColumnName, ColumnDefinition>;
 
 //------------------------------------------------------------------------------
 
-export interface ForeignKey {
-  table_name: string;
-  column_name: string;
-  foreign_table_name: string;
-  foreign_column_name: string;
-  conname: string;
+export interface TableComment {
+  table: TableName;
+  comment: Comment;
 }
 
-// export interface ForeignKey {
-//   table: string;
-//   column: string;
-//   // cardinality: Cardinality;
+export interface ColumnComment {
+  table: TableName;
+  column: ColumnName;
+  comment: Comment;
+
+  // TODO: look at
+  columnType?: string;
+  columnDefault?: string;
+}
+
+//------------------------------------------------------------------------------
+
+export interface PrimaryKey {
+  table: TableName;
+  column: ColumnName;
+  constraint: ConstraintName;
+  isUnique: boolean;
+  ordinalPosition: number;
+}
+
+//------------------------------------------------------------------------------
+
+// export interface TableColumnVector {
+//   table: TableName;
+//   column: ColumnName;
 // }
-// export type ForeignKeys = Record<string, { [columnName: string]: ForeignKey }>;
-export type ForeignKeys = Record<TableName, ForeignKey[]>;
-
-export type RelationshipType = string;
-export interface Relationship {
-  source: TableDefinition;
-  sink: TableDefinition;
-  type: RelationshipType;
+export interface ForeignKey {
+  // source: TableColumnVector;
+  // dest: TableColumnVector;
+  primaryTable: TableName;
+  primaryColumn: ColumnName;
+  foreignTable: TableName;
+  foreignColumn: ColumnName;
+  constraint: ConstraintName;
 }
-export type Relationships = Relationship[];
-
-export interface Metadata {
-  schema: string;
-  enumTypes: any;
-  foreignKeys: ForeignKeys;
-  tableToKeys: TableKeys;
-  columnComments: ColumnComments;
-  tableComments: TableComments;
-}
-
-//------------------------------------------------------------------------------
-
-export type Coreference = Record<string, string>;
-
-export interface Coreferences {
-  all: Coreference;
-  user: Coreference;
-}
-//------------------------------------------------------------------------------
-
-export type CustomType = Set<string>;
-export type CustomTypes = CustomType[];
-
-//------------------------------------------------------------------------------
-
-export interface BuildContext {
-  schema: Schema;
-  config: Config;
-  tables: TableDefinitions;
-  tableComments: TableComments[];
-  enums: EnumDefinitions;
-  relationships: Relationships;
-  foreignKeys: ForeignKeys;
-  customTypes: CustomTypes;
-  coreferences: Coreferences;
-}
-
-export type DBTypeMap = Record<string, string>;
-
-//------------------------------------------------------------------------------
-
-const ALL_BACKENDS = ["typescript", "json", "typedb"] as const;
-
-export type Backends = typeof ALL_BACKENDS;
-
-// export type Backend = "typescript" | "json" | "typedb";
-export type Backend = string;
 
 //------------------------------------------------------------------------------
 
@@ -131,27 +96,14 @@ export interface Database {
   getConnectionString: () => string;
   isReady(): Promise<void>;
   close(): Promise<void>;
-  getDefaultSchema(): Promise<Schema>;
-  getTableNames(schemaName: Schema): Promise<TableName[]>;
-  getEnumDefinitions(schemaName: Schema): Promise<EnumDefinitions>;
-  getTableDefinition(
-    schemaName: Schema,
-    tableName: TableName
-  ): Promise<TableDefinition>;
-
-  getTableComments(
-    schemaName: Schema,
-    tableName: TableName
-  ): Promise<TableComments>;
-
-  getForeignKeys(schemaName: string): Promise<ForeignKeys>;
-
-  // getMeta(schemaName: string, tableName: string): Promise<void>;
-
-  // getTableKeys(schemaName: string, tableName: string): Promise<TableKeys>
-
-  // getTableDefinition(schemaName: string, tableName: string, customTypes: CustomType[]): Promise<TableDefinition>
-  // getTableDefinitions(schemaName: string, customTypes: CustomType[]): Promise<TableDefinitions>
+  getDefaultSchema(): Promise<SchemaName>;
+  getTableNames(schema: SchemaName): Promise<TableName[]>;
+  getPrimaryKeys(schema: SchemaName): Promise<PrimaryKey[]>;
+  getForeignKeys(schema: SchemaName): Promise<ForeignKey[]>;
+  getTableComments(schema: SchemaName): Promise<TableComment[]>;
+  getColumnComments(schema: SchemaName): Promise<ColumnComment[]>;
+  getEnums(schema: SchemaName): Promise<EnumDefinition[]>;
+  getTable(schema: SchemaName, table: TableName): Promise<TableDefinition>;
 }
 
 //------------------------------------------------------------------------------

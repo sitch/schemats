@@ -1,34 +1,63 @@
 import { Config } from "./config";
-import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, size } from "lodash";
+import { BuildContext } from "./generator";
+import { flatMap, fromPairs, toPairs, uniq, sortBy, omit } from "lodash";
 import {
-  BuildContext,
-  EnumDefinition,
-  TableDefinition,
-  ColumnDefinition,
-  EnumDefinitions,
-  DBTypeMap,
-  TableDefinitions,
-  CustomType,
-  CustomTypes,
-  Coreferences,
+  TableDefinitionMap,
+  ColumnName,
+  TableName,
+  UDTName,
 } from "./adapters/types";
 
 import { TYPEDB_TYPEMAP } from "./typemaps/typedb-typemap";
 
-export const getCoreferences = (
-  config: Config,
-  tables: TableDefinitions
+//------------------------------------------------------------------------------
+
+export type UDTTypeMap = Record<string, string>;
+
+//------------------------------------------------------------------------------
+
+export type CoreferenceType = string;
+export type CoreferenceMap = Record<ColumnName, CoreferenceType[]>;
+
+export interface Coreferences {
+  all: CoreferenceMap;
+  user: CoreferenceMap;
+}
+
+//------------------------------------------------------------------------------
+
+export interface TypeDBCoreferences {
+  all: CoreferenceMap;
+  error: CoreferenceMap;
+  warning: CoreferenceMap;
+}
+
+//------------------------------------------------------------------------------
+
+// assertUniqEntities(config, tableDefinitions)
+// assertUniqAttributesAndTypes( config, overlaps)
+
+// const userOverlaps = applyConfigToCoreferenceMap(context);
+
+export const buildCoreferences = (
+  { ignoreFieldCollisions }: Config,
+  tables: TableDefinitionMap
 ): Coreferences => {
+  const all = attributeOverlapGrouping(tables);
+
   return {
-    all: {},
+    all,
     user: {},
   };
 };
 
-const inferType = (types: DBTypeMap, udtName: string): string =>
+const inferType = (types: UDTTypeMap, udtName: UDTName): string =>
   types[udtName] || udtName;
 
-export const applyConfigToCoreference = ({ config, tables }: BuildContext) => {
+export const applyConfigToCoreferenceMap = ({
+  config,
+  tables,
+}: BuildContext) => {
   const overlaps = attributeOverlapGrouping(tables);
   const userOverlaps = omit(overlaps, config.ignoreFieldCollisions);
   if (config.ignoreFieldCollisions.includes("*")) {
@@ -38,9 +67,9 @@ export const applyConfigToCoreference = ({ config, tables }: BuildContext) => {
 };
 
 export const findTableColumnType = (
-  tableDefinitions: TableDefinitions,
-  tableName: string,
-  columnName: string
+  tableDefinitions: TableDefinitionMap,
+  tableName: TableName,
+  columnName: ColumnName
 ) => {
   // const table = tableDefinitions.find(({ name }) => name === tableName);
   const table = tableDefinitions[tableName];
@@ -50,7 +79,9 @@ export const findTableColumnType = (
   return column?.udtName;
 };
 
-export const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
+export const attributeGroupingPairs = (
+  tableDefinitions: TableDefinitionMap
+) => {
   const tableList = Object.values(tableDefinitions);
 
   const tableColumnNames = uniq(
@@ -77,13 +108,13 @@ export const attributeGroupingPairs = (tableDefinitions: TableDefinitions) => {
 };
 
 export const attributeOverlapGrouping = (
-  tableDefinitions: TableDefinitions
-) => {
+  tableDefinitions: TableDefinitionMap
+): CoreferenceMap => {
   const groupingPairs = attributeGroupingPairs(tableDefinitions);
   return fromPairs(groupingPairs.filter(([key, values]) => values.length > 1));
 };
 
-export const invalidOverlaps = (overlaps: Record<string, string[]>) => {
+export const invalidOverlaps = (overlaps: CoreferenceMap) => {
   return fromPairs(
     toPairs(overlaps)
       .filter(([key, values]) => values.length > 1)
@@ -99,7 +130,9 @@ const withTypeDBType = (value: string): string => {
   return [inferType(TYPEDB_TYPEMAP, udtName), udtName, table].join("::");
 };
 
-export const invalidTypeDBOverlaps = (overlaps: Record<string, string[]>) => {
+export const invalidTypeDBOverlaps = (
+  overlaps: CoreferenceMap
+): CoreferenceMap => {
   return fromPairs(
     toPairs(overlaps)
       .filter(([key, values]) => values.length > 1)
@@ -114,11 +147,12 @@ export const invalidTypeDBOverlaps = (overlaps: Record<string, string[]>) => {
   );
 };
 
-// const overlaps = attributeOverlapGrouping(tableDefinitions)
-// ignoreFieldCollisions: config.ignoreFieldCollisions,
-// overlaps,
-// invalidOverlaps: invalidOverlaps(overlaps),
-// invalidTypeDBOverlaps: invalidTypeDBOverlaps(overlaps),
-
-// assertUniqEntities(config, tableDefinitions)
-// assertUniqAttributesAndTypes( config, overlaps)
+export const castTypeDBCoreferences = ({
+  coreferences: { all },
+}: BuildContext): TypeDBCoreferences => {
+  return {
+    all,
+    error: invalidTypeDBOverlaps(all),
+    warning: invalidOverlaps(all),
+  };
+};

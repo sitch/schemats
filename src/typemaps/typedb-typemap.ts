@@ -1,4 +1,11 @@
-import { DBTypeMap, ColumnDefinition, BuildContext } from "../adapters/types";
+import { BuildContext } from "../generator";
+import { ColumnDefinition } from "../adapters/types";
+import { UDTTypeMap } from "../coreference";
+
+
+export type TypeDBType = string
+
+//------------------------------------------------------------------------------
 
 export const TYPEDB_RESERVED_WORDS = new Set([
   // datatypes
@@ -44,7 +51,7 @@ export const TYPEDB_RESERVED_WORDS = new Set([
   "isa",
 ]);
 
-export const TYPEDB_MYSQL_TYPEMAP: DBTypeMap = {
+export const TYPEDB_MYSQL_TYPEMAP: UDTTypeMap = {
   char: "string",
   varchar: "string",
   text: "string",
@@ -79,7 +86,7 @@ export const TYPEDB_MYSQL_TYPEMAP: DBTypeMap = {
   bit: "string",
 };
 
-export const TYPEDB_POSTGRES_TYPEMAP: DBTypeMap = {
+export const TYPEDB_POSTGRES_TYPEMAP: UDTTypeMap = {
   bpchar: "string",
   char: "string",
   varchar: "string",
@@ -113,10 +120,12 @@ export const TYPEDB_POSTGRES_TYPEMAP: DBTypeMap = {
   // point: "{ x: number, y: number }",
 };
 
-export const TYPEDB_TYPEMAP: DBTypeMap = {
+export const TYPEDB_TYPEMAP: UDTTypeMap = {
   ...TYPEDB_MYSQL_TYPEMAP,
   ...TYPEDB_POSTGRES_TYPEMAP,
 };
+
+//------------------------------------------------------------------------------
 
 export const isReservedWord = (name: string): boolean =>
   TYPEDB_RESERVED_WORDS.has(name);
@@ -124,7 +133,7 @@ export const isReservedWord = (name: string): boolean =>
 export const castTypeDBType = (
   { config, enums }: BuildContext,
   { udtName }: ColumnDefinition
-): string => {
+): TypeDBType => {
   const type = TYPEDB_TYPEMAP[udtName];
   if (type && !["unknown"].includes(type)) {
     return type;
