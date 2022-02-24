@@ -113,7 +113,8 @@ export class PostgresDatabase implements Database {
     if (result.length === 0) {
       console.error(`[postgres] Missing columns for table: ${schema}.${table}`);
     }
-    return { name: table, columns: keyBy(result, "name") };
+    // return { name: table, columns: keyBy(result, "name") };
+    return { name: table, columns: result };
   }
 
   private async query<T>(query: string, args: any[] = []): Promise<T[]> {

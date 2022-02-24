@@ -99,7 +99,9 @@ export const attributeGroupingPairs = (
         .includes(columnName)
     );
     const tableNames = tables.map(({ name }) =>
-      [findTableColumnType(tableDefinitions, name, columnName), name].join(ENUM_DELIMITER)
+      [findTableColumnType(tableDefinitions, name, columnName), name].join(
+        ENUM_DELIMITER
+      )
     );
     return [columnName, tableNames.sort()];
   });
@@ -127,7 +129,9 @@ export const invalidOverlaps = (overlaps: CoreferenceMap) => {
 
 const withTypeDBType = (value: string): string => {
   const [udtName, table] = value.split(ENUM_DELIMITER);
-  return [inferType(TYPEDB_TYPEMAP, udtName), udtName, table].join(ENUM_DELIMITER);
+  return [inferType(TYPEDB_TYPEMAP, udtName), udtName, table].join(
+    ENUM_DELIMITER
+  );
 };
 
 export const invalidTypeDBOverlaps = (

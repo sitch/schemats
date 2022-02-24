@@ -31,7 +31,8 @@ const mergeTableColumnComments = (
   const columns = Object.values(table.columns).map((column) =>
     mergeColumnComment(column, get(commentMap, column.name))
   );
-  return { ...table, columns: keyBy(columns, "name") };
+  return { ...table, columns };
+  // return { ...table, columns: keyBy(columns, "name") };
 };
 
 export const mergeTableComments = (

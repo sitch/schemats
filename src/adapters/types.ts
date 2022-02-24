@@ -30,7 +30,8 @@ export type EnumDefinition = ParameterizedEnumDefinition<string>;
 
 export interface TableDefinition {
   name: TableName;
-  columns: ColumnDefinitionMap;
+  // columns: ColumnDefinitionMap;
+  columns: ColumnDefinition[];
   comment?: Comment;
 }
 
