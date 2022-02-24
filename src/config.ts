@@ -1,12 +1,11 @@
 import { version } from "../package.json";
 import { inflect, pretty } from "./formatters";
-import { relpath } from "./utils";
+import { callerRelPath } from "./utils";
 import { TableDefinitionMap } from "./adapters/types";
-
 
 //------------------------------------------------------------------------------
 
-export const ENUM_DELIMITER = "::"
+export const ENUM_DELIMITER = "::";
 
 //------------------------------------------------------------------------------
 
@@ -101,6 +100,12 @@ export type ConfigOptions = Partial<ConfigValues> &
 
 //------------------------------------------------------------------------------
 
+const generateTimestamp = () => {
+  console.warn("Bypassing timestamp");
+  return "__TIMESTAMP_BYPASS__";
+  // return new Date().toUTCString();
+};
+
 export class Config {
   public readonly config: ConfigOptions;
   public readonly timestamp: string;
@@ -110,7 +115,7 @@ export class Config {
     public readonly connection: string,
     config: CommandOptions
   ) {
-    this.timestamp = new Date().toUTCString();
+    this.timestamp = generateTimestamp();
     this.argv = argv;
     this.config = {
       logLevel: "INFO",
@@ -122,7 +127,7 @@ export class Config {
       ignoreFieldCollisions: (config.ignoreFieldCollisions || []).filter(
         (x) => !!x
       ),
-      outputPath: config.output ? relpath(config.output) : config.output,
+      outputPath: config.output ? callerRelPath(config.output) : config.output,
       // userImports: getUserImports(config)
     };
   }
@@ -176,7 +181,10 @@ export class Config {
   }
 
   public formatEnumName(name: string): string {
-    return inflect(name.replace(ENUM_DELIMITER, '_'), this.config.enumFormatter);
+    return inflect(
+      name.replace(ENUM_DELIMITER, "_"),
+      this.config.enumFormatter
+    );
   }
 
   public formatTableName(name: string): string {

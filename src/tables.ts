@@ -1,43 +1,64 @@
-import { keyBy } from "lodash";
-import { Config } from "./config";
-import { jsonEq } from "./utils";
+import { get, keyBy, groupBy, isEmpty } from "lodash";
 import {
-  ColumnName,
   TableComment,
   ColumnComment,
+  ColumnDefinition,
   TableDefinition,
   TableDefinitionMap,
-  TableName,
-  EnumDefinition,
 } from "./adapters/types";
 
-// const mergeComments = (tables: TableDefinitionMap, tableComments: TableComments) : TableDefinitionMap {
-//   tables.map(table => {
-//     const comments = tableComments[table.name]
-//   })
-// }
+const mergeColumnComment = (
+  column: ColumnDefinition,
+  columnComment: ColumnComment | undefined
+): ColumnDefinition => {
+  const comment = get(columnComment, "comment");
+  return isEmpty(comment) ? column : { ...column, comment };
+};
+
+const mergeTableComment = (
+  table: TableDefinition,
+  tableComment: TableComment | undefined
+): TableDefinition => {
+  const comment = get(tableComment, "comment");
+  return isEmpty(comment) ? table : { ...table, comment };
+};
+
+const mergeTableColumnComments = (
+  table: TableDefinition,
+  columnComments: ColumnComment[]
+): TableDefinition => {
+  const commentMap = keyBy(columnComments, "column");
+  const columns = Object.values(table.columns).map((column) =>
+    mergeColumnComment(column, get(commentMap, column.name))
+  );
+  return { ...table, columns: keyBy(columns, "name") };
+};
 
 export const mergeTableComments = (
-  tables: TableDefinition[],
+  table: TableDefinition,
+  tableComment: TableComment | undefined,
+  columnComments: ColumnComment[]
+): TableDefinition => {
+  return mergeTableColumnComments(
+    mergeTableComment(table, tableComment),
+    columnComments
+  );
+};
+
+export const mergeTableMeta = (
+  tableDefinitions: TableDefinition[],
   tableComments: TableComment[],
   columnComments: ColumnComment[]
 ): TableDefinitionMap => {
-  let tablesWithMeta = keyBy(tables, "name");
-  // let comments = keyBy(
-  //   tableComments.filter(({ columns }) => size(columns) > 0),
-  //   "table"
-  // );
-  // let comments = keyBy(
-  //   tableComments.filter(({ columns }) => size(columns) > 0),
-  //   "table"
-  // );
+  const tableCommentsMap = keyBy(tableComments, "table");
+  const columnCommentsMap = groupBy(columnComments, "table");
 
-  // // comments.reduce((tables, {table, columns}) => {
-  // //   tables[table]
-
-  // // })
-
-  // return { tables, comments };
-
-  return tablesWithMeta;
+  const tables = tableDefinitions.map((table) =>
+    mergeTableComments(
+      table,
+      get(tableCommentsMap, table.name),
+      get(columnCommentsMap, table.name, [])
+    )
+  );
+  return keyBy(tables, "name");
 };

@@ -1,72 +1,49 @@
-
-
-
-
-
-
-
-
-
-
-import { keyBy } from "lodash";
-import { Config } from "./config";
+import { difference, size, uniqWith } from "lodash";
+import { Backend, Config } from "./config";
+import { BuildContext } from "./generator";
+import { pretty } from "./formatters";
 import { jsonEq } from "./utils";
-import {
-  ColumnName,
-  TableComment,
-  ColumnComment,
-  TableDefinition,
-  TableDefinitionMap,
-  TableName,
-  EnumDefinition,
-} from "./adapters/types";
+import { EnumDefinition, TableDefinitionMap } from "./adapters/types";
 
-
-
-
-
-export const validateTables = (config: Config, tables: TableDefinitionMap) : void => {
-
-}
-
-export const validateTableNames = (
-  config: Config,
-  tableNames: TableName[]
-): void => {
-  if (tableNames.length === 0) {
-    console.error(`[tableNames] Missing schema: ${config.schema}`);
+const enumEq = (left: EnumDefinition, right: EnumDefinition): boolean => {
+  if (
+    left.table !== right.table ||
+    left.column !== right.column ||
+    left.name !== right.name
+  ) {
+    return false;
   }
-};
-
-const assertValidEnum = (
-  enumMap: Record<string, string[]>,
-  { name, values }: EnumDefinition,
-  column: ColumnName
-) => {
-  if (enumMap[name] && jsonEq(enumMap[name], values)) {
-    throw new Error(
-      `Multiple enums with the same name and contradicting types were found: ${column}: ${JSON.stringify(
-        enumMap[name]
-      )} and ${JSON.stringify(values)}`
-    );
-  }
+  return jsonEq(left.values, right.values);
 };
 
 export const validateEnums = (
   config: Config,
   enums: EnumDefinition[]
-): void => {
-  // const groups = groupBy(enums, 'name')
-  // Object.values(groups).map(list => {
-  //   if(list.length !== 1) {
-  //   }
-  // })
-  // let enumMap: Record<string, string[]> = {};
-  // enums.map(
-  //   (record): EnumDefinition => {
-  //     assertValidEnum(enumMap, record, column);
-  //     enumMap[name] = values;
-  //     return record;
-  //   }
-  // );
+): boolean => {
+  const enumsUniq = uniqWith(enums, enumEq);
+  const enumsCollision = difference(enums, enumsUniq);
+
+  if (enumsCollision.length > 0) {
+    console.error("Enum collisions found: ", pretty(enumsCollision));
+    return false;
+  }
+  return true;
+};
+
+export const validateTables = (
+  config: Config,
+  tables: TableDefinitionMap
+): boolean => {
+  if (size(tables) <= 0) {
+    console.error(`[tableNames] No tables found: ${config.schema}`);
+    return false;
+  }
+  return true;
+};
+
+export const validateCoreferences = (
+  context: BuildContext,
+  backend: Backend
+): boolean => {
+  return true;
 };

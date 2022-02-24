@@ -1,6 +1,6 @@
 import {Command} from 'commander'
 import {  generate } from '../src/generator'
-import { MysqlDatabase } from '../src/adapters/mysql-database'
+import { MySQLDatabase } from '../src/adapters/mysql-adapter'
 import { Config, CommandOptions } from '../src/config'
 import { writeRelFileAsync } from '../src/utils'
 
@@ -27,7 +27,7 @@ export const mysql = async (program: Command, argv: string[]): Promise<void> => 
         .option('--no-throw-on-missing-type', 'don\'t throw an error when pg type cannot be mapped to ts type')
         .action(async (connection: string, options: CommandOptions) => {
             const config = new Config(argv, connection, options)
-            const db = new MysqlDatabase(config, connection)
+            const db = new MySQLDatabase(config, connection)
             await db.isReady()
             const schema = await generate(config, db)
 

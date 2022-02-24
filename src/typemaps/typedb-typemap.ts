@@ -51,7 +51,14 @@ export const TYPEDB_RESERVED_WORDS = new Set([
   "isa",
 ]);
 
-export const TYPEDB_MYSQL_TYPEMAP: UDTTypeMap = {
+
+export const isReservedWord = (name: string): boolean =>
+  TYPEDB_RESERVED_WORDS.has(name);
+
+//------------------------------------------------------------------------------
+
+
+export const MYSQL_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   char: "string",
   varchar: "string",
   text: "string",
@@ -86,7 +93,8 @@ export const TYPEDB_MYSQL_TYPEMAP: UDTTypeMap = {
   bit: "string",
 };
 
-export const TYPEDB_POSTGRES_TYPEMAP: UDTTypeMap = {
+
+export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   bpchar: "string",
   char: "string",
   varchar: "string",
@@ -121,14 +129,12 @@ export const TYPEDB_POSTGRES_TYPEMAP: UDTTypeMap = {
 };
 
 export const TYPEDB_TYPEMAP: UDTTypeMap = {
-  ...TYPEDB_MYSQL_TYPEMAP,
-  ...TYPEDB_POSTGRES_TYPEMAP,
+  ...MYSQL_TO_TYPEDB_TYPEMAP,
+  ...POSTGRES_TO_TYPEDB_TYPEMAP,
 };
 
-//------------------------------------------------------------------------------
 
-export const isReservedWord = (name: string): boolean =>
-  TYPEDB_RESERVED_WORDS.has(name);
+//------------------------------------------------------------------------------
 
 export const castTypeDBType = (
   { config, enums }: BuildContext,

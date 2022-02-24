@@ -1,19 +1,9 @@
-
 import { jsonOfSchema } from "./backends/json";
 import { typedbOfSchema } from "./backends/typedb";
 import { typescriptOfSchema } from "./backends/typescript";
 import { Coreferences, buildCoreferences } from "./coreference";
 import { Relationship, buildRelationships } from "./relationships";
-import {
-  mergeTableComments,
-
-} from "./tables";
-
-import {
-  validateTableNames,
-  validateEnums,
-  validateTables,
-} from "./validators";
+import { mergeTableMeta } from "./tables";
 import {
   BACKENDS,
   Backend,
@@ -21,6 +11,11 @@ import {
   UserImport,
   getUserImports,
 } from "./config";
+import {
+  validateCoreferences,
+  validateEnums,
+  validateTables,
+} from "./validators";
 import {
   Database,
   SchemaName,
@@ -30,7 +25,6 @@ import {
   ColumnComment,
   EnumDefinition,
   TableDefinitionMap,
-
 } from "./adapters/types";
 
 //------------------------------------------------------------------------------
@@ -49,10 +43,7 @@ export interface BuildContext {
   userImports: UserImport[];
 }
 
-
-
 //------------------------------------------------------------------------------
-
 
 export async function generate(config: Config, db: Database): Promise<string> {
   const context = await compile(config, db);
@@ -61,11 +52,14 @@ export async function generate(config: Config, db: Database): Promise<string> {
 }
 
 const compile = async (config: Config, db: Database): Promise<BuildContext> => {
+  //----------------------------------------------------------------------------
+  // Database
+  //----------------------------------------------------------------------------
+
   const schema = config.schema || (await db.getDefaultSchema());
   config.log("[db] Using schema", schema);
 
   const tableNames = config.tables || (await db.getTableNames(schema));
-  validateTableNames(config, tableNames);
   config.log("[db] Fetched tableNames", tableNames);
 
   const enums = await db.getEnums(schema);
@@ -89,7 +83,11 @@ const compile = async (config: Config, db: Database): Promise<BuildContext> => {
   );
   config.log("[db] Fetched tables", tables);
 
-  const tablesWithMeta = mergeTableComments(
+  //----------------------------------------------------------------------------
+  // Compilation
+  //----------------------------------------------------------------------------
+
+  const tablesWithMeta = mergeTableMeta(
     tables,
     tableComments,
     columnComments
@@ -122,6 +120,8 @@ const compile = async (config: Config, db: Database): Promise<BuildContext> => {
 };
 
 const render = async (context: BuildContext, backend: Backend) => {
+  validateCoreferences(context, backend);
+
   if (backend === "typescript") {
     return await typescriptOfSchema(context);
   }

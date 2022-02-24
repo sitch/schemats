@@ -1,6 +1,5 @@
-import json5 from "json5";
-import { keyBy } from "lodash";
-import { Connection, createConnection, RowDataPacket } from "mysql2/promise";
+import { Client } from "pg";
+import { groupBy, keyBy } from "lodash";
 import { Config } from "../config";
 import { readSQL } from "../utils";
 import {
@@ -8,58 +7,51 @@ import {
   ColumnName,
   Database,
   EnumDefinition,
-  EnumName,
   ForeignKey,
   PrimaryKey,
   SchemaName,
   TableComment,
   TableDefinition,
   TableName,
+  UDTName,
 } from "./types";
 
 //------------------------------------------------------------------------------
 
-const queryDir = `${__dirname}/mysql`;
 const Queries = {
-  getTableNames: readSQL(`${queryDir}/getTableNames.sql`),
-  getPrimaryKeys: readSQL(`${queryDir}/getPrimaryKeys.sql`),
-  getForeignKeys: readSQL(`${queryDir}/getForeignKeys.sql`),
-  getTableComments: readSQL(`${queryDir}/getTableComments.sql`),
-  getColumnComments: readSQL(`${queryDir}/getColumnComments.sql`),
-  getEnums: readSQL(`${queryDir}/getEnums.sql`),
-  getTable: readSQL(`${queryDir}/getTable.sql`),
+  getTableNames: readSQL("resources/sql/postgres/getTableNames.sql"),
+  getPrimaryKeys: readSQL("resources/sql/postgres/getPrimaryKeys.sql"),
+  getForeignKeys: readSQL("resources/sql/postgres/getForeignKeys.sql"),
+  getTableComments: readSQL("resources/sql/postgres/getTableComments.sql"),
+  getColumnComments: readSQL("resources/sql/postgres/getColumnComments.sql"),
+  getEnums: readSQL("resources/sql/postgres/getEnums.sql"),
+  getTable: readSQL("resources/sql/postgres/getTable.sql"),
+  // getTableMeta: readSQL("resources/sql/postgres/getTableMeta.sql"),
 };
 
 //------------------------------------------------------------------------------
 
-const REGEX_MYSQL_SET_OR_ENUM = /^(enum|set)\(?|\)$/g;
-
-const parseEncodedEnumValues = (value: string): string[] => {
-  if (!REGEX_MYSQL_SET_OR_ENUM.test(value)) {
-    console.error(`[mysql] Unrecognized enum value format: ${value}`);
-  }
-  const encoded = `[${value.replace(REGEX_MYSQL_SET_OR_ENUM, "")}]`;
-  return json5.parse(encoded);
-};
-
-//------------------------------------------------------------------------------
-
-export class MysqlDatabase implements Database {
+export class PostgresDatabase implements Database {
+  private db: Client;
   public version: string = "";
-  private db!: Connection;
 
-  constructor(private config: Config, public connectionString: string) {}
+  constructor(private config: Config, private connectionString?: string) {
+    this.db = new Client(connectionString);
+  }
 
   public async isReady(): Promise<void> {
-    this.db = await createConnection(this.connectionString);
+    await this.db.connect();
+    this.connectionString = `postgres://username:password@${this.db.host}:${this.db.port}/${this.db.database}`;
+    const result = await this.query<{ version: string }>(`SELECT version()`);
+    this.version = result[0].version;
   }
 
   public async close(): Promise<void> {
-    this.db.destroy();
+    await this.db.end();
   }
 
   public getConnectionString(): string {
-    return this.connectionString;
+    return this.connectionString!;
   }
 
   public async getDefaultSchema(): Promise<SchemaName> {
@@ -74,16 +66,16 @@ export class MysqlDatabase implements Database {
     return result.map(({ table }) => table);
   }
 
-  // https://dataedo.com/kb/query/mysql/list-all-primary-keys-and-their-columns
+  // https://dataedo.com/kb/query/postgresql/list-all-primary-keys-and-their-columns
   public async getPrimaryKeys(schema: SchemaName): Promise<PrimaryKey[]> {
     return await this.query<PrimaryKey>(Queries.getPrimaryKeys, [schema]);
   }
 
+  // See https://stackoverflow.com/a/10950402/388951
   public async getForeignKeys(schema: SchemaName): Promise<ForeignKey[]> {
     return await this.query<ForeignKey>(Queries.getForeignKeys, [schema]);
   }
 
-  // See https://stackoverflow.com/a/4946306/388951
   public async getTableComments(schema: SchemaName): Promise<TableComment[]> {
     return await this.query<TableComment>(Queries.getTableComments, [schema]);
   }
@@ -94,43 +86,38 @@ export class MysqlDatabase implements Database {
 
   public async getEnums(schema: SchemaName): Promise<EnumDefinition[]> {
     const result = await this.query<{
-      name: EnumName;
-      table: TableName;
-      column: ColumnName;
-      isNullable: boolean;
-      hasDefault: boolean;
-      encodedEnumValues: string;
+      name: string;
+      value: string;
     }>(Queries.getEnums, [schema]);
 
-    return result.map(
-      ({ encodedEnumValues, ...rest }): EnumDefinition => ({
-        ...rest,
-        values: parseEncodedEnumValues(encodedEnumValues),
-      })
-    );
+    const groups = groupBy(result, "name");
+    return Object.keys(groups).map((name) => ({
+      name,
+      values: groups[name].map(({ value }) => value),
+    }));
   }
 
+  // https://www.developerfiles.com/adding-and-retrieving-comments-on-postgresql-tables/
   public async getTable(
     schema: SchemaName,
     table: TableName
   ): Promise<TableDefinition> {
     const result = await this.query<{
-      table: TableName;
       name: ColumnName;
-      udtName: string;
+      udtName: UDTName;
       isArray: boolean;
       isNullable: boolean;
       hasDefault: boolean;
     }>(Queries.getTable, [schema, table]);
 
     if (result.length === 0) {
-      console.error(`[mysql] Missing columns for table: ${schema}.${table}`);
+      console.error(`[postgres] Missing columns for table: ${schema}.${table}`);
     }
     return { name: table, columns: keyBy(result, "name") };
   }
 
-  private async query<T>(query: string, args: any[]): Promise<T[]> {
-    const [rows, _columns] = await this.db.query<RowDataPacket[]>(query, args);
-    return rows as T[];
+  private async query<T>(query: string, args: any[] = []): Promise<T[]> {
+    const result = await this.db.query<T>(query, args);
+    return result.rows;
   }
 }

@@ -2,12 +2,11 @@ import { BuildContext } from "../generator";
 import { ColumnDefinition } from "../adapters/types";
 import { UDTTypeMap } from "../coreference";
 
-
-
-export type TypescriptType = string
-
 //------------------------------------------------------------------------------
 
+export type TypescriptType = string;
+
+//------------------------------------------------------------------------------
 
 export const TYPESCRIPT_RESERVED_WORDS = new Set([
   // primatives
@@ -17,7 +16,12 @@ export const TYPESCRIPT_RESERVED_WORDS = new Set([
   "package",
 ]);
 
-const TYPESCRIPT_MYSQL_TYPES: Record<string, string> = {
+export const isReservedWord = (name: string): boolean =>
+  TYPESCRIPT_RESERVED_WORDS.has(name);
+
+//------------------------------------------------------------------------------
+
+const MYSQL_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
   char: "string",
   varchar: "string",
   text: "string",
@@ -52,7 +56,7 @@ const TYPESCRIPT_MYSQL_TYPES: Record<string, string> = {
   bit: "string",
 };
 
-const TYPESCRIPT_POSTGRES_TYPES: Record<string, string> = {
+const POSTGRES_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
   bpchar: "string",
   char: "string",
   varchar: "string",
@@ -87,57 +91,44 @@ const TYPESCRIPT_POSTGRES_TYPES: Record<string, string> = {
 };
 
 export const TYPESCRIPT_TYPEMAP = {
-  ...TYPESCRIPT_MYSQL_TYPES,
-  ...TYPESCRIPT_POSTGRES_TYPES,
+  ...MYSQL_TO_TYPESCRIPT_TYPEMAP,
+  ...POSTGRES_TO_TYPESCRIPT_TYPEMAP,
 };
-
-export const isReservedWord = (name: string): boolean =>
-  TYPESCRIPT_RESERVED_WORDS.has(name);
-
 
 //------------------------------------------------------------------------------
 
+export const castTypescriptType = (
+  { config, enums }: BuildContext,
+  { udtName }: ColumnDefinition
+): TypescriptType => {
+  const type = TYPESCRIPT_TYPEMAP[udtName];
+  if (type && !["unknown"].includes(type)) {
+    return type;
+  }
 
+  const enumDefinition = enums.find(({ name }) => name === udtName);
+  if (enumDefinition) {
+    const enumType = config.formatEnumName(enumDefinition.name);
+    return `string; # enum: ${enumType}`;
+  }
 
+  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
+  if (config.throwOnMissingType) {
+    throw new Error(warning);
+  }
+  console.warn(warning);
+  return "any";
+};
 
-
-
-
-
-  export const castTypescriptType = (
-    { config, enums }: BuildContext,
-    { udtName }: ColumnDefinition
-  ): TypescriptType => {
-    const type = TYPESCRIPT_TYPEMAP[udtName];
-    if (type && !["unknown"].includes(type)) {
-      return type;
-    }
-
-    const enumDefinition = enums.find(({ name }) => name === udtName);
-    if (enumDefinition) {
-      const enumType = config.formatEnumName(enumDefinition.name);
-      return `string; # enum: ${enumType}`;
-    }
-
-    const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`;
-    if (config.throwOnMissingType) {
-      throw new Error(warning);
-    }
-    console.warn(warning);
-    return "any";
-  };
-
-  export const translateType = (
-    context: BuildContext,
-    record: ColumnDefinition,
-  ): TypescriptType => {
-    const type = castTypescriptType(context, record);
-    return `${type}${record.isArray ? "[]" : ""}${
-      record.isNullable ? " | null" : ""
-    }`;
-  };
-
-
+export const translateType = (
+  context: BuildContext,
+  record: ColumnDefinition
+): TypescriptType => {
+  const type = castTypescriptType(context, record);
+  return `${type}${record.isArray ? "[]" : ""}${
+    record.isNullable ? " | null" : ""
+  }`;
+};
 
 // // uses the type mappings from https://github.com/mysqljs/ where sensible
 // export const translateMySQLToTypescript = (
