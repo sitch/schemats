@@ -1,4 +1,4 @@
-import { Config } from "./config";
+import { Config, ENUM_DELIMITER } from "./config";
 import { BuildContext } from "./generator";
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit } from "lodash";
 import {
@@ -99,7 +99,7 @@ export const attributeGroupingPairs = (
         .includes(columnName)
     );
     const tableNames = tables.map(({ name }) =>
-      [findTableColumnType(tableDefinitions, name, columnName), name].join("::")
+      [findTableColumnType(tableDefinitions, name, columnName), name].join(ENUM_DELIMITER)
     );
     return [columnName, tableNames.sort()];
   });
@@ -120,14 +120,14 @@ export const invalidOverlaps = (overlaps: CoreferenceMap) => {
       .filter(([key, values]) => values.length > 1)
       .filter(
         ([key, values]) =>
-          uniq(values.map((value) => value.split("::")[0])).length > 1
+          uniq(values.map((value) => value.split(ENUM_DELIMITER)[0])).length > 1
       )
   );
 };
 
 const withTypeDBType = (value: string): string => {
-  const [udtName, table] = value.split("::");
-  return [inferType(TYPEDB_TYPEMAP, udtName), udtName, table].join("::");
+  const [udtName, table] = value.split(ENUM_DELIMITER);
+  return [inferType(TYPEDB_TYPEMAP, udtName), udtName, table].join(ENUM_DELIMITER);
 };
 
 export const invalidTypeDBOverlaps = (
@@ -142,7 +142,7 @@ export const invalidTypeDBOverlaps = (
       ])
       .filter(
         ([key, values]) =>
-          uniq(values.map((value) => value.split("::")[0])).length > 1
+          uniq(values.map((value) => value.split(ENUM_DELIMITER)[0])).length > 1
       )
   );
 };
