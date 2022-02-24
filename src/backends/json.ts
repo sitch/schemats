@@ -2,9 +2,10 @@ import { pretty } from "../formatters";
 import { BuildContext } from "../generator";
 
 export const build = ({
-  config: { timestamp, config },
+  config: { version, timestamp, config },
   ...context
 }: BuildContext) => ({
+  version,
   timestamp,
   ...context,
 });
