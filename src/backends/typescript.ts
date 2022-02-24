@@ -1,4 +1,4 @@
-import {  UserImport } from "../config";
+import { UserImport } from "../config";
 import { flatMap } from "lodash";
 import { BuildContext } from "../generator";
 import { translateType, isReservedWord } from "../typemaps/typescript-typemap";

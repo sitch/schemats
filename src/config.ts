@@ -2,6 +2,7 @@ import { version } from "../package.json";
 import { inflect, pretty } from "./formatters";
 import { callerRelPath } from "./utils";
 import { TableDefinitionMap } from "./adapters/types";
+import chalk from "chalk";
 
 //------------------------------------------------------------------------------
 
@@ -100,12 +101,6 @@ export type ConfigOptions = Partial<ConfigValues> &
 
 //------------------------------------------------------------------------------
 
-const generateTimestamp = () => {
-  console.warn("Bypassing timestamp");
-  return "__TIMESTAMP_BYPASS__";
-  // return new Date().toUTCString();
-};
-
 export class Config {
   public readonly config: ConfigOptions;
   public readonly timestamp: string;
@@ -115,7 +110,7 @@ export class Config {
     public readonly connection: string,
     config: CommandOptions
   ) {
-    this.timestamp = generateTimestamp();
+    this.timestamp = this.generateTimestamp();
     this.argv = argv;
     this.config = {
       logLevel: "INFO",
@@ -212,9 +207,17 @@ export class Config {
       return;
     }
     if (data) {
-      console.info(message, pretty(data));
-      return;
+      console.info(chalk.cyan(message), pretty(data));
+    } else {
+      console.info(chalk.cyan(message));
     }
-    console.info(message);
+  }
+
+  private generateTimestamp(): string {
+    console.warn(chalk.yellow(`⚠️  ${chalk.bold("Bypassing timestamp")}  ⚠️`));
+    return "__TIMESTAMP_BYPASS__";
+
+    // TODO: RESTORE
+    // return new Date().toUTCString();
   }
 }

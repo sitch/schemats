@@ -2,8 +2,7 @@ import { BuildContext } from "../generator";
 import { ColumnDefinition } from "../adapters/types";
 import { UDTTypeMap } from "../coreference";
 
-
-export type TypeDBType = string
+export type TypeDBType = string;
 
 //------------------------------------------------------------------------------
 
@@ -51,12 +50,10 @@ export const TYPEDB_RESERVED_WORDS = new Set([
   "isa",
 ]);
 
-
 export const isReservedWord = (name: string): boolean =>
   TYPEDB_RESERVED_WORDS.has(name);
 
 //------------------------------------------------------------------------------
-
 
 export const MYSQL_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   char: "string",
@@ -92,7 +89,6 @@ export const MYSQL_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   varbinary: "string",
   bit: "string",
 };
-
 
 export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   bpchar: "string",
@@ -132,7 +128,6 @@ export const TYPEDB_TYPEMAP: UDTTypeMap = {
   ...MYSQL_TO_TYPEDB_TYPEMAP,
   ...POSTGRES_TO_TYPEDB_TYPEMAP,
 };
-
 
 //------------------------------------------------------------------------------
 

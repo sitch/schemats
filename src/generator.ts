@@ -87,11 +87,7 @@ const compile = async (config: Config, db: Database): Promise<BuildContext> => {
   // Compilation
   //----------------------------------------------------------------------------
 
-  const tablesWithMeta = mergeTableMeta(
-    tables,
-    tableComments,
-    columnComments
-  );
+  const tablesWithMeta = mergeTableMeta(tables, tableComments, columnComments);
   validateTables(config, tablesWithMeta);
   config.log("[build] Transformed tablesWithMeta", tablesWithMeta);
 
