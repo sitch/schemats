@@ -1,63 +1,86 @@
-import camelCase from "camelcase";
-import inflection from "inflection";
-import sortJson from "sort-json";
-import { VisitOptions } from "sort-json";
+import camelCase from 'camelcase'
+import inflection from 'inflection'
+import { castArray, isString } from 'lodash'
+import sortJson, { VisitOptions } from 'sort-json'
 
 const DEFAULT_SORT_JSON_OPTIONS = {
-  depth: Infinity,
-};
+  depth: Number.POSITIVE_INFINITY,
+}
 
 export const pretty = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
-  options: VisitOptions = DEFAULT_SORT_JSON_OPTIONS
+  options: VisitOptions = DEFAULT_SORT_JSON_OPTIONS,
 ) => {
-  const sorted = sortJson(data, options);
-  return JSON.stringify(sorted, null, 2);
-};
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const sorted = sortJson(data, options)
+  return JSON.stringify(sorted, undefined, 2)
+}
 
 export const inflect = (name: string, format: string | undefined): string => {
   if (!format) {
-    return name;
+    return name
   }
-  if (["camel", "camelcase"].includes(format)) {
-    return camelCase(name, { pascalCase: false });
+  if (['camel', 'camelcase'].includes(format)) {
+    return camelCase(name, { pascalCase: false })
   }
-  if (["pascal"].includes(format)) {
-    return camelCase(name, { pascalCase: true });
+  if (['pascal'].includes(format)) {
+    return camelCase(name, { pascalCase: true })
   }
-  if (["snakecase", "underscore"].includes(format)) {
-    return inflection.underscore(name);
+  if (['snakecase', 'underscore'].includes(format)) {
+    return inflection.underscore(name)
   }
-  if (["lower", "lowercase", "downcase"].includes(format)) {
-    return name.toLowerCase();
+  if (['lower', 'lowercase', 'downcase'].includes(format)) {
+    return name.toLowerCase()
   }
-  throw `Unsupported formatter: ${format}`;
-};
+  throw `Unsupported formatter: ${format}`
+}
+
+//------------------------------------------------------------------------------
 
 export const commentLines = (comment: string, body: string): string => {
   return body
-    .split("\n")
-    .map((line) => `${comment} ${line}`)
-    .join("\n");
-};
+    .split('\n')
+    .map(line => `${comment} ${line}`)
+    .join('\n')
+}
 
-export const divider = (
-  comment: string,
-  token: string = "-",
-  width: number = 80
-) => {
-  const count = Math.floor((width - comment.length) / token.length);
-  return `\n${comment}${token.repeat(count)}\n`;
-};
+//------------------------------------------------------------------------------
+
+export const divider = (comment: string, token = '-', width = 80) => {
+  const count = Math.floor((width - comment.length) / token.length)
+  return `\n${comment}${token.repeat(count)}\n`
+}
+
+//------------------------------------------------------------------------------
 
 export const banner = (comment: string, label: string) =>
-  `${divider(comment)}${comment} ${label}${divider(comment)}`;
+  `${divider(comment)}${comment} ${label}${divider(comment)}`
 
-export const pad = (content: string, padding: string = "  "): string =>
+//------------------------------------------------------------------------------
+
+export const padLines = (content: string, padding = '  '): string =>
   content
-    .split("\n")
-    .map((val) => `${padding}${val}`)
-    .join("\n");
+    .split('\n')
+    .map(value => `${padding}${value}`)
+    .join('\n')
+
+//------------------------------------------------------------------------------
 
 export const padWith = (padding: string) => (content: string) =>
-  pad(content, padding);
+  padLines(content, padding)
+
+//------------------------------------------------------------------------------
+
+type Line = string | boolean | undefined
+export type LineOrLines = Line | Line[]
+
+export const lines = (lineOrLines: LineOrLines, delimiter = '\n'): string => {
+  return castArray(lineOrLines)
+    .filter(value => isString(value))
+    .filter(value => !!value)
+    .join(delimiter)
+}
+
+export const singleQuote = (value: string): string => `"${value}"`
+export const doubleQuote = (value: string): string => `"${value}"`

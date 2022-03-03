@@ -1,88 +1,89 @@
-import { version } from "../package.json";
-import { inflect, pretty } from "./formatters";
-import { callerRelPath } from "./utils";
-import { TableDefinition } from "./adapters/types";
-import chalk from "chalk";
+import chalk from 'chalk'
+
+import { version } from '../package.json'
+import { TableDefinition } from './adapters/types'
+import { inflect, pretty } from './formatters'
+import { callerRelativePath } from './utils'
 
 //------------------------------------------------------------------------------
 
-export const ENUM_DELIMITER = "::";
+export const ENUM_DELIMITER = '::'
 
 //------------------------------------------------------------------------------
 
-export const BACKENDS = ["typescript", "json", "typedb", "julia"] as const;
-export type Backends = typeof BACKENDS;
+export const BACKENDS = ['typescript', 'json', 'typedb', 'julia'] as const
+export type Backends = typeof BACKENDS
 // export type Backend = "typescript" | "json" | "typedb" | "julia";
-export type Backend = string;
+export type Backend = string
 
 //------------------------------------------------------------------------------
 
-export type UserImport = Set<string>;
+export type UserImport = Set<string>
 
 export const getUserImports = (
-  config: Config,
-  tables: TableDefinition[] = []
+  _config: Config,
+  _tables: TableDefinition[] = [],
 ): UserImport[] => {
-  return [];
-};
+  return []
+}
 
 //------------------------------------------------------------------------------
 
 export interface ConfigValues {
-  logLevel: string;
-  output?: string | undefined;
-  outputPath: string | undefined;
-  typedbEntityTemplate: string;
-  typedbRelationTemplate: string;
-  typedbAttributeTemplate: string;
-  backend: string;
-  schema: string;
-  database: string;
-  connection: string;
-  tables: string[];
-  enums?: boolean;
-  ignoreFieldCollisions: string[];
+  logLevel: string
+  output?: string | undefined
+  outputPath: string | undefined
+  typedbEntityTemplate: string
+  typedbRelationTemplate: string
+  typedbAttributeTemplate: string
+  backend: string
+  schema: string
+  database: string
+  connection: string
+  tables: string[]
+  enums?: boolean
+  ignoreFieldCollisions: string[]
 
-  writeHeader?: boolean;
-  typesFile?: boolean;
-  throwOnMissingType?: boolean;
+  writeHeader?: boolean
+  typesFile?: string
+  throwOnMissingType?: boolean
 
-  enumFormatter?: string;
-  tableFormatter?: string;
-  columnFormatter?: string;
+  enumFormatter?: string
+  tableFormatter?: string
+  columnFormatter?: string
 }
 
 export type CommandOptions = Partial<ConfigValues> &
   Pick<
     ConfigValues,
-    | "output"
+    | 'output'
     // | "logLevel"
-    | "schema"
-    | "tables"
-    | "backend"
-    | "database"
-    | "connection"
-    | "ignoreFieldCollisions"
-    | "typedbEntityTemplate"
-    | "typedbRelationTemplate"
-    | "typedbAttributeTemplate"
-  >;
+    | 'schema'
+    | 'tables'
+    | 'backend'
+    | 'database'
+    | 'connection'
+    | 'ignoreFieldCollisions'
+    | 'typedbEntityTemplate'
+    | 'typedbRelationTemplate'
+    | 'typedbAttributeTemplate'
+  >
 
 export type ConfigOptions = Partial<ConfigValues> &
   Pick<
     ConfigValues,
-    | "output"
-    | "schema"
-    | "logLevel"
-    | "tables"
-    | "backend"
-    | "database"
-    | "connection"
-    | "ignoreFieldCollisions"
-    | "typedbEntityTemplate"
-    | "typedbRelationTemplate"
-    | "typedbAttributeTemplate"
-  >;
+    | 'output'
+    | 'schema'
+    | 'logLevel'
+    | 'tables'
+    | 'backend'
+    | 'database'
+    | 'connection'
+    | 'ignoreFieldCollisions'
+    | 'typedbEntityTemplate'
+    | 'typedbRelationTemplate'
+    | 'typedbAttributeTemplate'
+  >
 
 // const applyDefaults = (
 //   config: CommandOptions,
@@ -102,120 +103,116 @@ export type ConfigOptions = Partial<ConfigValues> &
 //------------------------------------------------------------------------------
 
 export class Config {
-  public readonly config: ConfigOptions;
-  public readonly timestamp: string;
+  public readonly config: ConfigOptions
+  public readonly timestamp: string
 
   constructor(
     private readonly argv: string[],
     public readonly connection: string,
-    config: CommandOptions
+    config: CommandOptions,
   ) {
-    this.timestamp = this.generateTimestamp();
-    this.argv = argv;
+    this.timestamp = this.generateTimestamp()
+    this.argv = argv
     this.config = {
-      logLevel: "INFO",
+      logLevel: 'INFO',
       // ignoreFieldCollisions: [],
       writeHeader: true,
       throwOnMissingType: true,
       enums: false,
       ...config,
-      ignoreFieldCollisions: (config.ignoreFieldCollisions || []).filter(
-        (x) => !!x
-      ),
-      outputPath: config.output ? callerRelPath(config.output) : config.output,
+      ignoreFieldCollisions: config.ignoreFieldCollisions.filter(value => !!value),
+      outputPath: config.output ? callerRelativePath(config.output) : config.output,
       // userImports: getUserImports(config)
-    };
+    }
   }
 
   public get commandFromCLI() {
-    return ["ts-node", "schemats", ...this.argv.slice(2)].join(" ");
+    return ['ts-node', 'schemats', ...this.argv.slice(2)].join(' ')
   }
 
   public get version() {
-    return version;
+    return version
   }
 
   public get outputPath() {
-    return this.config.outputPath;
+    return this.config.outputPath
   }
 
   public get database() {
-    return this.config.database;
+    return this.config.database
   }
 
   public get backend() {
-    return this.config.backend;
+    return this.config.backend
   }
 
   public get enums() {
-    return this.config.enums;
+    return this.config.enums
   }
 
   public get tables() {
-    return this.config.tables;
+    return this.config.tables
   }
 
   public get schema() {
-    return this.config.schema;
+    return this.config.schema
   }
 
   public get writeHeader() {
-    return this.config.writeHeader;
+    return this.config.writeHeader
   }
 
   public get typesFile() {
-    return this.config.typesFile;
+    return this.config.typesFile
   }
 
   public get throwOnMissingType() {
-    return this.config.throwOnMissingType;
+    return this.config.throwOnMissingType
   }
 
   public get ignoreFieldCollisions(): string[] {
-    return this.config.ignoreFieldCollisions;
+    return this.config.ignoreFieldCollisions
   }
 
   public formatEnumName(name: string): string {
-    return inflect(
-      name.replace(ENUM_DELIMITER, "_"),
-      this.config.enumFormatter
-    );
+    return inflect(name.replace(ENUM_DELIMITER, '_'), this.config.enumFormatter)
   }
 
   public formatTableName(name: string): string {
-    return inflect(name, this.config.tableFormatter);
+    return inflect(name, this.config.tableFormatter)
   }
 
   public formatColumnName(name: string): string {
-    return inflect(name, this.config.columnFormatter);
+    return inflect(name, this.config.columnFormatter)
   }
 
   public formatEntityName(name: string): string {
-    return inflect(name, this.config.tableFormatter);
+    return inflect(name, this.config.tableFormatter)
   }
 
   public formatAttributeName(name: string): string {
-    return inflect(name, this.config.columnFormatter);
+    return inflect(name, this.config.columnFormatter)
   }
 
   public formatRelationName(name: string): string {
-    return inflect(name, this.config.columnFormatter);
+    return inflect(name, this.config.columnFormatter)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public log(message: string, data?: any): void {
-    if (!["DEBUG"].includes(this.config.logLevel)) {
-      return;
+    if (!['DEBUG'].includes(this.config.logLevel)) {
+      return
     }
     if (data) {
-      console.info(chalk.cyan(message), pretty(data));
+      console.info(chalk.cyan(message), pretty(data))
     } else {
-      console.info(chalk.cyan(message));
+      console.info(chalk.cyan(message))
     }
   }
 
   private generateTimestamp(): string {
-    console.warn(chalk.yellow(`⚠️  ${chalk.bold("Bypassing timestamp")}  ⚠️`));
-    return "__TIMESTAMP_BYPASS__";
+    console.warn(chalk.yellow(`⚠️  ${chalk.bold('Bypassing timestamp')}  ⚠️`))
+    return '__TIMESTAMP_BYPASS__'
 
     // TODO: RESTORE
     // return new Date().toUTCString();

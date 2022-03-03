@@ -2,7 +2,7 @@ import {Command} from 'commander'
 import {  generate } from '../src/compiler'
 import { MySQLDatabase } from '../src/adapters/mysql-adapter'
 import { Config, CommandOptions } from '../src/config'
-import { writeRelFileAsync } from '../src/utils'
+import { writeRelativeFileAsync } from '../src/utils'
 
 export const mysql = async (program: Command, argv: string[]): Promise<void> => {
     program
@@ -32,7 +32,7 @@ export const mysql = async (program: Command, argv: string[]): Promise<void> => 
             const schema = await generate(config, db)
 
             if (config.outputPath) {
-              await writeRelFileAsync(schema, config.outputPath);
+              await writeRelativeFileAsync(schema, config.outputPath);
               console.info(`Written ${config.backend} schema to ${config.outputPath}`);
             } else {
               console.info(schema);
