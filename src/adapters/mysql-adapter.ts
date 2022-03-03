@@ -120,7 +120,13 @@ export class MySQLDatabase implements Database {
     if (result.length === 0) {
       console.error(`[mysql] Missing columns for table: ${schema}.${table}`);
     }
-    const columns = result.map(
+    const columns = result
+    // .map(
+    //   this.castAny(["defaultValue"], (val) => {
+    //     return val
+    //   })
+    // )
+    .map(
       this.castUnsigned(["isArray", "hasDefault", "isNullable"])
     );
     return { name: table, columns };
@@ -140,6 +146,11 @@ export class MySQLDatabase implements Database {
     const encoded = `[${value.replace(REGEX_MYSQL_SET_OR_ENUM, "")}]`;
     return json5.parse(encoded);
   }
+
+  // private castAny<T extends object, W>(keys: W[], fun : (key: W) => W) : T )  {
+  //   return (record: T) =>
+  //     keys.reduce((record, key) => update(record, key, (val) => !!val), record);
+  // }
 
   private castUnsigned<T extends object>(keys: string[]) {
     return (record: T) =>

@@ -1,5 +1,5 @@
 import { pretty } from "../formatters";
-import { BuildContext } from "../generator";
+import { BuildContext } from "../compiler";
 
 export const build = ({
   config: { version, timestamp, config },

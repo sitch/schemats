@@ -5,6 +5,7 @@ export type Comment = string;
 export type EnumName = string;
 export type UDTName = string;
 export type ConstraintName = string;
+export type CatValue = string;
 
 //------------------------------------------------------------------------------
 
@@ -35,6 +36,12 @@ export interface TableDefinition {
   comment?: Comment;
   primaryKeys?: PrimaryKey[];
   foreignKeys?: ForeignKey[];
+  statistics?: TableStatistics;
+}
+
+export interface TableStatistics {
+  count: number;
+  catValues?: CatValue[];
 }
 
 //------------------------------------------------------------------------------

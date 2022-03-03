@@ -52,3 +52,12 @@ export const divider = (
 
 export const banner = (comment: string, label: string) =>
   `${divider(comment)}${comment} ${label}${divider(comment)}`;
+
+export const pad = (content: string, padding: string = "  "): string =>
+  content
+    .split("\n")
+    .map((val) => `${padding}${val}`)
+    .join("\n");
+
+export const padWith = (padding: string) => (content: string) =>
+  pad(content, padding);

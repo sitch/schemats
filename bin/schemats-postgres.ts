@@ -1,5 +1,5 @@
 import {Command} from 'commander'
-import { generate } from '../src/generator'
+import { generate } from '../src/compiler'
 import { PostgresDatabase } from '../src/adapters/postgres-adapter'
 import { Config, CommandOptions } from '../src/config'
 import { writeRelFileAsync } from '../src/utils'

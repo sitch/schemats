@@ -1,4 +1,4 @@
-import { BuildContext } from "../generator";
+import { BuildContext } from "../compiler";
 import { ColumnDefinition } from "../adapters/types";
 import { UDTTypeMap } from "../coreference";
 
@@ -28,10 +28,17 @@ const MYSQL_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
   tinytext: "string",
   mediumtext: "string",
   longtext: "string",
-  time: "string",
   geometry: "string",
   set: "string",
   enum: "string",
+  tinyblob: "string",
+  mediumblob: "string",
+  longblob: "string",
+  blob: "string",
+  binary: "string",
+  varbinary: "string",
+  bit: "string",
+
   integer: "number",
   int: "number",
   smallint: "number",
@@ -42,18 +49,15 @@ const MYSQL_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
   numeric: "number",
   float: "number",
   year: "number",
+
   tinyint: "boolean",
+
   json: "JSON",
+
   date: "Date",
   datetime: "Date",
   timestamp: "Date",
-  tinyblob: "string",
-  mediumblob: "string",
-  longblob: "string",
-  blob: "string",
-  binary: "string",
-  varbinary: "string",
-  bit: "string",
+  time: "string",
 };
 
 const POSTGRES_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
@@ -65,14 +69,12 @@ const POSTGRES_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
   uuid: "string",
   bytea: "string",
   inet: "string",
-  time: "string",
-  timetz: "string",
-  interval: "string",
-  tsvector: "string",
+
   mol: "string",
   bit: "string",
   bfp: "string",
   name: "string",
+
   int2: "number",
   int4: "number",
   int8: "number",
@@ -81,12 +83,22 @@ const POSTGRES_TO_TYPESCRIPT_TYPEMAP: Record<string, string> = {
   numeric: "number",
   money: "number",
   oid: "number",
+
   bool: "boolean",
+
   json: "JSON",
   jsonb: "JSONB",
+
   date: "Date",
   timestamp: "Date",
   timestamptz: "Date",
+
+  time: "string",
+  timetz: "string",
+
+  interval: "string",
+  tsvector: "string",
+
   point: "{ x: number, y: number }",
 };
 
@@ -124,10 +136,14 @@ export const translateType = (
   context: BuildContext,
   record: ColumnDefinition
 ): TypescriptType => {
-  const type = castTypescriptType(context, record);
-  return `${type}${record.isArray ? "[]" : ""}${
-    record.isNullable ? " | null" : ""
-  }`;
+  let type = castTypescriptType(context, record);
+  if (record.isArray) {
+    type = `${type}[]`;
+  }
+  if (record.isNullable) {
+    type = `${type} | null`;
+  }
+  return type;
 };
 
 // // uses the type mappings from https://github.com/mysqljs/ where sensible

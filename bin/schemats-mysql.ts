@@ -1,5 +1,5 @@
 import {Command} from 'commander'
-import {  generate } from '../src/generator'
+import {  generate } from '../src/compiler'
 import { MySQLDatabase } from '../src/adapters/mysql-adapter'
 import { Config, CommandOptions } from '../src/config'
 import { writeRelFileAsync } from '../src/utils'

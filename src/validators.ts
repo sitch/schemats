@@ -1,6 +1,6 @@
 import { difference, size, uniqWith } from "lodash";
 import { Backend, Config } from "./config";
-import { BuildContext } from "./generator";
+import { BuildContext } from "./compiler";
 import { pretty } from "./formatters";
 import { jsonEq } from "./utils";
 import { EnumDefinition, TableDefinition } from "./adapters/types";

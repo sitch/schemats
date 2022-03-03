@@ -1,4 +1,4 @@
-import { BuildContext } from "../generator";
+import { BuildContext } from "../compiler";
 import { ColumnDefinition } from "../adapters/types";
 import { UDTTypeMap } from "../coreference";
 
@@ -62,25 +62,9 @@ export const MYSQL_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   tinytext: "string",
   mediumtext: "string",
   longtext: "string",
-  time: "string",
   geometry: "string",
   set: "string",
   enum: "string",
-  integer: "long",
-  int: "long",
-  smallint: "long",
-  mediumint: "long",
-  bigint: "long",
-  double: "double",
-  decimal: "double",
-  numeric: "double",
-  float: "double",
-  year: "long",
-  tinyint: "boolean",
-  json: "JSON",
-  date: "datetime",
-  datetime: "datetime",
-  timestamp: "datetime",
   tinyblob: "string",
   mediumblob: "string",
   longblob: "string",
@@ -88,6 +72,26 @@ export const MYSQL_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   binary: "string",
   varbinary: "string",
   bit: "string",
+
+  tinyint: "boolean",
+  int: "long",
+  smallint: "long",
+  mediumint: "long",
+  bigint: "long",
+  year: "long",
+  integer: "long",
+
+  double: "double",
+  decimal: "double",
+  numeric: "double",
+  float: "double",
+
+  json: "JSON",
+
+  time: "datetime",
+  date: "datetime",
+  datetime: "datetime",
+  timestamp: "datetime",
 };
 
 export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
@@ -99,14 +103,14 @@ export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   uuid: "string",
   bytea: "string",
   inet: "string",
-  time: "datetime",
-  timetz: "datetime",
+
   interval: "string",
   tsvector: "string",
   mol: "string",
   bit: "string",
   bfp: "string",
   name: "string",
+
   int2: "long",
   int4: "long",
   int8: "long",
@@ -115,12 +119,17 @@ export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap = {
   numeric: "double",
   money: "double",
   // oid: "number",
+
   bool: "boolean",
+
   json: "JSON",
   // jsonb: 'JSONB',
+
   date: "datetime",
   timestamp: "datetime",
   timestamptz: "datetime",
+  time: "datetime",
+  timetz: "datetime",
   // point: "{ x: number, y: number }",
 };
 

@@ -1,6 +1,6 @@
 import { UserImport } from "../config";
 import { flatMap } from "lodash";
-import { BuildContext } from "../generator";
+import { BuildContext } from "../compiler";
 import { translateType, isReservedWord } from "../typemaps/typescript-typemap";
 import {
   ColumnDefinition,

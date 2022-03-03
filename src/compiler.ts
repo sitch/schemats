@@ -1,4 +1,5 @@
 import { jsonOfSchema } from "./backends/json";
+import { juliaOfSchema } from "./backends/julia";
 import { typedbOfSchema } from "./backends/typedb";
 import { typescriptOfSchema } from "./backends/typescript";
 import { Coreferences, buildCoreferences } from "./coreference";
@@ -107,17 +108,17 @@ const compile = async (config: Config, db: Database): Promise<BuildContext> => {
   config.log("[build] Compiled relationships", relationships);
 
   return {
-    columnComments,
+    schema,
     config,
     coreferences,
-    enums,
-    foreignKeys,
-    primaryKeys,
-    relationships,
-    schema,
-    tableComments,
-    userImports,
-    tables,
+    enums: enums.sort(),
+    tables: tables.sort(),
+    userImports: userImports.sort(),
+    foreignKeys: foreignKeys.sort(),
+    primaryKeys: primaryKeys.sort(),
+    relationships: relationships.sort(),
+    tableComments: tableComments.sort(),
+    columnComments: columnComments.sort(),
   };
 };
 
@@ -132,6 +133,9 @@ const render = async (context: BuildContext, backend: Backend) => {
   }
   if (backend === "typedb") {
     return await typedbOfSchema(context);
+  }
+  if (backend === "julia") {
+    return await juliaOfSchema(context);
   }
   const backends = BACKENDS.join(", ");
   throw `Invalid backend: ${backend} must be one of: ${backends}`;

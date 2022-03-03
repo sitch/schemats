@@ -1,5 +1,5 @@
 import { Config, ENUM_DELIMITER } from "./config";
-import { BuildContext } from "./generator";
+import { BuildContext } from "./compiler";
 import { flatMap, fromPairs, toPairs, uniq, sortBy, omit, keyBy } from "lodash";
 import {
   TableDefinition,
