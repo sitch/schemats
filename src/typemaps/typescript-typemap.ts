@@ -10,13 +10,12 @@ export type TypescriptType = string
 
 export const TYPESCRIPT_RESERVED_WORDS = new Set([
   // primatives
-
   'string',
   'number',
   'package',
 ])
 
-export const isReservedWord = (name: string): boolean =>
+export const is_reserved_word = (name: string): boolean =>
   TYPESCRIPT_RESERVED_WORDS.has(name)
 
 //------------------------------------------------------------------------------
@@ -31,13 +30,14 @@ const MYSQL_TO_TYPESCRIPT_TYPEMAP: UDTTypeMap<TypescriptType> = {
   geometry: 'string',
   set: 'string',
   enum: 'string',
-  tinyblob: 'string',
-  mediumblob: 'string',
-  longblob: 'string',
-  blob: 'string',
-  binary: 'string',
-  varbinary: 'string',
-  bit: 'string',
+
+  bit: 'Buffer',
+  blob: 'Buffer',
+  tinyblob: 'Buffer',
+  mediumblob: 'Buffer',
+  longblob: 'Buffer',
+  binary: 'Buffer',
+  varbinary: 'Buffer',
 
   integer: 'number',
   int: 'number',
@@ -109,22 +109,22 @@ export const TYPESCRIPT_TYPEMAP = {
 
 //------------------------------------------------------------------------------
 
-export const castTypescriptType = (
+export const cast_typescript_type = (
   { config, enums }: BuildContext,
-  { udtName }: ColumnDefinition,
+  { udt_name }: ColumnDefinition,
 ): TypescriptType => {
-  const type = TYPESCRIPT_TYPEMAP[udtName]
+  const type = TYPESCRIPT_TYPEMAP[udt_name]
   if (type && !['unknown'].includes(type)) {
     return type
   }
 
-  const enumDefinition = enums.find(({ name }) => name === udtName)
-  if (enumDefinition) {
-    const enumType = config.formatEnumName(enumDefinition.name)
-    return `string; # enum: ${enumType}`
+  const enum_definition = enums.find(({ name }) => name === udt_name)
+  if (enum_definition) {
+    const enum_type = config.formatEnumName(enum_definition.name)
+    return `string; # enum: ${enum_type}`
   }
 
-  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`
+  const warning = `Type [${udt_name} has been mapped to [any] because no specific type has been found.`
   if (config.throwOnMissingType) {
     throw new Error(warning)
   }
@@ -132,222 +132,18 @@ export const castTypescriptType = (
   return 'any'
 }
 
-export const translateType = (
+export const translate_type = (
   context: BuildContext,
   record: ColumnDefinition,
 ): TypescriptType => {
-  let type = castTypescriptType(context, record)
-  if (record.isArray) {
+  let type = cast_typescript_type(context, record)
+  if (record.is_array) {
     type = `${type}[]`
   }
-  if (record.isNullable) {
+  if (record.is_nullable) {
     type = `${type} | null`
   }
   return type
 }
-
-// // uses the type mappings from https://github.com/mysqljs/ where sensible
-// export const translateMySQLToTypescript = (
-//   config: Config,
-//   tableDefinition: TableDefinition,
-//   enumType: Set<string>,
-//   userImports: UserImport[],
-//   columnDescriptions: Record<string, string>
-// ): TableDefinition => {
-//   return Object.entries(tableDefinition).reduce(
-//     (result, [columnName, column]) => {
-//       switch (column.udtName) {
-//         case "char":
-//         case "varchar":
-//         case "text":
-//         case "tinytext":
-//         case "mediumtext":
-//         case "longtext":
-//         case "time":
-//         case "geometry":
-//         case "set":
-//         case "enum":
-//           // keep set and enum defaulted to string if custom type not mapped
-//           column.tsType = "string";
-//           break;
-//         case "integer":
-//         case "int":
-//         case "smallint":
-//         case "mediumint":
-//         case "bigint":
-//         case "double":
-//         case "decimal":
-//         case "numeric":
-//         case "float":
-//         case "year":
-//           column.tsType = "number";
-//           break;
-//         case "tinyint":
-//           column.tsType = "boolean";
-//           break;
-//         // case 'json':
-//         //     column.tsType = 'unknown'
-//         //     if (columnDescriptions[columnName]) {
-//         //         const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
-//         //         if (type) {
-//         //             column.tsType = type[1].trim()
-//         //             // userImports.add(column.tsType)
-//         //         }
-//         //     }
-//         //     break
-//         case "date":
-//         case "datetime":
-//         case "timestamp":
-//           column.tsType = "Date";
-//           break;
-//         case "tinyblob":
-//         case "mediumblob":
-//         case "longblob":
-//         case "blob":
-//         case "binary":
-//         case "varbinary":
-//         case "bit":
-//           column.tsType = "Buffer";
-//           break;
-//         default:
-//           if (enumType.has(column.udtName)) {
-//             column.tsType = config.formatTableName(column.udtName);
-//             break;
-//           } else {
-//             const warning = `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`;
-//             if (config.throwOnMissingType) {
-//               throw new Error(warning);
-//             }
-//             console.error(
-//               `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`
-//             );
-//             column.tsType = "any";
-//             break;
-//           }
-//       }
-//       // result[columnName] = column
-//       result.columns[columnName] = column;
-//       return result;
-//     },
-//     { name: tableDefinition.name, columns: {} } as TableDefinition
-//   );
-// };
-
-// export const translatePostgresToTypescript = (
-//   config: Config,
-//   tableDefinition: TableDefinition,
-//   enumType: Set<string>,
-//   userImports: UserImports,
-//   columnDescriptions: Record<string, string>
-// ): TableDefinition => {
-//   return Object.values(tableDefinition.columns).reduce(
-//     (result, column) => {
-//       switch (column.udtName) {
-//         case "bpchar":
-//         case "char":
-//         case "varchar":
-//         case "text":
-//         case "citext":
-//         case "uuid":
-//         case "bytea":
-//         case "inet":
-//         case "time":
-//         case "timetz":
-//         case "interval":
-//         case "tsvector":
-//         case "mol":
-//         case "bfp":
-//         case "bit":
-//         case "name":
-//           column.tsType = "string";
-//           break;
-//         case "int2":
-//         case "int4":
-//         case "int8":
-//         case "float4":
-//         case "float8":
-//         case "numeric":
-//         case "money":
-//         case "oid":
-//           column.tsType = "number";
-//           break;
-//         case "bool":
-//           column.tsType = "boolean";
-//           break;
-//         case "json":
-//         // case 'jsonb':
-//         //     column.tsType = 'unknown'
-//         //     if (columnDescriptions[columnName]) {
-//         //         const type = /@type \{([^}]+)\}/.exec(columnDescriptions[columnName])
-//         //         if (type) {
-//         //             column.tsType = type[1].trim()
-//         //             // userImports.add(column.tsType)
-//         //         }
-//         //     }
-//         //     break
-//         case "date":
-//         case "timestamp":
-//         case "timestamptz":
-//           column.tsType = "Date";
-//           break;
-//         case "point":
-//           column.tsType = "{ x: number, y: number }";
-//           break;
-//         default:
-//           if (enumType.has(column.udtName)) {
-//             column.tsType = config.formatTableName(column.udtName);
-//             break;
-//           } else {
-//             const warning = `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`;
-//             if (config.throwOnMissingType) {
-//               throw new Error(warning);
-//             }
-//             console.error(
-//               `Type [${column.udtName} has been mapped to [any] because no specific type has been found.`
-//             );
-//             column.tsType = "any";
-//             break;
-//           }
-//       }
-//       result.columns[column.name] = column;
-//       return result;
-//     },
-//     { name: tableDefinition.name, columns: {} } as TableDefinition
-//   );
-// };
-
-//-------------------------------------------------------------
-// mysql
-//-------------------------------------------------------------
-// public async getTableMap(
-//   schemaName: Schema,
-//   tableName: TableName,
-//   userImports: UserImports
-// ) {
-//   const enumType = await this.getEnums(schemaName);
-//   const columnComments = await this.getTableComments(schemaName, tableName);
-//   return translateMySQLToTypescript(
-//     this.config,
-//     await this.getTable(schemaName, tableName),
-//     new Set(Object.keys(enumType)),
-//     userImports,
-//     columnComments
-//   );
-// }
-
-//-------------------------------------------------------------
-// postgres
-//-------------------------------------------------------------
-// public async getTableMap(schemaName: Schema, tableName: TableName, userImports: UserImports) :  Promise<TableType> {
-//     const enumType = await this.getEnums(schemaName)
-//     const columnComments = await this.getTableComments(schemaName, tableName)
-//     return translatePostgresToTypescript(
-//         this.config,
-//         await this.getTable(schemaName, tableName),
-//         new Set(Object.keys(enumType)),
-//         userImports,
-//         columnComments
-//     )
-// }
 
 export const pragma = (_context: BuildContext): string => ``

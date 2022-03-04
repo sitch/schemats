@@ -69,10 +69,21 @@
     "@typescript-eslint/naming-convention": [
       "error",
       {
-        "selector": "variable",
-        // "types": ["boolean"],
+        "selector": "typeProperty",
         "format": ["snake_case"]
-        // "prefix": ["is", "should", "has", "can", "did", "will"]
+      },
+      // {
+      //   "selector": "classProperty",
+      //   "format": ["snake_case"]
+      // },
+      // {
+      //   "selector": "objectLiteralProperty",
+      //   "format": ["snake_case"]
+      // },
+      {
+        "selector": "variable",
+        "format": ["snake_case", "UPPER_CASE", "PascalCase"],
+        "leadingUnderscore": "allow"
       }
     ],
 

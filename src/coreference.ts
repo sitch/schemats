@@ -1,4 +1,4 @@
-import { flatMap, fromPairs, keyBy, omit, sortBy, toPairs, uniq } from 'lodash'
+import { flatMap, fromPairs, keyBy, sortBy, toPairs, uniq } from 'lodash'
 
 import { ColumnName, TableDefinition, TableName, UDTName } from './adapters/types'
 import { BuildContext } from './compiler'
@@ -29,11 +29,11 @@ export interface TypeDBCoreferences {
 
 //------------------------------------------------------------------------------
 
-export const buildCoreferences = (
+export const build_coreferences = (
   _config: Config,
   tables: TableDefinition[],
 ): Coreferences => {
-  const all = attributeOverlapGrouping(tables)
+  const all = attribute_overlap_grouping(tables)
 
   return {
     all,
@@ -41,56 +41,47 @@ export const buildCoreferences = (
   }
 }
 
-function inferType<T>(types: UDTTypeMap<T>, udtName: UDTName): T {
-  return types[udtName]
-  // return types[udtName] || udtName
+function inferType<T>(types: UDTTypeMap<T>, udt_name: UDTName): T {
+  return types[udt_name]
+  // return types[udt_name] || udt_name
 }
 
-export const applyConfigToCoreferenceMap = ({ config, tables }: BuildContext) => {
-  const overlaps = attributeOverlapGrouping(tables)
-  const userOverlaps = omit(overlaps, config.ignoreFieldCollisions)
-  if (config.ignoreFieldCollisions.includes('*')) {
-    return {}
-  }
-  return userOverlaps
-}
-
-export const findTableColumnType = (
+const find_table_column_type = (
   tables: TableDefinition[],
-  tableName: TableName,
+  table_name: TableName,
   columnName: ColumnName,
 ) => {
-  const tableMap = keyBy(tables, 'name')
+  const table_map = keyBy(tables, 'name')
 
-  const table = tableMap[tableName]
+  const table = table_map[table_name]
   const column = table.columns.find(({ name }) => name === columnName)
-  return column?.udtName
+  return column?.udt_name
 }
 
-export const attributeGroupingPairs = (tableList: TableDefinition[]) => {
-  const tableColumnNames = uniq(
-    flatMap(tableList.map(({ columns }) => columns.map(({ name }) => name))),
+const attribute_grouping_pairs = (table_list: TableDefinition[]) => {
+  const table_column_names = uniq(
+    flatMap(table_list.map(({ columns }) => columns.map(({ name }) => name))),
   )
 
-  const pairs = tableColumnNames.map(columnName => {
-    const tables = tableList.filter(({ columns }) =>
+  const pairs = table_column_names.map(columnName => {
+    const tables = table_list.filter(({ columns }) =>
       columns.map(({ name }) => name).includes(columnName),
     )
-    const tableNames = tables.map(({ name }) =>
-      [findTableColumnType(tableList, name, columnName), name].join(ENUM_DELIMITER),
+    const table_names = tables.map(({ name }) =>
+      [find_table_column_type(table_list, name, columnName), name].join(ENUM_DELIMITER),
     )
-    return [columnName, tableNames]
+    return [columnName, table_names]
   })
 
   return sortBy(pairs, ([_key, values]) => values.length)
 }
 
-export const attributeOverlapGrouping = (tables: TableDefinition[]): CoreferenceMap => {
-  const groupingPairs = attributeGroupingPairs(tables)
-  return fromPairs(groupingPairs.filter(([_key, values]) => values.length > 1))
+const attribute_overlap_grouping = (tables: TableDefinition[]): CoreferenceMap => {
+  const grouping_pairs = attribute_grouping_pairs(tables)
+  return fromPairs(grouping_pairs.filter(([_key, values]) => values.length > 1))
 }
 
-export const invalidOverlaps = (overlaps: CoreferenceMap) => {
+const invalid_overlaps = (overlaps: CoreferenceMap) => {
   return fromPairs(
     toPairs(overlaps)
       .filter(([_key, values]) => values.length > 1)
@@ -101,20 +92,20 @@ export const invalidOverlaps = (overlaps: CoreferenceMap) => {
   )
 }
 
-const withTypeDBType = (value: string): string => {
-  const [udtName, table] = value.split(ENUM_DELIMITER)
-  return [inferType<TypeDBType>(TYPEDB_TYPEMAP, udtName), udtName, table].join(
+const with_typedb_type = (value: string): string => {
+  const [udt_name, table] = value.split(ENUM_DELIMITER)
+  return [inferType<TypeDBType>(TYPEDB_TYPEMAP, udt_name), udt_name, table].join(
     ENUM_DELIMITER,
   )
 }
 
-export const invalidTypeDBOverlaps = (overlaps: CoreferenceMap): CoreferenceMap => {
+const invalid_typedb_overlaps = (overlaps: CoreferenceMap): CoreferenceMap => {
   return fromPairs(
     toPairs(overlaps)
       .filter(([_key, values]) => values.length > 1)
       .map(([key, values]): [string, string[]] => [
         key,
-        values.map(value => withTypeDBType(value)),
+        values.map(value => with_typedb_type(value)),
       ])
       .filter(
         ([_key, values]) =>
@@ -123,12 +114,21 @@ export const invalidTypeDBOverlaps = (overlaps: CoreferenceMap): CoreferenceMap 
   )
 }
 
-export const castTypeDBCoreferences = ({
+// const apply_config_to_coreference_map = ({ config, tables }: BuildContext) => {
+//   const overlaps = attribute_overlap_grouping(tables)
+//   const user_overlaps = omit(overlaps, config.ignoreAttributeCollisions)
+//   if (config.ignoreAttributeCollisions.includes('*')) {
+//     return {}
+//   }
+//   return user_overlaps
+// }
+
+export const cast_typedb_coreferences = ({
   coreferences: { all },
 }: BuildContext): TypeDBCoreferences => {
   return {
     all,
-    error: invalidTypeDBOverlaps(all),
-    warning: invalidOverlaps(all),
+    error: invalid_typedb_overlaps(all),
+    warning: invalid_overlaps(all),
   }
 }

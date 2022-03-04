@@ -3,7 +3,7 @@ import chalk from 'chalk'
 import { version } from '../package.json'
 import { TableDefinition } from './adapters/types'
 import { inflect, pretty } from './formatters'
-import { callerRelativePath } from './utils'
+import { caller_relative_path } from './utils'
 
 //------------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ export type Backend = string
 
 export type UserImport = Set<string>
 
-export const getUserImports = (
+export const get_user_imports = (
   _config: Config,
   _tables: TableDefinition[] = [],
 ): UserImport[] => {
@@ -30,27 +30,42 @@ export const getUserImports = (
 //------------------------------------------------------------------------------
 
 export interface ConfigValues {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   logLevel: string
   output?: string | undefined
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   outputPath: string | undefined
-  typedbEntityTemplate: string
-  typedbRelationTemplate: string
-  typedbAttributeTemplate: string
-  backend: string
+
   schema: string
+  backend: string
   database: string
   connection: string
-  tables: string[]
   enums?: boolean
-  ignoreFieldCollisions: string[]
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ignoreAttributeCollisions: string[]
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  enumFormatter?: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  tableFormatter?: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  columnFormatter?: string
 
+  // NOT USED
+
+  tables: string[]
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   writeHeader?: boolean
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   typesFile?: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   throwOnMissingType?: boolean
 
-  enumFormatter?: string
-  tableFormatter?: string
-  columnFormatter?: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  typedbEntityTemplate: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  typedbRelationTemplate: string
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  typedbAttributeTemplate: string
 }
 
 export type CommandOptions = Partial<ConfigValues> &
@@ -63,7 +78,7 @@ export type CommandOptions = Partial<ConfigValues> &
     | 'backend'
     | 'database'
     | 'connection'
-    | 'ignoreFieldCollisions'
+    | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
     | 'typedbRelationTemplate'
     | 'typedbAttributeTemplate'
@@ -79,7 +94,7 @@ export type ConfigOptions = Partial<ConfigValues> &
     | 'backend'
     | 'database'
     | 'connection'
-    | 'ignoreFieldCollisions'
+    | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
     | 'typedbRelationTemplate'
     | 'typedbAttributeTemplate'
@@ -89,12 +104,12 @@ export type ConfigOptions = Partial<ConfigValues> &
 //   config: CommandOptions,
 //   argv: string[]
 // ): ConfigOptions => ({
-//   // ignoreFieldCollisions: [],
+//   // ignoreAttributeCollisions: [],
 //   writeHeader: true,
 //   throwOnMissingType: true,
 //   enums: false,
 //   ...config,
-//   ignoreFieldCollisions: (config.ignoreFieldCollisions || []).filter(
+//   ignoreAttributeCollisions: (config.ignoreAttributeCollisions || []).filter(
 //     (x) => !!x
 //   ),
 //   outputPath: config.output ? relpath(config.output) : config.output,
@@ -115,14 +130,16 @@ export class Config {
     this.argv = argv
     this.config = {
       logLevel: 'INFO',
-      // ignoreFieldCollisions: [],
+      // ignoreAttributeCollisions: [],
       writeHeader: true,
       throwOnMissingType: true,
       enums: false,
       ...config,
-      ignoreFieldCollisions: config.ignoreFieldCollisions.filter(value => !!value),
-      outputPath: config.output ? callerRelativePath(config.output) : config.output,
-      // userImports: getUserImports(config)
+      ignoreAttributeCollisions: config.ignoreAttributeCollisions.filter(
+        value => !!value,
+      ),
+      outputPath: config.output ? caller_relative_path(config.output) : config.output,
+      // user_imports: get_user_imports(config)
     }
   }
 
@@ -170,8 +187,8 @@ export class Config {
     return this.config.throwOnMissingType
   }
 
-  public get ignoreFieldCollisions(): string[] {
-    return this.config.ignoreFieldCollisions
+  public get ignoreAttributeCollisions(): string[] {
+    return this.config.ignoreAttributeCollisions
   }
 
   public formatEnumName(name: string): string {

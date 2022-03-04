@@ -1,11 +1,11 @@
 // export interface Typedef<T> {
-// defaultValue?: T | undefined;
+// default_value?: T | undefined;
 
 export interface Typedef {
   name: string
-  hasDefault: boolean
-  isArray: boolean
-  isNullable: boolean
+  has_default: boolean
+  is_array: boolean
+  is_nullable: boolean
   type: string
 }
 

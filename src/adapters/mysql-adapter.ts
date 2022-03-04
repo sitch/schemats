@@ -3,7 +3,7 @@ import { update } from 'lodash'
 import { Connection, createConnection, RowDataPacket } from 'mysql2/promise'
 
 import { Config } from '../config'
-import { readSQL } from '../utils'
+import { read_sql } from '../utils'
 import {
   ColumnComment,
   ColumnName,
@@ -22,13 +22,13 @@ import {
 //------------------------------------------------------------------------------
 
 const Queries = {
-  getTableNames: readSQL('resources/sql/mysql/getTableNames.sql'),
-  getPrimaryKeys: readSQL('resources/sql/mysql/getPrimaryKeys.sql'),
-  getForeignKeys: readSQL('resources/sql/mysql/getForeignKeys.sql'),
-  getTableComments: readSQL('resources/sql/mysql/getTableComments.sql'),
-  getColumnComments: readSQL('resources/sql/mysql/getColumnComments.sql'),
-  getEnums: readSQL('resources/sql/mysql/getEnums.sql'),
-  getTable: readSQL('resources/sql/mysql/getTable.sql'),
+  getTableNames: read_sql('resources/sql/mysql/getTableNames.sql'),
+  getPrimaryKeys: read_sql('resources/sql/mysql/getPrimaryKeys.sql'),
+  getForeignKeys: read_sql('resources/sql/mysql/getForeignKeys.sql'),
+  getTableComments: read_sql('resources/sql/mysql/getTableComments.sql'),
+  getColumnComments: read_sql('resources/sql/mysql/getColumnComments.sql'),
+  getEnums: read_sql('resources/sql/mysql/getEnums.sql'),
+  getTable: read_sql('resources/sql/mysql/getTable.sql'),
 }
 
 //------------------------------------------------------------------------------
@@ -96,19 +96,19 @@ export class MySQLDatabase implements Database {
       name: EnumName
       table: TableName
       column: ColumnName
-      isNullable: boolean
-      hasDefault: boolean
+      is_nullable: boolean
+      has_default: boolean
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      defaultValue: any
-      encodedEnumValues: MySQLEncodedEnumValueString
+      default_value: any
+      encoded_enum_values: MySQLEncodedEnumValueString
     }>(Queries.getEnums, [schema])
 
     return result
-      .map(({ encodedEnumValues, ...rest }) => ({
+      .map(({ encoded_enum_values, ...rest }) => ({
         ...rest,
-        values: this.parseEnumString(encodedEnumValues),
+        values: this.parseEnumString(encoded_enum_values),
       }))
-      .map(this.castUnsigned(['hasDefault', 'isNullable']))
+      .map(this.castUnsigned(['has_default', 'is_nullable']))
   }
 
   public async getTable(
@@ -118,12 +118,12 @@ export class MySQLDatabase implements Database {
     const result = await this.query<{
       table: TableName
       name: ColumnName
-      udtName: UDTName
-      isArray: boolean
-      isNullable: boolean
-      hasDefault: boolean
+      udt_name: UDTName
+      is_array: boolean
+      is_nullable: boolean
+      has_default: boolean
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      defaultValue: any
+      default_value: any
     }>(Queries.getTable, [schema, table])
 
     if (result.length === 0) {
@@ -131,11 +131,11 @@ export class MySQLDatabase implements Database {
     }
     const columns = result
       // .map(
-      //   this.castAny(["defaultValue"], (val) => {
+      //   this.castAny(["default_value"], (val) => {
       //     return val
       //   })
       // )
-      .map(this.castUnsigned(['isArray', 'hasDefault', 'isNullable']))
+      .map(this.castUnsigned(['is_array', 'has_default', 'is_nullable']))
     return { name: table, columns }
   }
 

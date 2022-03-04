@@ -14,7 +14,7 @@ export type RelationshipMap = Record<TableName, Relationship[]>
 
 //------------------------------------------------------------------------------
 
-export const buildRelationships = (
+export const build_relationships = (
   _config: Config,
   _tables: TableDefinition[],
 ): Relationship[] => {
@@ -26,10 +26,10 @@ export const buildRelationships = (
 //
 // const countKey = (fk: ForeignKey) => `${fk.table_name},${fk.conname}`;
 // const colCounts = countBy(result.rows, countKey);
-export const transformCompoundForeignKeys = (
+export const transform_compound_foreign_keys = (
   _config: Config,
   _tables: TableDefinition[],
 ): ForeignKey[] => {
   // TODO: implement
-  throw 'not implemented'
+  throw new Error('not implemented')
 }

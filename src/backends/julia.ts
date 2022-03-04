@@ -2,16 +2,16 @@ import { flatMap, get, groupBy, size } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import { BuildContext } from '../compiler'
-import { castTypeDBCoreferences } from '../coreference'
-import { banner, lines, padLines } from '../formatters'
-import { pragma, translateType } from '../typemaps/julia-typemap'
+import { cast_typedb_coreferences } from '../coreference'
+import { banner, lines, pad_lines } from '../formatters'
+import { pragma, translate_type } from '../typemaps/julia-typemap'
 import { BackendContext, header } from './base'
 
 //------------------------------------------------------------------------------
 
-const normalizeName = (name: string): string => {
+const normalize_name = (name: string): string => {
   return name
-  // return isReservedWord(name) ? `${name}_` : name;
+  // return is_reserved_word(name) ? `${name}_` : name;
 }
 
 // const prefix = (context: BuildContext) => {
@@ -25,10 +25,10 @@ const Attribute = {
     return ''
   },
   name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
-    return normalizeName(config.formatAttributeName(name))
+    return normalize_name(config.formatAttributeName(name))
   },
   type: (context: BuildContext, column: ColumnDefinition): string => {
-    return translateType(context, column)
+    return translate_type(context, column)
   },
 }
 
@@ -37,7 +37,7 @@ const Entity = {
     return ''
   },
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
-    return normalizeName(config.formatEntityName(name))
+    return normalize_name(config.formatEntityName(name))
   },
 }
 
@@ -45,25 +45,25 @@ const Relation = {
   comment: (
     _context: BuildContext,
     {
-      primaryTable,
-      primaryColumn,
-      foreignTable,
-      foreignColumn,
+      primary_table,
+      primary_column,
+      foreign_table,
+      foreign_column,
       constraint,
     }: ForeignKey,
   ): string => {
     return lines([
       constraint && `# Constraint: ${constraint}`,
-      `# Relation: ${primaryTable}.${primaryColumn} => ${foreignTable}.${foreignColumn}`,
+      `# Relation: ${primary_table}.${primary_column} => ${foreign_table}.${foreign_column}`,
     ])
   },
-  name: ({ config }: BuildContext, { primaryColumn }: ForeignKey): string => {
+  name: ({ config }: BuildContext, { primary_column }: ForeignKey): string => {
     // TODO: improve global suffix handling
-    const relation = primaryColumn.replace(/_id$/, '').replace(/_?I[Dd]$/, '')
-    return normalizeName(config.formatRelationName(relation))
+    const relation = primary_column.replace(/_id$/, '').replace(/_?I[Dd]$/, '')
+    return normalize_name(config.formatRelationName(relation))
   },
-  type: (context: BuildContext, foreignKey: ForeignKey): string => {
-    const column = { name: foreignKey.foreignTable, columns: [] }
+  type: (context: BuildContext, foreign_key: ForeignKey): string => {
+    const column = { name: foreign_key.foreign_table, columns: [] }
     const name = Entity.name(context, column)
     return `Nullable{${name}}`
   },
@@ -71,7 +71,7 @@ const Relation = {
 
 //------------------------------------------------------------------------------
 
-const castField =
+const cast_field =
   (context: BuildContext) =>
   (column: ColumnDefinition): string => {
     const name = Attribute.name(context, column)
@@ -84,24 +84,24 @@ const castField =
 
 //------------------------------------------------------------------------------
 
-const castEntity = (context: BuildContext) => {
-  const relationsMap = groupBy(context.foreignKeys, 'primaryTable')
+const cast_entity = (context: BuildContext) => {
+  const relations_map = groupBy(context.foreign_keys, 'primary_table')
 
   return (record: TableDefinition) => {
     const name = Entity.name(context, record)
     const comment = Entity.comment(context, record)
 
-    const foreignKeys = get(relationsMap, record.name, [])
+    const foreign_keys = get(relations_map, record.name, [])
 
-    const fields = record.columns.map(castField(context)).sort()
-    const relations = foreignKeys.map(castRelation(context)).sort()
+    const fields = record.columns.map(cast_field(context)).sort()
+    const relations = foreign_keys.map(cast_relation(context)).sort()
 
     return lines([
       comment,
       `mutable struct ${name} {`,
-      padLines('iid:DbId', '  '),
-      padLines(lines(fields), '  '),
-      padLines(lines(relations), '  '),
+      pad_lines('iid:DbId', '  '),
+      pad_lines(lines(fields), '  '),
+      pad_lines(lines(relations), '  '),
       '}',
     ])
   }
@@ -109,7 +109,7 @@ const castEntity = (context: BuildContext) => {
 
 //------------------------------------------------------------------------------
 
-const castRelation = (context: BuildContext) => (record: ForeignKey) => {
+const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
   const name = Relation.name(context, record)
   const type = Relation.type(context, record)
   const comment = Relation.comment(context, record)
@@ -121,25 +121,25 @@ const castRelation = (context: BuildContext) => (record: ForeignKey) => {
 //------------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export const juliaOfSchema = async (context: BuildContext) => {
+export const render_julia = async (context: BuildContext) => {
   const tables = context.tables
-  const foreignKeys = context.foreignKeys.flat()
-  const entities = flatMap(tables, castEntity(context))
-  // const relations = flatMap(foreignKeys, castRelation(context));
+  const foreign_keys = context.foreign_keys.flat()
+  const entities = flatMap(tables, cast_entity(context))
+  // const relations = flatMap(foreign_keys, cast_relation(context));
 
   const backend: BackendContext = {
     backend: 'julia',
     comment: '#',
     indent: '  ',
-    coreferences: castTypeDBCoreferences(context),
+    coreferences: cast_typedb_coreferences(context),
   }
 
   return lines([
     header(context, backend),
     pragma(context),
-    // coreferenceBanner(context, backend),
+    // coreference_banner(context, backend),
     banner(backend.comment, `Entities (${size(tables)})`),
-    banner(backend.comment, `Relations (${size(foreignKeys)})`),
+    banner(backend.comment, `Relations (${size(foreign_keys)})`),
     lines(entities, '\n\n'),
   ])
 }

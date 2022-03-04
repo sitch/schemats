@@ -4,9 +4,9 @@ import { EnumDefinition, TableDefinition } from './adapters/types'
 import { BuildContext } from './compiler'
 import { Backend, Config } from './config'
 import { pretty } from './formatters'
-import { jsonEq } from './utils'
+import { json_equal } from './utils'
 
-const enumEq = (left: EnumDefinition, right: EnumDefinition): boolean => {
+const enum_equal = (left: EnumDefinition, right: EnumDefinition): boolean => {
   if (
     left.table !== right.table ||
     left.column !== right.column ||
@@ -14,29 +14,29 @@ const enumEq = (left: EnumDefinition, right: EnumDefinition): boolean => {
   ) {
     return false
   }
-  return jsonEq(left.values, right.values)
+  return json_equal(left.values, right.values)
 }
 
-export const validateEnums = (config: Config, enums: EnumDefinition[]): boolean => {
-  const enumsUniq = uniqWith(enums, enumEq)
-  const enumsCollision = difference(enums, enumsUniq)
+export const validate_enums = (config: Config, enums: EnumDefinition[]): boolean => {
+  const enums_uniq = uniqWith(enums, enum_equal)
+  const enums_collision = difference(enums, enums_uniq)
 
-  if (enumsCollision.length > 0) {
-    console.error('Enum collisions found:', pretty(enumsCollision))
+  if (enums_collision.length > 0) {
+    console.error('Enum collisions found:', pretty(enums_collision))
     return false
   }
   return true
 }
 
-export const validateTables = (config: Config, tables: TableDefinition[]): boolean => {
+export const validate_tables = (config: Config, tables: TableDefinition[]): boolean => {
   if (size(tables) <= 0) {
-    console.error(`[tableNames] No tables found: ${config.schema}`)
+    console.error(`[table_names] No tables found: ${config.schema}`)
     return false
   }
   return true
 }
 
-export const validateCoreferences = (
+export const validate_coreferences = (
   _context: BuildContext,
   _backend: Backend,
 ): boolean => {

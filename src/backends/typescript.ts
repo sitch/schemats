@@ -3,15 +3,19 @@ import { flatMap, size } from 'lodash'
 import { ColumnDefinition, EnumDefinition, TableDefinition } from '../adapters/types'
 import { BuildContext } from '../compiler'
 import { UserImport } from '../config'
-import { castTypeDBCoreferences } from '../coreference'
-import { banner, doubleQuote, lines, padLines } from '../formatters'
-import { isReservedWord, pragma, translateType } from '../typemaps/typescript-typemap'
+import { cast_typedb_coreferences } from '../coreference'
+import { banner, double_quote, lines, pad_lines } from '../formatters'
+import {
+  is_reserved_word,
+  pragma,
+  translate_type,
+} from '../typemaps/typescript-typemap'
 import { BackendContext, header } from './base'
 
 //------------------------------------------------------------------------------
 
-const normalizeName = (name: string): string =>
-  isReservedWord(name) ? `${name}_` : name
+const normalize_name = (name: string): string =>
+  is_reserved_word(name) ? `${name}_` : name
 
 // const prefix = (context: BuildContext) => {
 //   return `${context.config.database.toLowerCase()}-`
@@ -21,7 +25,7 @@ const normalizeName = (name: string): string =>
 
 const Enums = {
   name: ({ config }: BuildContext, { name }: EnumDefinition): string => {
-    return normalizeName(config.formatEnumName(`${name}`))
+    return normalize_name(config.formatEnumName(`${name}`))
   },
   key: (_context: BuildContext, value: string): string => {
     return value
@@ -31,59 +35,59 @@ const Enums = {
   },
 }
 
-const castEnumAsEnum = (context: BuildContext) => (record: EnumDefinition) => {
+const cast_enum_as_enum = (context: BuildContext) => (record: EnumDefinition) => {
   const type = Enums.name(context, record)
   const entries = record.values.map((value: string) => {
     const key = Enums.key(context, value)
-    const value_ = Enums.value(context, value)
-    return `'${key}' = '${value_}',`
+    const type = Enums.value(context, value)
+    return `'${key}' = '${type}',`
   })
   return lines([`export enum ${type} {`, lines(entries), '};'])
 }
 
-const castEnumAsType = (context: BuildContext) => (record: EnumDefinition) => {
+const cast_enum_as_type = (context: BuildContext) => (record: EnumDefinition) => {
   const type = Enums.name(context, record)
-  const values = record.values.map(value => doubleQuote(value))
+  const values = record.values.map(value => double_quote(value))
 
   return `export type ${type} = ${values.join(' | ')};`
 }
 
-const castEnum =
+const cast_enum =
   (context: BuildContext) =>
   (record: EnumDefinition): string => {
     if (context.config.enums) {
-      return castEnumAsEnum(context)(record)
+      return cast_enum_as_enum(context)(record)
     }
-    return castEnumAsType(context)(record)
+    return cast_enum_as_type(context)(record)
   }
 
 //------------------------------------------------------------------------------
 
 const Interface = {
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
-    return normalizeName(config.formatTableName(name))
+    return normalize_name(config.formatTableName(name))
   },
-  key: ({ config }: BuildContext, { name, isNullable }: ColumnDefinition): string => {
-    return `${normalizeName(config.formatColumnName(name))}${isNullable ? '?' : ''}`
+  key: ({ config }: BuildContext, { name, is_nullable }: ColumnDefinition): string => {
+    return `${normalize_name(config.formatColumnName(name))}${is_nullable ? '?' : ''}`
   },
   value: (context: BuildContext, record: ColumnDefinition): string => {
-    return translateType(context, record)
+    return translate_type(context, record)
   },
 }
 
-const castEntity = (context: BuildContext) => (record: TableDefinition) => {
+const cast_entity = (context: BuildContext) => (record: TableDefinition) => {
   const name = Interface.name(context, record)
   const fields = record.columns.map(column => {
     const key = Interface.key(context, column)
     const value = Interface.value(context, column)
     return `${key}: ${value}`
   })
-  return lines([`export interface ${name} {`, padLines(lines(fields), '  '), '}'])
+  return lines([`export interface ${name} {`, pad_lines(lines(fields), '  '), '}'])
 }
 
 //------------------------------------------------------------------------------
 
-const castUserImports =
+const cast_user_imports =
   ({ config: { typesFile } }: BuildContext) =>
   (record: UserImport): string => {
     if (!typesFile) {
@@ -98,7 +102,7 @@ const castUserImports =
 
 export const lookup = ({ config, tables }: BuildContext): string => {
   const types = tables.map(
-    ({ name }) => `  ${name}: ${normalizeName(config.formatTableName(name))}`,
+    ({ name }) => `  ${name}: ${normalize_name(config.formatTableName(name))}`,
   )
   return `export interface Tables {\n${types.join(',\n')}\n}`
 }
@@ -106,23 +110,23 @@ export const lookup = ({ config, tables }: BuildContext): string => {
 //------------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export const typescriptOfSchema = async (context: BuildContext) => {
-  const enums = flatMap(context.enums, castEnum(context))
-  const customImports = flatMap(context.userImports, castUserImports(context))
-  const entities = flatMap(context.tables, castEntity(context))
+export const render_typescript = async (context: BuildContext) => {
+  const enums = flatMap(context.enums, cast_enum(context))
+  const custom_imports = flatMap(context.user_imports, cast_user_imports(context))
+  const entities = flatMap(context.tables, cast_entity(context))
 
   const backend: BackendContext = {
     backend: 'typescript',
     comment: '//',
     indent: '  ',
-    coreferences: castTypeDBCoreferences(context),
+    coreferences: cast_typedb_coreferences(context),
   }
 
   return lines([
     header(context, backend),
     pragma(context),
-    // coreferenceBanner(context, backend),
-    lines(customImports),
+    // coreference_banner(context, backend),
+    lines(custom_imports),
     banner(backend.comment, `Enums (${size(enums)})`),
     lines(enums, '\n\n'),
     banner(backend.comment, `Entities (${size(entities)})`),

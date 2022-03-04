@@ -1,9 +1,9 @@
 SELECT
     kcu.table_name AS "table"
     , kcu.column_name AS "column"
-    , tco.constraint_name AS "constraintName"
-    , kcu.ordinal_position AS "ordinalPosition"
-    , (kcu.position_in_unique_constraint IS NOT NULL) AS "isUnique"
+    , tco.constraint_name AS "constraint"
+    , kcu.ordinal_position AS "ordinal_position"
+    , (kcu.position_in_unique_constraint IS NOT NULL) AS "is_unique"
 FROM
     information_schema.table_constraints tco
     JOIN information_schema.key_column_usage kcu ON kcu.constraint_name = tco.constraint_name

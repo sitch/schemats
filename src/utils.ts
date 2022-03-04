@@ -1,29 +1,29 @@
 import { promises, readFileSync } from 'fs'
 import path from 'path'
 
-export const projectDirectory = () => {
+const project_directory = () => {
   return path.join(__dirname, '..')
   // return path.dirname('..')
 }
 
-export const relativeToProjectDirectory = (filepath: string): string => {
-  return path.join(projectDirectory(), filepath)
+const relative_to_project_directory = (filepath: string): string => {
+  return path.join(project_directory(), filepath)
 }
-export const callerRelativePath = (filepath: string): string => {
+export const caller_relative_path = (filepath: string): string => {
   return path.relative(process.cwd(), filepath)
 }
 
-export const writeRelativeFileAsync = async (content: string, filepath: string) => {
-  await promises.writeFile(callerRelativePath(filepath), content, 'utf8')
+export const write_relative_file_async = async (content: string, filepath: string) => {
+  await promises.writeFile(caller_relative_path(filepath), content, 'utf8')
 }
 
-export const readSQL = (filepath: string) => {
-  return readFileSync(relativeToProjectDirectory(filepath)).toString('utf8')
+export const read_sql = (filepath: string) => {
+  return readFileSync(relative_to_project_directory(filepath)).toString('utf8')
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const jsonEq = (left: any, right: any): boolean => {
-  const leftEncoded = JSON.stringify(left)
-  const rightEncoded = JSON.stringify(right)
-  return leftEncoded == rightEncoded
+export const json_equal = (left: any, right: any): boolean => {
+  const left_encoded = JSON.stringify(left)
+  const right_encoded = JSON.stringify(right)
+  return left_encoded == right_encoded
 }

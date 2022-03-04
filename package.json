@@ -14,8 +14,8 @@
   "scripts": {
     "build": "tsc",
     "eslint:fix": "yarn run eslint --fix",
-    "eslint": "node node_modules/eslint/bin/eslint \"src/**/*.{ts,tsx}\"",
-    "format:src": "prettier src --write",
+    "eslint": "node node_modules/eslint/bin/eslint \"{bin,src}/**/*.{ts,tsx}\"",
+    "format:src": "prettier {bin,src} --write",
     "lint:fix": "yarn run eslint:fix",
     "lint:w": "run-p tscheck:w eslint:w",
     "mocha": "node -r @swc/register node_modules/mocha/bin/_mocha",

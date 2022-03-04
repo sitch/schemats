@@ -11,6 +11,6 @@ export const build = ({
 })
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export const jsonOfSchema = async (context: BuildContext) => {
+export const render_json = async (context: BuildContext) => {
   return pretty(build(context))
 }

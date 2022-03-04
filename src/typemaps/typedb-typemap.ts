@@ -50,7 +50,8 @@ export const TYPEDB_RESERVED_WORDS = new Set([
   'isa',
 ])
 
-export const isReservedWord = (name: string): boolean => TYPEDB_RESERVED_WORDS.has(name)
+export const is_reserved_word = (name: string): boolean =>
+  TYPEDB_RESERVED_WORDS.has(name)
 
 //------------------------------------------------------------------------------
 
@@ -139,22 +140,22 @@ export const TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
 
 //------------------------------------------------------------------------------
 
-export const castTypeDBType = (
+export const cast_typedb_type = (
   { config, enums }: BuildContext,
-  { udtName }: ColumnDefinition,
+  { udt_name }: ColumnDefinition,
 ): TypeDBType => {
-  const type = TYPEDB_TYPEMAP[udtName]
+  const type = TYPEDB_TYPEMAP[udt_name]
   if (type && !['unknown'].includes(type)) {
     return type
   }
 
-  const enumDefinition = enums.find(({ name }) => name === udtName)
-  if (enumDefinition) {
-    const enumType = config.formatEnumName(enumDefinition.name)
-    return `string; # enum: ${enumType}`
+  const enum_definition = enums.find(({ name }) => name === udt_name)
+  if (enum_definition) {
+    const enum_type = config.formatEnumName(enum_definition.name)
+    return `string; # enum: ${enum_type}`
   }
 
-  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`
+  const warning = `Type [${udt_name} has been mapped to [any] because no specific type has been found.`
   if (config.throwOnMissingType) {
     throw new Error(warning)
   }

@@ -3,8 +3,8 @@
 --     , tc.TABLE_NAME AS "table"
 --     , cl2.relname AS "tabl2e"
 --     , att2.attname AS "column"
---     , cl.relname AS "foreignTable"
---     , att.attname AS "foreignColumn"
+--     , cl.relname AS "foreign_table"
+--     , att.attname AS "foreign_column"
 --     , conname AS "constraint"
 -- FROM
 --     INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS tc
@@ -31,11 +31,11 @@
 --
 --
 SELECT
-    kcu.TABLE_NAME AS "primaryTable"
-    , kcu.COLUMN_NAME AS "primaryColumn"
-    , kcu.REFERENCED_TABLE_NAME AS "foreignTable"
-    , kcu.REFERENCED_COLUMN_NAME AS "foreignColumn"
-    , kcu.CONSTRAINT_NAME AS "constraintName"
+    kcu.TABLE_NAME AS "primary_table"
+    , kcu.COLUMN_NAME AS "primary_column"
+    , kcu.REFERENCED_TABLE_NAME AS "foreign_table"
+    , kcu.REFERENCED_COLUMN_NAME AS "foreign_column"
+    , kcu.CONSTRAINT_NAME AS "constraint"
 FROM
     information_schema.key_column_usage AS kcu
 WHERE

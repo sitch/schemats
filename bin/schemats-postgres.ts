@@ -1,46 +1,46 @@
-import {Command} from 'commander'
-import { generate } from '../src/compiler'
+import chalk from 'chalk'
+import { Command } from 'commander'
+
 import { PostgresDatabase } from '../src/adapters/postgres-adapter'
-import { Config, CommandOptions } from '../src/config'
-import { writeRelativeFileAsync } from '../src/utils'
+import { generate } from '../src/compiler'
+import { CommandOptions, Config } from '../src/config'
+import { write_relative_file_async } from '../src/utils'
 
-export const postgres = async (program: Command, argv: string[]): Promise<void> => {
-    program
-        .command('postgres')
-        .description('Generate a schema from postgres')
-        .argument('<connection>', 'The connection string to use, if left empty will use env variables')
-        .option('-d, --database <database>', 'the database to use')
-        .option('-I, --ignore-field-collisions <field...>', 'fields to ignore when generating tql')
-        .option('-s, --schema <schema>', 'the schema to use', 'public')
-        .option('-o, --output <filePath>', 'where to save the generated file relative to the current working directory')
-        .option('-F, --backend <backend>', 'the output format', 'typescript')
-        .option('-e, --enums', 'use enums instead of types')
-        .option('-t, --tables <tables...>', 'the tables within the schema')
-        .option('-f, --typesFile <typesFile>', 'the file where jsonb types can be imported from')
-        .option('-E, --enum-formatter <enumFormatterter>', 'Formatter for enum names')
-        .option('-T, --table-formatter <tableFormatterter>', 'Formatter for table names')
-        .option('-C, --column-formatter <columnFormatterter>', 'Formatter for column names')
-        .option('--typedb-entity-template <typedbEntityTemplate>', 'Formatter for typedb entity names', '{{entity}}')
-        .option('--typedb-relation-template <typedbRelationTemplate>', 'Formatter for typedb relation names', '{{relation}}')
-        .option('--typedb-attribute-template <typedbAttributeTemplate>', 'Formatter for typedb attribute names', '{{attribute}}')
-        .option('--no-header', 'don\'t generate a header')
-        .option('--no-throw-on-missing-type', 'don\'t throw an error when pg type cannot be mapped to ts type')
-        .action(async (connection: string, options: CommandOptions) => {
-            const config = new Config(argv, connection, options)
-            const db = new PostgresDatabase(config, connection)
-            await db.isReady()
-            const schema = await generate(config, db)
+export const postgres = (program: Command, argv: string[]) => {
+  program
+    .command('postgres')
+    .description('Generate a typescript schema from mysql')
+    .argument('<connection>', 'if left empty will use env variables')
+    .option('-d, --database <database>', 'the database to use')
+    .option('-I, --ignore-attribute-collisions <attribute...>')
+    .option('-s, --schema <schema>', 'the schema to use', 'public')
+    .option('-o, --output <path>', 'generated file relative to the cwd')
+    .option('-F, --backend <backend>', 'the output format', 'typescript')
+    .option('-e, --enums', 'use enums instead of types')
+    .option('-t, --tables <table...>', 'the tables within the schema')
+    .option('-f, --typesFile <path>', 'the file where jsonb types can be imported from')
+    .option('-E, --enum-formatter <format>', 'Formatter for enum names')
+    .option('-T, --table-formatter <format>', 'Formatter for table names')
+    .option('-C, --column-formatter <format>', 'Formatter for column names')
+    .option('--typedb-entity-template <template>', '{{entity}}')
+    .option('--typedb-relation-template <template>', '{{relation}}')
+    .option('--typedb-attribute-template <template>', '{{attribute}}')
+    .option('--no-header', "don't generate a header")
+    .option('--no-throw-on-missing-type', 'suppress type mapping erros')
+    .action(async (connection: string, options: CommandOptions) => {
+      const config = new Config(argv, connection, options)
+      const database = new PostgresDatabase(config, connection)
+      await database.isReady()
+      const schema = await generate(config, database)
 
-            if (config.outputPath) {
-              await writeRelativeFileAsync(schema, config.outputPath);
-              console.info(`Written ${config.backend} schema to ${config.outputPath}`);
-            } else {
-              console.info(schema);
-            }
-            await db.close();
-        })
+      if (config.outputPath) {
+        await write_relative_file_async(schema, config.outputPath)
+        console.info(`Written ${config.backend} schema to ${config.outputPath}`)
+      } else {
+        console.info(schema)
+      }
+      await database.close()
+    })
 
-    program.action(program.help)
+  program.action(() => console.error(chalk.red(program.helpInformation())))
 }
-
-

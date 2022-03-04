@@ -1,9 +1,9 @@
 SELECT
-    cl2.relname AS "primaryTable"
-    , att2.attname AS "primaryColumn"
-    , cl.relname AS "foreignTable"
-    , att.attname AS "foreignColumn"
-    , conname AS "constraintName"
+    cl2.relname AS "primary_table"
+    , att2.attname AS "primary_column"
+    , cl.relname AS "foreign_table"
+    , att.attname AS "foreign_column"
+    , conname AS "constraint"
 FROM (
     SELECT
         unnest(con1.conkey) AS "parent"

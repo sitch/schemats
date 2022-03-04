@@ -36,41 +36,26 @@ export const inflect = (name: string, format: string | undefined): string => {
   throw `Unsupported formatter: ${format}`
 }
 
-//------------------------------------------------------------------------------
-
-export const commentLines = (comment: string, body: string): string => {
+export const comment_lines = (comment: string, body: string): string => {
   return body
     .split('\n')
-    .map(line => `${comment} ${line}`)
+    .map(line => `${comment}${line}`)
     .join('\n')
 }
 
-//------------------------------------------------------------------------------
-
-export const divider = (comment: string, token = '-', width = 80) => {
+const divider = (comment: string, token = '-', width = 80) => {
   const count = Math.floor((width - comment.length) / token.length)
   return `\n${comment}${token.repeat(count)}\n`
 }
 
-//------------------------------------------------------------------------------
-
 export const banner = (comment: string, label: string) =>
   `${divider(comment)}${comment} ${label}${divider(comment)}`
 
-//------------------------------------------------------------------------------
-
-export const padLines = (content: string, padding = '  '): string =>
+export const pad_lines = (content: string, padding = '  '): string =>
   content
     .split('\n')
     .map(value => `${padding}${value}`)
     .join('\n')
-
-//------------------------------------------------------------------------------
-
-export const padWith = (padding: string) => (content: string) =>
-  padLines(content, padding)
-
-//------------------------------------------------------------------------------
 
 type Line = string | boolean | undefined
 export type LineOrLines = Line | Line[]
@@ -82,5 +67,5 @@ export const lines = (lineOrLines: LineOrLines, delimiter = '\n'): string => {
     .join(delimiter)
 }
 
-export const singleQuote = (value: string): string => `"${value}"`
-export const doubleQuote = (value: string): string => `"${value}"`
+export const single_quote = (value: string): string => `"${value}"`
+export const double_quote = (value: string): string => `"${value}"`

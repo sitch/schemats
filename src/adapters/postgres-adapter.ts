@@ -2,7 +2,7 @@ import { groupBy } from 'lodash'
 import { Client } from 'pg'
 
 import { Config } from '../config'
-import { readSQL } from '../utils'
+import { read_sql } from '../utils'
 import {
   ColumnComment,
   ColumnName,
@@ -20,14 +20,14 @@ import {
 //------------------------------------------------------------------------------
 
 const Queries = {
-  getTableNames: readSQL('resources/sql/postgres/getTableNames.sql'),
-  getPrimaryKeys: readSQL('resources/sql/postgres/getPrimaryKeys.sql'),
-  getForeignKeys: readSQL('resources/sql/postgres/getForeignKeys.sql'),
-  getTableComments: readSQL('resources/sql/postgres/getTableComments.sql'),
-  getColumnComments: readSQL('resources/sql/postgres/getColumnComments.sql'),
-  getEnums: readSQL('resources/sql/postgres/getEnums.sql'),
-  getTable: readSQL('resources/sql/postgres/getTable.sql'),
-  // getTableMeta: readSQL("resources/sql/postgres/getTableMeta.sql"),
+  getTableNames: read_sql('resources/sql/postgres/getTableNames.sql'),
+  getPrimaryKeys: read_sql('resources/sql/postgres/getPrimaryKeys.sql'),
+  getForeignKeys: read_sql('resources/sql/postgres/getForeignKeys.sql'),
+  getTableComments: read_sql('resources/sql/postgres/getTableComments.sql'),
+  getColumnComments: read_sql('resources/sql/postgres/getColumnComments.sql'),
+  getEnums: read_sql('resources/sql/postgres/getEnums.sql'),
+  getTable: read_sql('resources/sql/postgres/getTable.sql'),
+  // getTableMeta: read_sql("resources/sql/postgres/getTableMeta.sql"),
 }
 
 //------------------------------------------------------------------------------
@@ -111,12 +111,12 @@ export class PostgresDatabase implements Database {
   ): Promise<TableDefinition> {
     const result = await this.query<{
       name: ColumnName
-      udtName: UDTName
-      isArray: boolean
-      isNullable: boolean
-      hasDefault: boolean
+      udt_name: UDTName
+      is_array: boolean
+      is_nullable: boolean
+      has_default: boolean
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      defaultValue: any
+      default_value: any
     }>(Queries.getTable, [schema, table])
 
     if (result.length === 0) {

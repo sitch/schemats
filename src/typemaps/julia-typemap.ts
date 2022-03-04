@@ -60,7 +60,8 @@ export const JULIA_RESERVED_WORDS = new Set([
   'where',
 ])
 
-export const isReservedWord = (name: string): boolean => JULIA_RESERVED_WORDS.has(name)
+export const is_reserved_word = (name: string): boolean =>
+  JULIA_RESERVED_WORDS.has(name)
 
 //------------------------------------------------------------------------------
 
@@ -160,22 +161,22 @@ Nullable{T} = Union{Nothing,T}
 Optional{T} = Union{Nothing,T}
 `
 
-export const castJuliaType = (
+export const cast_julia_type = (
   { config, enums }: BuildContext,
-  { udtName }: ColumnDefinition,
+  { udt_name }: ColumnDefinition,
 ): JuliaType => {
-  const type = JULIA_TYPEMAP[udtName]
+  const type = JULIA_TYPEMAP[udt_name]
   if (type && !['unknown'].includes(type)) {
     return type
   }
 
-  const enumDefinition = enums.find(({ name }) => name === udtName)
-  if (enumDefinition) {
-    const enumType = config.formatEnumName(enumDefinition.name)
-    return `String; # enum: ${enumType}`
+  const enum_definition = enums.find(({ name }) => name === udt_name)
+  if (enum_definition) {
+    const enum_type = config.formatEnumName(enum_definition.name)
+    return `String; # enum: ${enum_type}`
   }
 
-  const warning = `Type [${udtName} has been mapped to [any] because no specific type has been found.`
+  const warning = `Type [${udt_name} has been mapped to [any] because no specific type has been found.`
   if (config.throwOnMissingType) {
     throw new Error(warning)
   }
@@ -183,29 +184,29 @@ export const castJuliaType = (
   return 'any'
 }
 
-export const translateType = (
+export const translate_type = (
   context: BuildContext,
   record: ColumnDefinition,
 ): JuliaType => {
-  let type = castJuliaType(context, record)
-  if (record.isArray) {
+  let type = cast_julia_type(context, record)
+  if (record.is_array) {
     type = `Array{<:${type}}`
   }
-  if (record.isNullable) {
+  if (record.is_nullable) {
     type = `Nullable{${type}}`
   }
   return type
 }
 
-export const translateRelationName = (
+export const translate_relation_name = (
   context: BuildContext,
   record: ColumnDefinition,
 ): JuliaType => {
-  let type = castJuliaType(context, record)
-  if (record.isArray) {
+  let type = cast_julia_type(context, record)
+  if (record.is_array) {
     type = `Array{<:${type}}`
   }
-  if (record.isNullable) {
+  if (record.is_nullable) {
     type = `Optional{${type}}`
   }
   return type

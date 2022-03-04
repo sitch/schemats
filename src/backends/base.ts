@@ -3,7 +3,7 @@ import { size } from 'lodash'
 import { BuildContext } from '../compiler'
 import { Backend } from '../config'
 import { TypeDBCoreferences } from '../coreference'
-import { commentLines, padLines, pretty } from '../formatters'
+import { pad_lines, pretty } from '../formatters'
 
 export type CommentDelimiter = string
 export type IndentDelimiter = string
@@ -23,8 +23,7 @@ export const header = (
     return ''
   }
 
-  return commentLines(
-    comment,
+  return pad_lines(
     `###############################################################################
 
   AUTO-GENERATED FILE @ ${config.timestamp} - DO NOT EDIT!
@@ -33,30 +32,31 @@ export const header = (
   $ ${config.commandFromCLI}
 
 ###############################################################################`,
+    comment,
   )
 }
 
-export const coreferenceBanner = (
+export const coreference_banner = (
   _context: BuildContext,
   { comment, indent, coreferences: { all, error, warning } }: BackendContext,
 ) => {
   if (size(all) === 0) {
     return ''
   }
-  return commentLines(
-    comment,
+  return pad_lines(
     `###############################################################################
   ⛔ CRITICAL ⛔ - (${size(error)}) - Attribute Conflicts
 ###############################################################################
-${padLines(pretty(error), indent)}
+${pad_lines(pretty(error), indent)}
 ===============================================================================
   ⚠️ WARNING ⚠️ - (${size(warning)}) - UDT Conflicts
 ===============================================================================
-${padLines(pretty(warning), indent)}
+${pad_lines(pretty(warning), indent)}
 -------------------------------------------------------------------------------
   ❎ INFO ❎ - (${size(all)}) - Attribute Overlaps
 -------------------------------------------------------------------------------
-${padLines(pretty(all), indent)}
+${pad_lines(pretty(all), indent)}
 ###############################################################################`,
+    comment,
   )
 }

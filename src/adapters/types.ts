@@ -22,10 +22,10 @@ export interface ParameterizedEnumDefinition<T> {
   values: T[]
   table?: TableName
   column?: ColumnName
-  hasDefault?: boolean
-  isNullable?: boolean
+  has_default?: boolean
+  is_nullable?: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue?: any
+  default_value?: any
 }
 export type EnumDefinition = ParameterizedEnumDefinition<string>
 
@@ -35,29 +35,29 @@ export interface TableDefinition {
   name: TableName
   columns: ColumnDefinition[]
   comment?: Comment
-  primaryKeys?: PrimaryKey[]
-  foreignKeys?: ForeignKey[]
+  primary_keys?: PrimaryKey[]
+  foreign_keys?: ForeignKey[]
   statistics?: TableStatistics
 }
 
 export interface TableStatistics {
   count: number
-  catValues?: CatValue[]
+  cat_values?: CatValue[]
 }
 
 //------------------------------------------------------------------------------
 
 export interface ColumnDefinition {
   name: ColumnName
-  udtName: UDTName
+  udt_name: UDTName
   comment?: Comment
-  // primaryKey?: PrimaryKey;
-  // foreignKey?: ForeignKey;
-  isArray: boolean
-  hasDefault: boolean
-  isNullable: boolean
+  // primary_key?: PrimaryKey;
+  // foreign_key?: ForeignKey;
+  is_array: boolean
+  has_default: boolean
+  is_nullable: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  defaultValue: any
+  default_value: any
 }
 
 //------------------------------------------------------------------------------
@@ -79,8 +79,8 @@ export interface PrimaryKey {
   table: TableName
   column: ColumnName
   constraint: ConstraintName
-  isUnique: boolean
-  ordinalPosition: number
+  is_unique: boolean
+  ordinal_position: number
 }
 
 //------------------------------------------------------------------------------
@@ -92,10 +92,10 @@ export interface PrimaryKey {
 export interface ForeignKey {
   // source: TableColumnVector;
   // dest: TableColumnVector;
-  primaryTable: TableName
-  primaryColumn: ColumnName
-  foreignTable: TableName
-  foreignColumn: ColumnName
+  primary_table: TableName
+  primary_column: ColumnName
+  foreign_table: TableName
+  foreign_column: ColumnName
   constraint: ConstraintName
 }
 
@@ -103,7 +103,7 @@ export interface ForeignKey {
 
 export interface Database {
   version: string
-  getConnectionString: () => string
+  getConnectionString(): string
   isReady(): Promise<void>
   close(): Promise<void>
   getDefaultSchema(): Promise<SchemaName>

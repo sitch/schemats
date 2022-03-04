@@ -2,15 +2,15 @@ import { flatMap, size } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import { BuildContext } from '../compiler'
-import { castTypeDBCoreferences } from '../coreference'
-import { banner, lines, padLines } from '../formatters'
-import { castTypeDBType, isReservedWord, pragma } from '../typemaps/typedb-typemap'
-import { BackendContext, coreferenceBanner, header } from './base'
+import { cast_typedb_coreferences } from '../coreference'
+import { banner, lines, pad_lines } from '../formatters'
+import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
+import { BackendContext, coreference_banner, header } from './base'
 
 //------------------------------------------------------------------------------
 
-const normalizeName = (name: string): string =>
-  isReservedWord(name) ? `${name}_` : name
+const normalize_name = (name: string): string =>
+  is_reserved_word(name) ? `${name}_` : name
 
 const prefix = (context: BuildContext) => {
   return `${context.config.database.toLowerCase()}-`
@@ -23,7 +23,7 @@ const Attribute = {
     return ``
   },
   name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
-    return normalizeName(config.formatAttributeName(name))
+    return normalize_name(config.formatAttributeName(name))
   },
   type: (context: BuildContext, _record: ColumnDefinition): string => {
     return `${prefix(context)}attribute`
@@ -35,7 +35,7 @@ const Entity = {
     return ``
   },
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
-    return normalizeName(config.formatEntityName(name))
+    return normalize_name(config.formatEntityName(name))
   },
   type: (context: BuildContext, _table: TableDefinition): string => {
     return `${prefix(context)}entity`
@@ -48,28 +48,28 @@ const Relation = {
   },
   name: (
     { config }: BuildContext,
-    { primaryTable, primaryColumn, foreignTable, foreignColumn }: ForeignKey,
+    { primary_table, primary_column, foreign_table, foreign_column }: ForeignKey,
   ): string => {
-    const tableSource = config.formatRelationName(primaryTable)
-    const attributeSource = config.formatRelationName(primaryColumn)
-    const tableDestination = config.formatRelationName(foreignTable)
-    const attributeDestination = config.formatRelationName(foreignColumn)
+    const table_source = config.formatRelationName(primary_table)
+    const attribute_source = config.formatRelationName(primary_column)
+    const table_destination = config.formatRelationName(foreign_table)
+    const attribute_destination = config.formatRelationName(foreign_column)
 
-    return normalizeName(
-      `${tableSource}-${attributeSource}-${tableDestination}-${attributeDestination}`,
+    return normalize_name(
+      `${table_source}-${attribute_source}-${table_destination}-${attribute_destination}`,
     )
   },
-  type: (context: BuildContext, _foreignKey: ForeignKey): string => {
+  type: (context: BuildContext, _foreign_key: ForeignKey): string => {
     return `${prefix(context)}relation`
   },
 }
 
 //------------------------------------------------------------------------------
 
-const castAttribute = (context: BuildContext) => (column: ColumnDefinition) => {
+const cast_attribute = (context: BuildContext) => (column: ColumnDefinition) => {
   const name = Attribute.name(context, column)
   const type = Attribute.type(context, column)
-  const value = castTypeDBType(context, column)
+  const value = cast_typedb_type(context, column)
   const comment = Attribute.comment(context, column)
 
   const line = `${name} sub ${type}, value ${value};`
@@ -78,7 +78,7 @@ const castAttribute = (context: BuildContext) => (column: ColumnDefinition) => {
 
 //------------------------------------------------------------------------------
 
-const castField =
+const cast_field =
   (context: BuildContext) =>
   (column: ColumnDefinition): string => {
     const name = Attribute.name(context, column)
@@ -90,23 +90,23 @@ const castField =
 
 //------------------------------------------------------------------------------
 
-const castEntity = (context: BuildContext) => (record: TableDefinition) => {
+const cast_entity = (context: BuildContext) => (record: TableDefinition) => {
   const name = Entity.name(context, record)
   const type = Entity.type(context, record)
   const comment = Entity.comment(context, record)
 
-  const fields = record.columns.map(castField(context))
-  const attributes = record.columns.map(castAttribute(context))
+  const fields = record.columns.map(cast_field(context))
+  const attributes = record.columns.map(cast_attribute(context))
 
   const line = `${name} sub ${type}`
-  return lines([comment, line, padLines(lines(fields), '  '), ';', lines(attributes)])
+  return lines([comment, line, pad_lines(lines(fields), '  '), ';', lines(attributes)])
 }
 
 //------------------------------------------------------------------------------
 
-const castRelation = (context: BuildContext) => (record: ForeignKey) => {
+const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
   const { config } = context
-  const { primaryTable, primaryColumn, foreignTable, foreignColumn } = record
+  const { primary_table, primary_column, foreign_table, foreign_column } = record
 
   const name = Relation.name(context, record)
   const type = Relation.type(context, record)
@@ -114,38 +114,38 @@ const castRelation = (context: BuildContext) => (record: ForeignKey) => {
 
   const line = `${name} sub ${type}`
   const relations = [
-    `, owns ${config.formatAttributeName(primaryColumn)}`,
-    `, owns ${config.formatAttributeName(foreignColumn)}`,
-    `, relates ${config.formatEntityName(primaryTable)}`,
-    `, relates ${config.formatEntityName(foreignTable)}`,
+    `, owns ${config.formatAttributeName(primary_column)}`,
+    `, owns ${config.formatAttributeName(foreign_column)}`,
+    `, relates ${config.formatEntityName(primary_table)}`,
+    `, relates ${config.formatEntityName(foreign_table)}`,
   ]
 
-  return lines([comment, line, ...padLines(lines(relations), '  '), ';'])
+  return lines([comment, line, ...pad_lines(lines(relations), '  '), ';'])
 }
 
 //------------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export const typedbOfSchema = async (context: BuildContext) => {
+export const render_typedb = async (context: BuildContext) => {
   const tables = context.tables
-  const foreignKeys = context.foreignKeys.flat()
-  const entities = flatMap(tables, castEntity(context))
-  const relations = flatMap(foreignKeys, castRelation(context))
+  const foreign_keys = context.foreign_keys.flat()
+  const entities = flatMap(tables, cast_entity(context))
+  const relations = flatMap(foreign_keys, cast_relation(context))
 
   const backend: BackendContext = {
     backend: 'typedb',
     comment: '#',
     indent: '  ',
-    coreferences: castTypeDBCoreferences(context),
+    coreferences: cast_typedb_coreferences(context),
   }
 
   return lines([
     header(context, backend),
     pragma(context),
-    coreferenceBanner(context, backend),
+    coreference_banner(context, backend),
     banner(backend.comment, `Entities (${size(tables)})`),
     lines(entities, '\n\n'),
-    banner(backend.comment, `Relations (${size(foreignKeys)})`),
+    banner(backend.comment, `Relations (${size(foreign_keys)})`),
     lines(relations, '\n\n'),
   ])
 }
