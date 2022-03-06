@@ -28,6 +28,8 @@ export const mysql = (program: Command, argv: string[]) => {
     .option('--no-header', "don't generate a header")
     .option('--no-throw-on-missing-type', 'suppress type mapping erros')
     .action(async (connection: string, options: CommandOptions) => {
+      // const { MySQLDatabase } = await import('../src/adapters/mysql-adapter')
+
       const config = new Config(argv, connection, options)
       const database = new MySQLDatabase(config, connection)
       await database.isReady()

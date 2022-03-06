@@ -28,6 +28,8 @@ export const postgres = (program: Command, argv: string[]) => {
     .option('--no-header', "don't generate a header")
     .option('--no-throw-on-missing-type', 'suppress type mapping erros')
     .action(async (connection: string, options: CommandOptions) => {
+      // const { PostgresDatabase } = await import('../src/adapters/postgres-adapter')
+
       const config = new Config(argv, connection, options)
       const database = new PostgresDatabase(config, connection)
       await database.isReady()

@@ -29,7 +29,7 @@
     "tscheck": "tsc --noEmit",
     "up": "yarn upgrade-interactive --latest",
     "lint": "yarn run eslint && yarn run tscheck",
-    "format": "yarn run format:src && yarn run lint:fix"
+    "format": "yarn run format:src && yarn run lint:fix && yarn run tscheck"
   },
   "bin": {
     "schemats": "dist/bin/schemats.js"
@@ -105,5 +105,17 @@
     "lodash": "^4.17.21",
     "mysql2": "^2.3.3",
     "pg": "^8.7.3"
+  },
+  "_peerDependencies": {
+    "mysql2": ">= 2",
+    "pg": ">= 8"
+  },
+  "_peerDependenciesMeta": {
+    "mysql2": {
+      "optional": true
+    },
+    "pg": {
+      "optional": true
+    }
   }
 }
