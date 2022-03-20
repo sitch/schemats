@@ -11,7 +11,15 @@ export const ENUM_DELIMITER = '::'
 
 //------------------------------------------------------------------------------
 
-export const BACKENDS = ['typescript', 'json', 'typedb', 'julia'] as const
+export const BACKENDS = [
+  'typescript',
+  'json',
+  'typedb',
+  'julia',
+  'algebraic-julia',
+  'hydra',
+  'julia-genie',
+] as const
 export type Backends = typeof BACKENDS
 // export type Backend = "typescript" | "json" | "typedb" | "julia";
 export type Backend = string

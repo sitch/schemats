@@ -10,6 +10,9 @@ import {
   TableComment,
   TableDefinition,
 } from './adapters/types'
+import { render_julia_genie} from './backends/julia-genie'
+import { render_hydra} from './backends/hydra'
+import { render_algebraic_julia } from './backends/algebraic-julia'
 import { render_json } from './backends/json'
 import { render_julia } from './backends/julia'
 import { render_typedb } from './backends/typedb'
@@ -125,6 +128,15 @@ const render = async (context: BuildContext, backend: Backend) => {
   }
   if (backend === 'julia') {
     return await render_julia(context)
+  }
+  if (backend === 'algebraic-julia') {
+    return await render_algebraic_julia(context)
+  }
+  if (backend === 'julia-genie') {
+    return await render_julia_genie(context)
+  }
+  if (backend === 'hydra') {
+    return await render_hydra(context)
   }
   const backends = BACKENDS.join(', ')
   throw `Invalid backend: ${backend} must be one of: ${backends}`
