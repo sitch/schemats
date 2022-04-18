@@ -1,3 +1,4 @@
+import inflection from 'inflection'
 import { flatMap, get, groupBy, size } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
@@ -33,10 +34,12 @@ const Attribute = {
 }
 
 const Entity = {
-  comment: (_context: BuildContext, _table: TableDefinition): string => {
+  comment: (_context: BuildContext, { name }: TableDefinition): string => {
+    // return `# Table: ${name}`
     return ''
   },
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
+    // name = inflection.singularize(name)
     return normalize_name(config.formatEntityName(name))
   },
 }
@@ -144,16 +147,20 @@ export const render_julia_genie = async (context: BuildContext) => {
     header(context, backend),
     // pragma(context),
 
-    `module ${inflect(context.schema, 'pascal')}
+    `
+module ${inflect(context.schema, 'pascal')}
 
-    import SearchLight: AbstractModel, DbId
-    import Base: @kwdef
-    `,
-    lines(exported, '\n\n'),
+import SearchLight: AbstractModel, DbId
+import Base: @kwdef
+
+Nullable{T} = Union{T,Nothing}
+`,
+    lines(exported, '\n'),
 
     // coreference_banner(context, backend),
-    banner(backend.comment, `Entities (${size(tables)})`),
     banner(backend.comment, `Relations (${size(foreign_keys)})`),
+    banner(backend.comment, `Entities (${size(tables)})`),
     lines(entities, '\n\n'),
+    'end\n',
   ])
 }

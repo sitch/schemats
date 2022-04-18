@@ -10,11 +10,11 @@ import {
   TableComment,
   TableDefinition,
 } from './adapters/types'
-import { render_julia_genie} from './backends/julia-genie'
-import { render_hydra} from './backends/hydra'
 import { render_algebraic_julia } from './backends/algebraic-julia'
+import { render_hydra } from './backends/hydra'
 import { render_json } from './backends/json'
 import { render_julia } from './backends/julia'
+import { render_julia_genie } from './backends/julia-genie'
 import { render_typedb } from './backends/typedb'
 import { render_typescript } from './backends/typescript'
 import { Backend, BACKENDS, Config, get_user_imports, UserImport } from './config'

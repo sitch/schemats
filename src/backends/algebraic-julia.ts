@@ -1,3 +1,4 @@
+import inflection from 'inflection'
 import { flatMap, get, groupBy, size } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
@@ -95,10 +96,11 @@ const Attribute = {
 }
 
 const Entity = {
-  comment: (_context: BuildContext, _table: TableDefinition): string => {
-    return ''
+  comment: (_context: BuildContext, { name }: TableDefinition): string => {
+    return `# Table: ${name}`
   },
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
+    name = inflection.singularize(name)
     return normalize_name(config.formatEntityName(name))
   },
 }
