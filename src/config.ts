@@ -19,6 +19,7 @@ export const BACKENDS = [
   'algebraic-julia',
   'hydra',
   'julia-genie',
+  'julia-octo',
 ] as const
 export type Backends = typeof BACKENDS
 // export type Backend = "typescript" | "json" | "typedb" | "julia";

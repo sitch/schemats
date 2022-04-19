@@ -48,8 +48,10 @@ const divider = (comment: string, token = '-', width = 80) => {
   return `\n${comment}${token.repeat(count)}\n`
 }
 
-export const banner = (comment: string, label: string) =>
-  `${divider(comment)}${comment} ${label}${divider(comment)}`
+export const banner = (comment: string, label: string) => {
+  const lines = label.split('\n').map(line => `${comment} ${line}`)
+  return `${divider(comment)}${lines.join('\n')}${divider(comment)}`
+}
 
 export const pad_lines = (content: string, padding = '  '): string =>
   content

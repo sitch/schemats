@@ -15,6 +15,7 @@ import { render_hydra } from './backends/hydra'
 import { render_json } from './backends/json'
 import { render_julia } from './backends/julia'
 import { render_julia_genie } from './backends/julia-genie'
+import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typescript } from './backends/typescript'
 import { Backend, BACKENDS, Config, get_user_imports, UserImport } from './config'
@@ -134,6 +135,9 @@ const render = async (context: BuildContext, backend: Backend) => {
   }
   if (backend === 'julia-genie') {
     return await render_julia_genie(context)
+  }
+  if (backend === 'julia-octo') {
+    return await render_julia_octo(context)
   }
   if (backend === 'hydra') {
     return await render_hydra(context)

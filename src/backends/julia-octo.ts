@@ -5,9 +5,12 @@ import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types
 import { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
+// import { inflect } from '../formatters'
 import { translate_type } from '../typemaps/julia-typemap'
 import { BackendContext, header } from './base'
-// import { inflect } from '../formatters'
+
+const INDENT_COMMENT_LINE =
+  '#-----------------------------------------------------------------------------'
 
 //------------------------------------------------------------------------------
 
@@ -73,10 +76,10 @@ const Relation = {
   },
 }
 
-const cast_export = (context: BuildContext) => (record: TableDefinition) => {
-  const name = Entity.name(context, record)
-  return lines([`export ${name}`])
-}
+// const cast_export = (context: BuildContext) => (record: TableDefinition) => {
+//   const name = Entity.name(context, record)
+//   return lines([`export ${name}`])
+// }
 
 //------------------------------------------------------------------------------
 
@@ -109,10 +112,13 @@ const cast_entity = (context: BuildContext) => {
       comment,
       `@kwdef mutable struct ${name}`,
       // `@kwdef mutable struct ${name} <: AbstractModel {`,
-      pad_lines('# iid:DbId', '  '),
+      // pad_lines('# iid:DbId', '  '),
       pad_lines(lines(fields), '  '),
-      pad_lines('# Relations: '),
+      size(relations) > 0 ? '\n' : false,
+      size(relations) > 0 ? pad_lines(INDENT_COMMENT_LINE) : false,
+      size(relations) > 0 ? pad_lines('# Relations: ') : false,
       pad_lines(lines(relations), '  '),
+      size(relations) > 0 ? pad_lines(INDENT_COMMENT_LINE) : false,
       // '}',
       'end',
     ])
@@ -133,10 +139,10 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
 //------------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export const render_julia_genie = async (context: BuildContext) => {
+export const render_julia_octo = async (context: BuildContext) => {
   const tables = context.tables
   const foreign_keys = context.foreign_keys.flat()
-  const exported = flatMap(tables, cast_export(context))
+  // const exported = flatMap(tables, cast_export(context))
   const entities = flatMap(tables, cast_entity(context))
   // const relations = flatMap(foreign_keys, cast_relation(context));
 
@@ -164,7 +170,7 @@ import Base: @kwdef
 
 Nullable{T} = Union{T,Nothing}
 `,
-    lines(exported, '\n'),
+    // lines(exported, '\n'),
 
     // coreference_banner(context, backend),
     // banner(backend.comment, `Relations (${size(foreign_keys)})`),
