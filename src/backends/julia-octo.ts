@@ -81,6 +81,11 @@ const Relation = {
 //   return lines([`export ${name}`])
 // }
 
+const cast_octo_import = (context: BuildContext) => (record: TableDefinition) => {
+  const name = Entity.name(context, record)
+  return lines([`Schema.model(${name}, table_name="${name}")`])
+}
+
 //------------------------------------------------------------------------------
 
 const cast_field =
@@ -121,7 +126,8 @@ const cast_entity = (context: BuildContext) => {
         ? [
             '\n',
             pad_lines(INDENT_COMMENT_LINE, '  '),
-            pad_lines('# Relations: '),
+            pad_lines('# Relations:'),
+            pad_lines(INDENT_COMMENT_LINE, '  '),
             pad_lines(lines(relations), '  '),
             pad_lines(INDENT_COMMENT_LINE, '  '),
           ]
@@ -158,6 +164,8 @@ export const render_julia_octo = async (context: BuildContext) => {
   const tables = context.tables
   const foreign_keys = context.foreign_keys.flat()
   // const exported = flatMap(tables, cast_export(context))
+  const octo_imports = flatMap(tables, cast_octo_import(context))
+
   const entities = flatMap(tables, cast_entity(context))
   // const relations = flatMap(foreign_keys, cast_relation(context));
 
@@ -196,5 +204,8 @@ Nullable{T} = Union{T,Nothing}
     ),
     lines(entities, '\n\n'),
     // 'end\n',
+
+    banner(backend.comment, `Models: ${size(octo_imports)}`),
+    lines(octo_imports, '\n'),
   ])
 }
