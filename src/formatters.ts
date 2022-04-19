@@ -21,6 +21,9 @@ export const inflect = (name: string, format: string | undefined): string => {
   if (!format) {
     return name
   }
+  if (['none'].includes(format)) {
+    return name
+  }
   if (['camel', 'camelcase'].includes(format)) {
     return camelCase(name, { pascalCase: false })
   }
