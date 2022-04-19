@@ -1,5 +1,5 @@
-// import inflection from 'inflection'
-import { flatMap, get, groupBy, size } from 'lodash'
+import inflection from 'inflection'
+import { flatMap, get, groupBy, partition, size } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import { BuildContext } from '../compiler'
@@ -61,7 +61,7 @@ const Relation = {
   ): string => {
     return lines([
       constraint && `# Constraint: ${constraint}`,
-      `# Relation: ${primary_table}.${primary_column} => ${foreign_table}.${foreign_column}`,
+      `# Relation:   ${primary_table}.${primary_column} => ${foreign_table}.${foreign_column}`,
     ])
   },
   name: ({ config }: BuildContext, { primary_column }: ForeignKey): string => {
@@ -110,7 +110,15 @@ const cast_entity = (context: BuildContext) => {
 
     const foreign_keys = get(relations_map, record.name, [])
 
-    const fields = record.columns.map(cast_field(context)).sort()
+    const [id_columns, attribute_columns] = partition(record.columns, ({ name }) => {
+      const name_underscore = inflection.underscore(name)
+      return name_underscore == 'id' || name_underscore.endsWith('_id')
+    })
+
+    const fields = [
+      ...id_columns.map(cast_field(context)).sort(),
+      ...attribute_columns.map(cast_field(context)).sort(),
+    ]
     const relations = foreign_keys.map(cast_relation(context)).sort()
 
     const field_lines =
@@ -154,7 +162,7 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
   const comment = Relation.comment(context, record)
 
   const line = `${name}::${type}`
-  return lines([comment, line])
+  return lines([comment, line, INDENT_COMMENT_LINE])
 }
 
 //------------------------------------------------------------------------------
