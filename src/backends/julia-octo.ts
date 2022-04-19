@@ -108,17 +108,31 @@ const cast_entity = (context: BuildContext) => {
     const fields = record.columns.map(cast_field(context)).sort()
     const relations = foreign_keys.map(cast_relation(context)).sort()
 
+    const field_lines =
+      size(fields) > 0
+        ? [
+            // pad_lines('# iid:DbId', '  '),
+            pad_lines(lines(fields), '  '),
+          ]
+        : []
+
+    const relations_lines =
+      size(relations) > 0
+        ? [
+            pad_lines(INDENT_COMMENT_LINE, '  '),
+            pad_lines('# Relations: '),
+            pad_lines(lines(relations), '  '),
+            pad_lines(INDENT_COMMENT_LINE, '  '),
+          ]
+        : []
+
     return lines([
       comment,
       `@kwdef mutable struct ${name}`,
       // `@kwdef mutable struct ${name} <: AbstractModel {`,
-      // pad_lines('# iid:DbId', '  '),
-      pad_lines(lines(fields), '  '),
-      size(relations) > 0 ? '\n' : false,
-      size(relations) > 0 ? pad_lines(INDENT_COMMENT_LINE) : false,
-      size(relations) > 0 ? pad_lines('# Relations: ') : false,
-      pad_lines(lines(relations), '  '),
-      size(relations) > 0 ? pad_lines(INDENT_COMMENT_LINE) : false,
+
+      ...field_lines,
+      ...relations_lines,
       // '}',
       'end',
     ])
