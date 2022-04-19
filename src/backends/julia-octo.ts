@@ -119,6 +119,7 @@ const cast_entity = (context: BuildContext) => {
     const relations_lines =
       size(relations) > 0
         ? [
+            '\n',
             pad_lines(INDENT_COMMENT_LINE, '  '),
             pad_lines('# Relations: '),
             pad_lines(lines(relations), '  '),
