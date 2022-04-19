@@ -137,7 +137,6 @@ const cast_entity = (context: BuildContext) => {
             pad_lines('# Relations:'),
             pad_lines(INDENT_COMMENT_LINE, '    '),
             pad_lines(lines(relations), '    '),
-            pad_lines(INDENT_COMMENT_LINE, '    '),
           ]
         : []
 
@@ -212,7 +211,7 @@ Nullable{T} = Union{T,Nothing}`,
     lines(entities, '\n\n'),
     // 'end\n',
 
-    banner(backend.comment, `Models: ${size(octo_imports)}`),
+    banner(backend.comment, `Models: (${size(octo_imports)})`),
     lines(octo_imports, '\n'),
   ])
 }
