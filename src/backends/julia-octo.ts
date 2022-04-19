@@ -10,7 +10,7 @@ import { translate_type } from '../typemaps/julia-typemap'
 import { BackendContext, header } from './base'
 
 const INDENT_COMMENT_LINE =
-  '#-----------------------------------------------------------------------------'
+  '#---------------------------------------------------------------------------'
 
 //------------------------------------------------------------------------------
 
@@ -124,8 +124,8 @@ const cast_entity = (context: BuildContext) => {
     const field_lines =
       size(fields) > 0
         ? [
-            // pad_lines('# iid:DbId', '  '),
-            pad_lines(lines(fields), '  '),
+            // pad_lines('# iid:DbId', '    '),
+            pad_lines(lines(fields), '    '),
           ]
         : []
 
@@ -133,11 +133,11 @@ const cast_entity = (context: BuildContext) => {
       size(relations) > 0
         ? [
             '\n',
-            pad_lines(INDENT_COMMENT_LINE, '  '),
+            pad_lines(INDENT_COMMENT_LINE, '    '),
             pad_lines('# Relations:'),
-            pad_lines(INDENT_COMMENT_LINE, '  '),
-            pad_lines(lines(relations), '  '),
-            pad_lines(INDENT_COMMENT_LINE, '  '),
+            pad_lines(INDENT_COMMENT_LINE, '    '),
+            pad_lines(lines(relations), '    '),
+            pad_lines(INDENT_COMMENT_LINE, '    '),
           ]
         : []
 
@@ -180,7 +180,7 @@ export const render_julia_octo = async (context: BuildContext) => {
   const backend: BackendContext = {
     backend: 'julia',
     comment: '#',
-    indent: '  ',
+    indent: '    ',
     coreferences: cast_typedb_coreferences(context),
   }
 
@@ -199,8 +199,7 @@ export const render_julia_octo = async (context: BuildContext) => {
     `
 import Base: @kwdef
 
-Nullable{T} = Union{T,Nothing}
-`,
+Nullable{T} = Union{T,Nothing}`,
     // lines(exported, '\n'),
 
     // coreference_banner(context, backend),
