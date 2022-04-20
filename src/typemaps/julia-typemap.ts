@@ -101,10 +101,10 @@ export const MYSQL_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   set: 'String',
   enum: 'String',
 
-  time: 'Datetime',
-  date: 'Datetime',
-  datetime: 'Datetime',
-  timestamp: 'Datetime',
+  time: 'DateTime',
+  date: 'DateTime',
+  datetime: 'DateTime',
+  timestamp: 'DateTime',
 }
 
 export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
@@ -116,14 +116,14 @@ export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   bytea: 'String',
   char: 'String',
   citext: 'String',
-  inet: 'String',
-  interval: 'String',
-  mol: 'String',
+  inet: 'INET',
+  interval: 'Interval',
+  mol: 'Mol',
   name: 'String',
   text: 'String',
   tsvector: 'String',
-  uuid: 'String',
   varchar: 'String',
+  uuid: 'UUID',
 
   int2: 'Int2',
   int4: 'Int4',
@@ -131,20 +131,23 @@ export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   int16: 'Int16',
   int32: 'Int32',
   int64: 'Int64',
-  float4: 'Float',
-  float8: 'Float',
-  numeric: 'Float',
-  money: 'Float',
+  float4: 'Float4',
+  float8: 'Float8',
+  float16: 'Float16',
+  float32: 'Float32',
+  float64: 'Float64',
+  numeric: 'Float32',
+  money: 'Money',
 
-  date: 'Datetime',
-  time: 'Datetime',
-  timetz: 'Datetime',
-  timestamp: 'Datetime',
-  timestamptz: 'Datetime',
+  date: 'DateTime',
+  time: 'DateTime',
+  timetz: 'DateTime',
+  timestamp: 'DateTime',
+  timestamptz: 'DateTime',
 
   // oid: "number",
   json: 'JSON',
-  // jsonb: 'JSONB',
+  jsonb: 'JSONB',
 
   // point: "{ x: number, y: number }",
 }
@@ -158,9 +161,7 @@ export const JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
 
 export const pragma = (_context: BuildContext): string => `
 Nullable{T} = Union{Nothing,T}
-Optional{T} = Union{Nothing,T}
 `
-
 export const cast_julia_type = (
   { config, enums }: BuildContext,
   { udt_name }: ColumnDefinition,

@@ -1,18 +1,22 @@
 import inflection from 'inflection'
-import { flatMap, get, groupBy, partition, size } from 'lodash'
+import { flatMap, get, groupBy, partition, size, sortBy, uniq } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
 // import { inflect } from '../formatters'
-import { translate_type } from '../typemaps/julia-typemap'
+import { cast_julia_type, translate_type } from '../typemaps/julia-typemap'
 import { BackendContext, header } from './base'
 
-const INDENT_COMMENT_LINE =
-  '#---------------------------------------------------------------------------'
+// const INDENT_COMMENT_LINE1 =
+//   '############################################################################'
 
-//------------------------------------------------------------------------------
+// const INDENT_COMMENT_LINE2 =
+//   '#==========================================================================='
+
+const INDENT_COMMENT_LINE3 =
+  '#---------------------------------------------------------------------------'
 
 const normalize_name = (name: string): string => {
   return name
@@ -112,12 +116,22 @@ const cast_entity = (context: BuildContext) => {
 
     const [id_columns, attribute_columns] = partition(record.columns, ({ name }) => {
       const name_underscore = inflection.underscore(name)
-      return name_underscore == 'id' || name_underscore.endsWith('_id')
+      return (
+        name_underscore == 'id' ||
+        name_underscore.endsWith('_id') ||
+        name_underscore.endsWith('id')
+      )
     })
 
     const fields = [
-      ...id_columns.map(cast_field(context)).sort(),
-      ...attribute_columns.map(cast_field(context)).sort(),
+      ...sortBy(id_columns, ({ name }) => name.length).map(cast_field(context)),
+      size(id_columns) > 0 && size(attribute_columns) > 0
+        ? INDENT_COMMENT_LINE3
+        : false,
+      ...sortBy(attribute_columns, column => [
+        cast_julia_type(context, column),
+        column.name,
+      ]).map(cast_field(context)),
     ]
     const relations = foreign_keys.map(cast_relation(context)).sort()
 
@@ -132,10 +146,10 @@ const cast_entity = (context: BuildContext) => {
     const relations_lines =
       size(relations) > 0
         ? [
-            '\n',
-            pad_lines(INDENT_COMMENT_LINE, '    '),
-            pad_lines('# Relations:'),
-            pad_lines(INDENT_COMMENT_LINE, '    '),
+            pad_lines(INDENT_COMMENT_LINE3, '    '),
+            // pad_lines('\n' + INDENT_COMMENT_LINE3, '    '),
+            pad_lines('  # Relations:'),
+            pad_lines(INDENT_COMMENT_LINE3, '    '),
             pad_lines(lines(relations), '    '),
           ]
         : []
@@ -160,11 +174,73 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
   const type = Relation.type(context, record)
   const comment = Relation.comment(context, record)
 
-  const line = `${name}::${type}`
-  return lines([comment, line, INDENT_COMMENT_LINE])
+  const line = `#   ${name}::${type}`
+  return lines([comment, line, INDENT_COMMENT_LINE3])
 }
 
 //------------------------------------------------------------------------------
+
+const type_pragma = (context: BuildContext) => {
+  //     `
+  // module ${inflect(context.schema, 'pascal')}
+  // import SearchLight: AbstractModel, DbId
+  // `,
+
+  const types = uniq(
+    context.tables.flatMap(({ columns }) =>
+      columns.map(column => cast_julia_type(context, column)),
+    ),
+  )
+
+  let body: string[] = ['']
+  let using_body: string[] = []
+  let type_alias_body: string[] = []
+
+  if (types.includes('DateTime')) {
+    using_body = using_body.concat(['using Dates: DateTime'])
+  }
+  if (types.includes('UUID')) {
+    using_body = using_body.concat(['using UUIDs: UUID'])
+  }
+
+  // Block Line
+  if (using_body.length > 0) {
+    using_body.sort()
+    body = body.concat(using_body)
+  }
+
+  body = body.concat(['import Base: @kwdef'])
+  body = body.concat([''])
+  body = body.concat(['Nullable{T} = Union{T,Nothing}'])
+
+  if (types.includes('Int2')) {
+    type_alias_body = type_alias_body.concat(['Int2 = Int8'])
+  }
+  if (types.includes('Int4')) {
+    type_alias_body = type_alias_body.concat(['Int4 = Int8'])
+  }
+  if (types.includes('Float2')) {
+    type_alias_body = type_alias_body.concat(['Float2 = Float16'])
+  }
+  if (types.includes('Float4')) {
+    type_alias_body = type_alias_body.concat(['Float4 = Float16'])
+  }
+  if (types.includes('Float8')) {
+    type_alias_body = type_alias_body.concat(['Float8 = Float16'])
+  }
+  if (types.includes('JSON')) {
+    type_alias_body = type_alias_body.concat(['JSON = Any'])
+  }
+
+  // Block Line
+  if (type_alias_body.length > 0) {
+    body = body.concat([''])
+    type_alias_body.sort()
+    body = body.concat(type_alias_body)
+  }
+
+  return body.join('\n')
+}
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_julia_octo = async (context: BuildContext) => {
@@ -185,20 +261,8 @@ export const render_julia_octo = async (context: BuildContext) => {
 
   return lines([
     header(context, backend),
-    // pragma(context),
+    type_pragma(context),
 
-    //     `
-    // module ${inflect(context.schema, 'pascal')}
-
-    // import SearchLight: AbstractModel, DbId
-    // import Base: @kwdef
-
-    // Nullable{T} = Union{T,Nothing}
-    // `,
-    `
-import Base: @kwdef
-
-Nullable{T} = Union{T,Nothing}`,
     // lines(exported, '\n'),
 
     // coreference_banner(context, backend),
