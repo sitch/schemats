@@ -157,12 +157,12 @@ export const render_julia_genie = async (context: BuildContext) => {
     // import SearchLight: AbstractModel, DbId
     // import Base: @kwdef
 
-    // Nullable{T} = Union{missing,T}
+    // Nullable{T} = Union{Missing,T}
     // `,
     `
 import Base: @kwdef
 
-Nullable{T} = Union{missing,T}
+Nullable{T} = Union{Missing,T}
 `,
     lines(exported, '\n'),
 
