@@ -35,7 +35,7 @@ const Attribute = {
 }
 
 const Entity = {
-  comment: (_context: BuildContext, { name }: TableDefinition): string => {
+  comment: (_context: BuildContext, _table: TableDefinition): string => {
     // return `# Table: ${name}`
     return ''
   },

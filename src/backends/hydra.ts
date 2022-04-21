@@ -1,4 +1,4 @@
-import { flatMap, groupBy, size } from 'lodash'
+import { flatMap, size } from 'lodash'
 
 import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import { BuildContext } from '../compiler'
@@ -8,62 +8,6 @@ import { cast_julia_type } from '../typemaps/julia-typemap'
 import { BackendContext, header } from './base'
 
 //------------------------------------------------------------------------------
-
-// ```julia
-// @present TrainingSchema <: TheorySQL begin
-//     # Tables
-//     split::Ob
-//     extract::Ob
-//     train::Ob
-//     evaluate::Ob
-//
-//     # Columns of tables
-//     extract_1_Files1::Attr(extract, String)
-//     extract_2_Images2::Attr(extract, String)
-//
-//     split_1_Images1::Attr(split, String)
-//     split_2_Images2::Attr(split, String)
-//     split_3_Images3::Attr(split, String)
-//
-//     train_1_NeuralNet1::Attr(train, NeuralNet)
-//     train_2_Images2::Attr(train, Images)
-//     train_3_NeuralNet3::Attr(train, NeuralNet)
-//     train_4_Metadata4::Attr(train, Metadata)
-//
-//     evaluate_1_NeuralNet1::Attr(evaluate, NeuralNet)
-//     evaluate_2_Images2::Attr(evaluate, Images)
-//     evaluate_3_Accuracy3::Attr(evaluate, Accuracy)
-//     evaluate_4_Metadata4::Attr(evaluate, Metadata)
-// end;
-// ```
-
-// using AlgebraicRelations.DB
-// using SQLite
-//
-// @present WorkplaceSchema <: TheorySQL begin
-//   # Data tables
-//   employee::Ob
-//   emp_data::Attr(employee, Int)
-//
-//   name::Ob
-//   name_data::Attr(name, String)
-//
-//   salary::Ob
-//   sal_data::Attr(salary, Real)
-//
-//   # Relation tables
-//   manager::Ob
-//   emplm::Hom(manager, employee)
-//   manag::Hom(manager, employee)
-//
-//   full_name::Ob
-//   empln::Hom(full_name, employee)
-//   namen::Hom(full_name, name)
-//
-//   income::Ob
-//   empli::Hom(income, employee)
-//   sali::Hom(income, salary)
-// end;
 
 const imports = (_context: BuildContext): string => `
 using AlgebraicRelations.DB
@@ -153,7 +97,7 @@ const cast_attribute =
 //------------------------------------------------------------------------------
 
 const cast_ob = (context: BuildContext) => {
-  const relations_map = groupBy(context.foreign_keys, 'primary_table')
+  // const relations_map = groupBy(context.foreign_keys, 'primary_table')
 
   return (record: TableDefinition) => {
     const name = Entity.name(context, record)
@@ -169,8 +113,8 @@ const cast_ob = (context: BuildContext) => {
 
 const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
   const ob = Relation.name(context, record)
-  const name = Relation.name(context, record)
-  const relation = Relation.relation(context, record)
+  // const name = Relation.name(context, record)
+  // const relation = Relation.relation(context, record)
   const comment = Relation.comment(context, record)
   const ob1 = record.primary_table
   const ob2 = record.foreign_table

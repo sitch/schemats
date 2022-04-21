@@ -5,7 +5,7 @@ export type Comment = string
 export type EnumName = string
 export type UDTName = string
 export type ConstraintName = string
-export type CatValue = string
+export type CatValue = string | boolean | number
 
 //------------------------------------------------------------------------------
 
@@ -40,13 +40,6 @@ export interface TableDefinition {
   statistics?: TableStatistics
 }
 
-export interface TableStatistics {
-  count: number
-  cat_values?: CatValue[]
-}
-
-//------------------------------------------------------------------------------
-
 export interface ColumnDefinition {
   name: ColumnName
   udt_name: UDTName
@@ -58,6 +51,21 @@ export interface ColumnDefinition {
   is_nullable: boolean
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   default_value: any
+  statistics?: ColumnStatistics
+}
+
+//------------------------------------------------------------------------------
+export interface TableStatistics {
+  row_count: number
+  // statistics?: ColumnStatistics[]
+}
+
+export interface ColumnStatistics {
+  distinct_count: number
+  mean: number
+  median: number
+  mode: number
+  cat_values: CatValue[]
 }
 
 //------------------------------------------------------------------------------
@@ -114,6 +122,8 @@ export interface Database {
   getColumnComments(schema: SchemaName): Promise<ColumnComment[]>
   getEnums(schema: SchemaName): Promise<EnumDefinition[]>
   getTable(schema: SchemaName, table: TableName): Promise<TableDefinition>
+  getTableStatistics(schema: SchemaName, table: TableName): Promise<TableStatistics>
+  getColumnStatistics(schema: SchemaName, table: TableName): Promise<ColumnStatistics[]>
 }
 
 //------------------------------------------------------------------------------

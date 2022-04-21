@@ -7,6 +7,7 @@ import { read_sql } from '../utils'
 import {
   ColumnComment,
   ColumnName,
+  ColumnStatistics,
   Database,
   EnumDefinition,
   EnumName,
@@ -16,19 +17,22 @@ import {
   TableComment,
   TableDefinition,
   TableName,
+  TableStatistics,
   UDTName,
 } from './types'
 
 //------------------------------------------------------------------------------
 
 const Queries = {
+  getEnums: read_sql('resources/sql/mysql/getEnums.sql'),
+  getTable: read_sql('resources/sql/mysql/getTable.sql'),
   getTableNames: read_sql('resources/sql/mysql/getTableNames.sql'),
   getPrimaryKeys: read_sql('resources/sql/mysql/getPrimaryKeys.sql'),
   getForeignKeys: read_sql('resources/sql/mysql/getForeignKeys.sql'),
   getTableComments: read_sql('resources/sql/mysql/getTableComments.sql'),
   getColumnComments: read_sql('resources/sql/mysql/getColumnComments.sql'),
-  getEnums: read_sql('resources/sql/mysql/getEnums.sql'),
-  getTable: read_sql('resources/sql/mysql/getTable.sql'),
+  getTableStatistics: read_sql('resources/sql/mysql/getTableStatistics.sql'),
+  getColumnStatistics: read_sql('resources/sql/mysql/getColumnStatistics.sql'),
 }
 
 //------------------------------------------------------------------------------
@@ -137,6 +141,33 @@ export class MySQLDatabase implements Database {
       // )
       .map(this.castUnsigned(['is_array', 'has_default', 'is_nullable']))
     return { name: table, columns }
+  }
+
+  // https://towardsdatascience.com/how-to-derive-summary-statistics-using-postgresql-742f3cdc0f44
+  public async getTableStatistics(
+    schema: SchemaName,
+    table: TableName,
+  ): Promise<TableStatistics> {
+    const result = await this.query<TableStatistics>(Queries.getTableStatistics, [
+      schema,
+      table,
+    ])
+    if (result.length !== 1) {
+      console.error(
+        `[mysql] getTableStatistics failed to return a row: ${schema}.${table}`,
+      )
+    }
+    return result[0]
+  }
+
+  public async getColumnStatistics(
+    schema: SchemaName,
+    table: TableName,
+  ): Promise<ColumnStatistics[]> {
+    return await this.query<ColumnStatistics>(Queries.getColumnStatistics, [
+      schema,
+      table,
+    ])
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -2,8 +2,8 @@ import { promises, readFileSync } from 'fs'
 import path from 'path'
 
 const project_directory = () => {
+  // eslint-disable-next-line unicorn/prefer-module
   return path.join(__dirname, '..')
-  // return path.dirname('..')
 }
 
 const relative_to_project_directory = (filepath: string): string => {

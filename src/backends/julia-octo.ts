@@ -41,7 +41,7 @@ const Attribute = {
 }
 
 const Entity = {
-  comment: (_context: BuildContext, { name }: TableDefinition): string => {
+  comment: (_context: BuildContext, _table: TableDefinition): string => {
     // return `# Table: ${name}`
     return ''
   },
@@ -156,11 +156,8 @@ const cast_entity = (context: BuildContext) => {
     return lines([
       comment,
       `@kwdef mutable struct ${name}`,
-      // `@kwdef mutable struct ${name} <: AbstractModel {`,
-
       ...field_lines,
       ...relations_lines,
-      // '}',
       'end',
     ])
   }
@@ -180,11 +177,6 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
 //------------------------------------------------------------------------------
 
 const type_pragma = (context: BuildContext) => {
-  //     `
-  // module ${inflect(context.schema, 'pascal')}
-  // import SearchLight: AbstractModel, DbId
-  // `,
-
   const types = uniq(
     context.tables.flatMap(({ columns }) =>
       columns.map(column => cast_julia_type(context, column)),
@@ -200,17 +192,9 @@ const type_pragma = (context: BuildContext) => {
     types.includes('Dates.DateTime') ||
     types.includes('Dates.Time')
   ) {
-    // const date_types = [
-    //   types.includes('Date') ? 'Date' : false,
-    //   types.includes('DateTime') ? 'DateTime' : false,
-    // ].filter(x => !!x)
-
-    // using_body = using_body.concat([`using Dates: ${date_types.join(', ')}`])
-    // using_body = using_body.concat(['using Dates'])
     using_body = using_body.concat(['import Dates'])
   }
   if (types.includes('UUID')) {
-    // using_body = using_body.concat(['using UUIDs: UUID'])
     using_body = using_body.concat(['import UUIDs'])
   }
 
@@ -279,27 +263,27 @@ export const render_julia_octo = async (context: BuildContext) => {
 
   return lines([
     header(context, backend),
+    // Start Module
     `module ${inflection.underscore(context.config.database)}`,
-
     lines(exported, '\n'),
-
     type_pragma(context),
 
     // coreference_banner(context, backend),
     // banner(backend.comment, `Relations (${size(foreign_keys)})`),
     // banner(backend.comment, `Entities (${size(tables)})`),
+
     banner(
       backend.comment,
       lines([`Relations (${size(foreign_keys)})`, `Entities (${size(tables)})`]),
     ),
     lines(entities, '\n\n'),
-    // 'end\n',
 
-    banner(backend.comment, `Models: (${size(octo_imports)})`),
-
+    banner(backend.comment, `Octo Definitions: (${size(octo_imports)})`),
     'function octo_definitions()',
     pad_lines(lines(['import Octo.Schema', ...octo_imports], '\n'), backend.indent),
     'end\n',
+
+    // End module
     'end\n',
   ])
 }
