@@ -76,7 +76,7 @@ const Relation = {
   type: (context: BuildContext, foreign_key: ForeignKey): string => {
     const column = { name: foreign_key.foreign_table, columns: [] }
     const name = Entity.name(context, column)
-    return `Nullable{${name}}`
+    return `Union{missing,${name}}`
   },
 }
 
@@ -196,11 +196,19 @@ const type_pragma = (context: BuildContext) => {
   let using_body: string[] = []
   let type_alias_body: string[] = []
 
-  if (types.includes('DateTime')) {
-    using_body = using_body.concat(['using Dates: DateTime'])
+  if (types.includes('Dates.Date') || types.includes('Dates.DateTime')) {
+    // const date_types = [
+    //   types.includes('Date') ? 'Date' : false,
+    //   types.includes('DateTime') ? 'DateTime' : false,
+    // ].filter(x => !!x)
+
+    // using_body = using_body.concat([`using Dates: ${date_types.join(', ')}`])
+    // using_body = using_body.concat(['using Dates'])
+    using_body = using_body.concat(['import Dates'])
   }
   if (types.includes('UUID')) {
-    using_body = using_body.concat(['using UUIDs: UUID'])
+    // using_body = using_body.concat(['using UUIDs: UUID'])
+    using_body = using_body.concat(['import UUIDs'])
   }
 
   // Block Line
@@ -210,23 +218,32 @@ const type_pragma = (context: BuildContext) => {
   }
 
   body = body.concat(['import Base: @kwdef'])
-  body = body.concat([''])
-  body = body.concat(['Nullable{T} = Union{T,Nothing}'])
+  // body = body.concat([''])
+  // body = body.concat(['Nullable{T} = Union{missing,T}'])
 
   if (types.includes('Int2')) {
-    type_alias_body = type_alias_body.concat(['Int2 = Int8'])
+    // type_alias_body = type_alias_body.concat(['Int2 = Int8'])
+    type_alias_body = type_alias_body.concat(['Int2 = Int'])
+  }
+  if (types.includes('Int3')) {
+    // type_alias_body = type_alias_body.concat(['Int3 = Int8'])
+    type_alias_body = type_alias_body.concat(['Int3 = Int'])
   }
   if (types.includes('Int4')) {
-    type_alias_body = type_alias_body.concat(['Int4 = Int8'])
+    // type_alias_body = type_alias_body.concat(['Int4 = Int8'])
+    type_alias_body = type_alias_body.concat(['Int4 = Int'])
   }
   if (types.includes('Float2')) {
-    type_alias_body = type_alias_body.concat(['Float2 = Float16'])
+    // type_alias_body = type_alias_body.concat(['Float2 = Float16'])
+    type_alias_body = type_alias_body.concat(['Float2 = Float'])
   }
   if (types.includes('Float4')) {
-    type_alias_body = type_alias_body.concat(['Float4 = Float16'])
+    // type_alias_body = type_alias_body.concat(['Float4 = Float16'])
+    type_alias_body = type_alias_body.concat(['Float4 = Float'])
   }
   if (types.includes('Float8')) {
-    type_alias_body = type_alias_body.concat(['Float8 = Float16'])
+    // type_alias_body = type_alias_body.concat(['Float8 = Float16'])
+    type_alias_body = type_alias_body.concat(['Float8 = Float'])
   }
   if (types.includes('JSON')) {
     type_alias_body = type_alias_body.concat(['JSON = Any'])

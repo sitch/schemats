@@ -101,10 +101,10 @@ export const MYSQL_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   set: 'String',
   enum: 'String',
 
-  time: 'DateTime',
-  date: 'DateTime',
-  datetime: 'DateTime',
-  timestamp: 'DateTime',
+  date: 'Dates.Date',
+  time: 'Dates.Time',
+  datetime: 'Dates.DateTime',
+  timestamp: 'Dates.DateTime',
 }
 
 export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
@@ -123,7 +123,7 @@ export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   text: 'String',
   tsvector: 'String',
   varchar: 'String',
-  uuid: 'UUID',
+  uuid: 'UUIDs.UUID',
 
   int2: 'Int2',
   int4: 'Int4',
@@ -139,11 +139,11 @@ export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   numeric: 'Float32',
   money: 'Money',
 
-  date: 'DateTime',
-  time: 'DateTime',
-  timetz: 'DateTime',
-  timestamp: 'DateTime',
-  timestamptz: 'DateTime',
+  date: 'Dates.Date',
+  time: 'Dates.Time',
+  timetz: 'Dates.Time',
+  timestamp: 'Dates.DateTime',
+  timestamptz: 'Dates.DateTime',
 
   // oid: "number",
   json: 'JSON',
@@ -194,7 +194,8 @@ export const translate_type = (
     type = `Array{<:${type}}`
   }
   if (record.is_nullable) {
-    type = `Nullable{${type}}`
+    // type = `Nullable{${type}}`
+    type = `Union{missing,${type}}`
   }
   return type
 }
@@ -206,9 +207,10 @@ export const translate_relation_name = (
   let type = cast_julia_type(context, record)
   if (record.is_array) {
     type = `Array{<:${type}}`
+    return type
   }
   if (record.is_nullable) {
-    type = `Optional{${type}}`
+    type = `Union{missing,${type}}`
   }
   return type
 }
