@@ -5,7 +5,6 @@ import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types
 import { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
-// import { inflect } from '../formatters'
 import { cast_julia_type, translate_type } from '../typemaps/julia-typemap'
 import { BackendContext, header } from './base'
 
@@ -80,10 +79,10 @@ const Relation = {
   },
 }
 
-// const cast_export = (context: BuildContext) => (record: TableDefinition) => {
-//   const name = Entity.name(context, record)
-//   return lines([`export ${name}`])
-// }
+const cast_export = (context: BuildContext) => (record: TableDefinition) => {
+  const name = Entity.name(context, record)
+  return lines([`export ${name}`])
+}
 
 const cast_octo_import = (context: BuildContext) => (record: TableDefinition) => {
   const name = Entity.name(context, record)
@@ -227,27 +226,21 @@ const type_pragma = (context: BuildContext) => {
 
   if (types.includes('Int2')) {
     type_alias_body = type_alias_body.concat(['Int2 = Int8'])
-    // type_alias_body = type_alias_body.concat(['Int2 = Int'])
   }
   if (types.includes('Int3')) {
     type_alias_body = type_alias_body.concat(['Int3 = Int8'])
-    // type_alias_body = type_alias_body.concat(['Int3 = Int'])
   }
   if (types.includes('Int4')) {
     type_alias_body = type_alias_body.concat(['Int4 = Int8'])
-    // type_alias_body = type_alias_body.concat(['Int4 = Int'])
   }
   if (types.includes('Float2')) {
     type_alias_body = type_alias_body.concat(['Float2 = Float16'])
-    // type_alias_body = type_alias_body.concat(['Float2 = Float'])
   }
   if (types.includes('Float4')) {
     type_alias_body = type_alias_body.concat(['Float4 = Float16'])
-    // type_alias_body = type_alias_body.concat(['Float4 = Float'])
   }
   if (types.includes('Float8')) {
     type_alias_body = type_alias_body.concat(['Float8 = Float16'])
-    // type_alias_body = type_alias_body.concat(['Float8 = Float'])
   }
   if (types.includes('JSON')) {
     type_alias_body = type_alias_body.concat(['JSON = Any'])
@@ -267,7 +260,7 @@ const type_pragma = (context: BuildContext) => {
 export const render_julia_octo = async (context: BuildContext) => {
   const tables = context.tables
   const foreign_keys = context.foreign_keys.flat()
-  // const exported = flatMap(tables, cast_export(context))
+  const exported = flatMap(tables, cast_export(context))
   const octo_imports = flatMap(tables, cast_octo_import(context))
 
   const entities = flatMap(tables, cast_entity(context))
@@ -282,9 +275,11 @@ export const render_julia_octo = async (context: BuildContext) => {
 
   return lines([
     header(context, backend),
-    type_pragma(context),
+    `module ${inflection.underscore(context.config.database)}`,
 
-    // lines(exported, '\n'),
+    lines(exported, '\n'),
+
+    type_pragma(context),
 
     // coreference_banner(context, backend),
     // banner(backend.comment, `Relations (${size(foreign_keys)})`),
@@ -297,6 +292,10 @@ export const render_julia_octo = async (context: BuildContext) => {
     // 'end\n',
 
     banner(backend.comment, `Models: (${size(octo_imports)})`),
-    lines(octo_imports, '\n'),
+
+    'function octo_definitions()',
+    pad_lines(lines(['import Octo.Schema', ...octo_imports], '\n'), backend.indent),
+    'end\n',
+    'end\n',
   ])
 }
