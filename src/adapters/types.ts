@@ -5,7 +5,6 @@ export type Comment = string
 export type EnumName = string
 export type UDTName = string
 export type ConstraintName = string
-export type CatValue = string | boolean | number
 
 //------------------------------------------------------------------------------
 
@@ -56,16 +55,44 @@ export interface ColumnDefinition {
 
 //------------------------------------------------------------------------------
 export interface TableStatistics {
-  row_count: number
-  // statistics?: ColumnStatistics[]
+  cardinality: number
+  statistics?: ColumnStatistics[]
 }
 
-export interface ColumnStatistics {
-  distinct_count: number
+export type ColumnStatistics =
+  | NumericalColumnStatistics
+  | TextColumnStatistics
+  | BooleanColumnStatistics
+
+interface DefaultColumnStatistics<T> {
+  is_null_present: boolean
+  cardinality: number
+  categories: CategoryStatistics<T>[]
+}
+
+type TextColumnStatistics = DefaultColumnStatistics<string>
+type BooleanColumnStatistics = DefaultColumnStatistics<boolean>
+
+export interface NumericalColumnStatistics extends DefaultColumnStatistics<number> {
   mean: number
   median: number
+  minimum: number
+  maximum: number
+  range: number
+  standard_deviation: number
+  variance: number
+  q1: number
+  q3: number
+  iqr: number
+  skewness: number
   mode: number
-  cat_values: CatValue[]
+}
+
+export interface CategoryStatistics<T> {
+  label: string
+  value: T | null
+  frequency: number
+  relative_frequency: number
 }
 
 //------------------------------------------------------------------------------
