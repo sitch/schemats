@@ -243,6 +243,10 @@ const type_pragma = (context: BuildContext) => {
     type_alias_body = type_alias_body.concat(['Float8 = Float16'])
   }
   if (types.includes('JSON')) {
+    // type_alias_body = type_alias_body.concat([
+    //   'JSONScalar = Union{Missing,Int32,Int64,String,Bool,Float32,Float64}',
+    //   'JSON = Union{Missing,JSONScalar,Dict{String,JSON}, Array{JSON}}',
+    // ])
     type_alias_body = type_alias_body.concat(['JSON = Any'])
   }
 
