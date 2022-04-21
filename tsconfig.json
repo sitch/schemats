@@ -1,16 +1,23 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es6",
-    "lib": ["es2020"],
+    "module": "es2022",
+    "target": "es2022",
+    "lib": [
+      "es2020"
+    ],
     "strict": true,
     "noImplicitAny": true,
     "declaration": true,
     "strictNullChecks": true,
     "sourceMap": true,
     "outDir": "dist",
+    "skipLibCheck": true,
     "esModuleInterop": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "moduleResolution": "node"
   },
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // "bridge/ptype-caller.ts"
+  ]
 }

@@ -1,3 +1,0 @@
-ts-node bin/schemats.ts postgres 'postgresql://postgres:postgres@localhost:5441/aact?currentSchema=ctgov' --column-formatter 'underscore' --table-formatter 'pascal' --schema ctgov --database aact --output test.tql --backend typedb --ignore-field-collisions id nct_id
-
-ts-node bin/schemats.ts mysql 'mysqlql://root@localhost:3306/umls' --column-formatter 'lowercase' --table-formatter 'pascal' --schema umls --database umls --output test.tql --backend typedb --ignore-field-collisions id nct_id
