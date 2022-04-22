@@ -1,6 +1,6 @@
 import { isEmpty, sortBy } from 'lodash'
 
-import {
+import type {
   ColumnComment,
   Database,
   EnumDefinition,
@@ -18,9 +18,12 @@ import { render_julia_genie } from './backends/julia-genie'
 import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typescript } from './backends/typescript'
-import { Backend, BACKENDS, Config, get_user_imports, UserImport } from './config'
-import { build_coreferences, Coreferences } from './coreference'
-import { build_relationships, Relationship } from './relationships'
+import type { Backend, Config, UserImport } from './config'
+import { BACKENDS, get_user_imports } from './config'
+import type { Coreferences } from './coreference'
+import { build_coreferences } from './coreference'
+import type { Relationship } from './relationships'
+import { build_relationships } from './relationships'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
 

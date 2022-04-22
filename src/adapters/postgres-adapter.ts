@@ -1,9 +1,9 @@
 import { groupBy } from 'lodash'
 import { Client } from 'pg'
 
-import { Config } from '../config'
+import type { Config } from '../config'
 import { read_sql } from '../utils'
-import {
+import type {
   ColumnComment,
   ColumnName,
   ColumnStatistics,
@@ -139,9 +139,7 @@ export class PostgresDatabase implements Database {
       table,
     ])
     if (result.length !== 1) {
-      console.error(
-        `[postgres] getTableStatistics failed to return a row: ${schema}.${table}`,
-      )
+      throw `[postgres] getTableStatistics failed to return a row: ${schema}.${table}`
     }
     return result[0]
   }

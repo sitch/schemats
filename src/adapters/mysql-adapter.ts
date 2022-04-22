@@ -1,10 +1,11 @@
 import json5 from 'json5'
 import { update } from 'lodash'
-import { Connection, createConnection, RowDataPacket } from 'mysql2/promise'
+import type { Connection, RowDataPacket } from 'mysql2/promise'
+import { createConnection } from 'mysql2/promise'
 
-import { Config } from '../config'
+import type { Config } from '../config'
 import { read_sql } from '../utils'
-import {
+import type {
   ColumnComment,
   ColumnName,
   ColumnStatistics,
@@ -131,7 +132,7 @@ export class MySQLDatabase implements Database {
     }>(Queries.getTable, [schema, table])
 
     if (result.length === 0) {
-      console.error(`[mysql] Missing columns for table: ${schema}.${table}`)
+      throw `[mysql] Missing columns for table: ${schema}.${table}`
     }
     const columns = result
       // .map(

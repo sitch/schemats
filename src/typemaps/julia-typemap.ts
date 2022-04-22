@@ -1,6 +1,6 @@
-import { ColumnDefinition } from '../adapters/types'
-import { BuildContext } from '../compiler'
-import { UDTTypeMap } from '../coreference'
+import type { ColumnDefinition } from '../adapters/types'
+import type { BuildContext } from '../compiler'
+import type { UDTTypeMap } from '../coreference'
 
 export type JuliaType = string
 

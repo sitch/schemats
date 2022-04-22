@@ -56,6 +56,7 @@
     "@swc/helpers": "^0.3.8",
     "@swc/jest": "^0.2.20",
     "@swc/register": "^0.1.10",
+    "@tsconfig/node17": "^1.0.0",
     "@tsconfig/recommended": "^1.0.1",
     "@types/fs-extra": "^9.0.13",
     "@types/inflection": "^1.13.0",

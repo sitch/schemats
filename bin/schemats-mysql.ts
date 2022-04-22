@@ -1,9 +1,10 @@
 import chalk from 'chalk'
-import { Command } from 'commander'
+import type { Command } from 'commander'
 
 import { MySQLDatabase } from '../src/adapters/mysql-adapter'
 import { generate } from '../src/compiler'
-import { CommandOptions, Config } from '../src/config'
+import type { CommandOptions } from '../src/config'
+import { Config } from '../src/config'
 import { write_relative_file_async } from '../src/utils'
 
 export const mysql = (program: Command, argv: string[]) => {

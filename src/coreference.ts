@@ -1,8 +1,9 @@
 import { flatMap, fromPairs, keyBy, sortBy, toPairs, uniq } from 'lodash'
 
-import { ColumnName, TableDefinition, TableName, UDTName } from './adapters/types'
-import { BuildContext } from './compiler'
-import { Config, ENUM_DELIMITER } from './config'
+import type { ColumnName, TableDefinition, TableName, UDTName } from './adapters/types'
+import type { BuildContext } from './compiler'
+import type { Config } from './config'
+import { ENUM_DELIMITER } from './config'
 import { TYPEDB_TYPEMAP, TypeDBType } from './typemaps/typedb-typemap'
 
 //------------------------------------------------------------------------------

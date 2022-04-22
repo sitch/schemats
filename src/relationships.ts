@@ -1,5 +1,5 @@
-import { ForeignKey, TableDefinition, TableName } from './adapters/types'
-import { Config } from './config'
+import type { ForeignKey, TableDefinition, TableName } from './adapters/types'
+import type { Config } from './config'
 
 //------------------------------------------------------------------------------
 

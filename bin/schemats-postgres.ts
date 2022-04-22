@@ -1,9 +1,10 @@
 import chalk from 'chalk'
-import { Command } from 'commander'
+import type { Command } from 'commander'
 
 import { PostgresDatabase } from '../src/adapters/postgres-adapter'
 import { generate } from '../src/compiler'
-import { CommandOptions, Config } from '../src/config'
+import type { CommandOptions } from '../src/config'
+import { Config } from '../src/config'
 import { write_relative_file_async } from '../src/utils'
 
 export const postgres = (program: Command, argv: string[]) => {

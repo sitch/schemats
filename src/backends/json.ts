@@ -1,4 +1,4 @@
-import { BuildContext } from '../compiler'
+import type { BuildContext } from '../compiler'
 import { pretty } from '../formatters'
 
 export const build = ({

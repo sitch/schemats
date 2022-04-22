@@ -33,7 +33,7 @@ export type EnumDefinition = ParameterizedEnumDefinition<string>
 export interface TableDefinition {
   name: TableName
   columns: ColumnDefinition[]
-  comment?: Comment
+  comment?: Comment | undefined
   primary_keys?: PrimaryKey[]
   foreign_keys?: ForeignKey[]
   statistics?: TableStatistics
@@ -42,7 +42,7 @@ export interface TableDefinition {
 export interface ColumnDefinition {
   name: ColumnName
   udt_name: UDTName
-  comment?: Comment
+  comment?: Comment | undefined
   // primary_key?: PrimaryKey;
   // foreign_key?: ForeignKey;
   is_array: boolean

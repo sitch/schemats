@@ -1,12 +1,13 @@
 import inflection from 'inflection'
 import { flatMap, get, groupBy, partition, size, sortBy, uniq } from 'lodash'
 
-import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
-import { BuildContext } from '../compiler'
+import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
+import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
 import { cast_julia_type, translate_type } from '../typemaps/julia-typemap'
-import { BackendContext, header } from './base'
+import type { BackendContext } from './base'
+import { header } from './base'
 
 // const INDENT_COMMENT_LINE1 =
 //   '############################################################################'

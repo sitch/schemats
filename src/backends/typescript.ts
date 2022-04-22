@@ -1,8 +1,12 @@
 import { flatMap, size } from 'lodash'
 
-import { ColumnDefinition, EnumDefinition, TableDefinition } from '../adapters/types'
-import { BuildContext } from '../compiler'
-import { UserImport } from '../config'
+import type {
+  ColumnDefinition,
+  EnumDefinition,
+  TableDefinition,
+} from '../adapters/types'
+import type { BuildContext } from '../compiler'
+import type { UserImport } from '../config'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, double_quote, lines, pad_lines } from '../formatters'
 import {
@@ -10,7 +14,8 @@ import {
   pragma,
   translate_type,
 } from '../typemaps/typescript-typemap'
-import { BackendContext, header } from './base'
+import type { BackendContext } from './base'
+import { header } from './base'
 
 //------------------------------------------------------------------------------
 

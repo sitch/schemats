@@ -1,11 +1,12 @@
 import { flatMap, size } from 'lodash'
 
-import { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
-import { BuildContext } from '../compiler'
+import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
+import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
 import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
-import { BackendContext, coreference_banner, header } from './base'
+import type { BackendContext } from './base'
+import { coreference_banner, header } from './base'
 
 //------------------------------------------------------------------------------
 

@@ -1,8 +1,8 @@
 import { size } from 'lodash'
 
-import { BuildContext } from '../compiler'
-import { Backend } from '../config'
-import { TypeDBCoreferences } from '../coreference'
+import type { BuildContext } from '../compiler'
+import type { Backend } from '../config'
+import type { TypeDBCoreferences } from '../coreference'
 import { pad_lines, pretty } from '../formatters'
 
 export type CommentDelimiter = string

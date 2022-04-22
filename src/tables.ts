@@ -1,6 +1,6 @@
 import { get, groupBy, isEmpty, keyBy } from 'lodash'
 
-import {
+import type {
   ColumnComment,
   ColumnDefinition,
   ForeignKey,
