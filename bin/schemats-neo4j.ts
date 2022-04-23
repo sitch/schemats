@@ -121,10 +121,14 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       },
     )
 
-    const fields = [...index_fields, ...label_fields]
+    const constraint_fields: string[] = [
+      // `    id::Int64`
+    ]
+
+    const fields = [...constraint_fields, ...index_fields, ...label_fields]
+
     return `
 @kwdef mutable struct ${name}
-    id::Int64
 ${fields.join('\n')}
 end
 `
@@ -210,12 +214,12 @@ Unique{T} = T
 #-------------------------------------------------------------------------------
 # Nodes         (${node_structs.length})
 #-------------------------------------------------------------------------------
-${node_structs.join('\n')}
+${node_structs.join('')}
 
 #-------------------------------------------------------------------------------
 # Relationships (${relationship_structs.length})
 #-------------------------------------------------------------------------------
-${relationship_structs.join('\n')}
+${relationship_structs.join('')}
 
 
 #-------------------------------------------------------------------------------
