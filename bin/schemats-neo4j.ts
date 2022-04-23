@@ -230,6 +230,7 @@ ${relationship_structs.join('')}
 
 function octo_definitions()
     import Octo.Schema
+
 ${node_octo_definitions.join('\n')}
 ${relationship_octo_definitions.join('\n')}
     return nothing
