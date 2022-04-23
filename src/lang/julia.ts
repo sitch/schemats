@@ -8,10 +8,7 @@ export const JULIA_CHARACTER_LINE_LIMIT = 92
 export const JULIA_COMMENT = '#'
 export const JULIA_INDENT = '    '
 
-// export const INDENT_COMMENT_LINE1 = `${JULIA_COMMENT}${'#'.repeat(JULIA_CHARACTER_LINE_LIMIT - JULIA_COMMENT.length - JULIA_INDENT.length)}`
-// export const INDENT_COMMENT_LINE2 = `${JULIA_COMMENT}${'='.repeat(JULIA_CHARACTER_LINE_LIMIT - JULIA_COMMENT.length - JULIA_INDENT.length)}`
-// export const INDENT_COMMENT_LINE3 = `${JULIA_COMMENT}${'-'.repeat(JULIA_CHARACTER_LINE_LIMIT - JULIA_COMMENT.length - JULIA_INDENT.length)}`
-
+export const COMMENT_LINE = divider_line('-', 0)
 export const INDENT_COMMENT_LINE = divider_line('-', 1)
 
 export function divider_line(char = '-', indentation = 0) {

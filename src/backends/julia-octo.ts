@@ -171,7 +171,9 @@ export const render_julia_octo = async (context: BuildContext) => {
   const octo_imports = flatMap(tables, cast_octo_import(context))
 
   const entities = flatMap(tables, cast_entity(context))
-  // const relations = flatMap(foreign_keys, cast_relation(context));
+  const relations = flatMap(foreign_keys, cast_relation(context))
+
+  console.log(relations)
 
   const backend: BackendContext = {
     backend: 'julia',
@@ -188,9 +190,6 @@ export const render_julia_octo = async (context: BuildContext) => {
     render_module(module_name, [
       lines(exported),
       render_using_pragma(context),
-      // coreference_banner(context, backend),
-      // banner(backend.comment, `Relations (${size(foreign_keys)})`),
-      // banner(backend.comment, `Entities  (${size(tables)})`),
       banner(
         backend.comment,
         lines([`Entities  (${size(tables)})`, `Relations (${size(foreign_keys)})`]),
