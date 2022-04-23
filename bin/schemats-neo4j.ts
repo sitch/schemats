@@ -83,12 +83,31 @@ interface Neo4jRelationship {
 type Neo4jRelationshipProperties = Record<string, never>
 
 //##############################################################################
-
+// See: https://neo4j.com/docs/graphql-manual/current/type-definitions/types/
+//##############################################################################
 const JULIA_TYPES: Record<string, string> = {
-  STRING: 'String',
-  LIST: 'Array{String}',
+  // See: https://neo4j.com/labs/apoc/4.4/overview/apoc.meta/apoc.meta.type/
+
   INTEGER: 'Int64',
+  FLOAT: 'Float64',
+  STRING: 'String',
+  BOOLEAN: 'Boolean',
+  // RELATIONSHIP: 'Relationship',
+  // NODE: 'Node',
+  // PATH: 'Path',
+  NULL: 'Missing',
+  UNKNOWN: 'Any',
+  MAP: 'Dict',
+  LIST: 'Array',
+  // LIST: 'Array{String}',
   LOCAL_DATE_TIME: 'Dates.Datetime',
+
+  // Int: 'Int32',
+  // BigInt: 'Int64',
+  // Float: 'Float32',
+  // Boolean: 'Boolean',
+  // ID: 'ID',
+  //
 }
 
 function cast_node_struct(node_labels_map: NodeLabelsMap) {
@@ -111,7 +130,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       }) => {
         let julia_type = JULIA_TYPES[type]
         if (uniqueConstraint) {
-          julia_type = `Unique{${julia_type}}`
+          julia_type = `Distinct{${julia_type}}`
         }
         if (!existenceConstraint) {
           julia_type = `Union{Missing,${julia_type}}`
@@ -200,7 +219,7 @@ using Dates
 import Base: @kwdef
 
 # Distinct
-Unique{T} = T
+Distinct{T} = T
 
 #-------------------------------------------------------------------------------
 # Nodes         (${node_structs.length})
