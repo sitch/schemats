@@ -147,7 +147,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
     })
 
     const field_lines = [
-      ...sortBy(id_fields, field => field.length),
+      ...sortBy(id_fields, field => field.split('::')[0].length),
       ...attribute_fields,
     ]
     const body = field_lines.length > 0 ? `\n${field_lines.join('\n')}\n` : ' '
