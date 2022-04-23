@@ -10,7 +10,7 @@ import { write_relative_file_async } from '../src/utils'
 export const postgres = (program: Command, argv: string[]) => {
   program
     .command('postgres')
-    .description('Generate a typescript schema from mysql')
+    .description('Generate a typescript schema from postgres')
     .argument('<connection>', 'if left empty will use env variables')
     .option('-d, --database <database>', 'the database to use')
     .option('-I, --ignore-attribute-collisions <attribute...>')
@@ -27,7 +27,7 @@ export const postgres = (program: Command, argv: string[]) => {
     .option('--typedb-relation-template <template>', '{{relation}}')
     .option('--typedb-attribute-template <template>', '{{attribute}}')
     .option('--no-header', "don't generate a header")
-    .option('--no-throw-on-missing-type', 'suppress type mapping erros')
+    .option('--no-throw-on-missing-type', 'suppress type mapping errors')
     .action(async (connection: string, options: CommandOptions) => {
       // const { PostgresDatabase } = await import('../src/adapters/postgres-adapter')
 

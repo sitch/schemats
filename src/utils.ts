@@ -1,4 +1,4 @@
-import { promises, readFileSync } from 'fs'
+import { promises, readFileSync, readJSONSync } from 'fs-extra'
 import path from 'path'
 
 const project_directory = () => {
@@ -19,6 +19,10 @@ export const write_relative_file_async = async (content: string, filepath: strin
 
 export const read_sql = (filepath: string) => {
   return readFileSync(relative_to_project_directory(filepath)).toString('utf8')
+}
+
+export function read_json<T>(filepath: string): T {
+  return readJSONSync(filepath) as T
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

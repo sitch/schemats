@@ -57,3 +57,23 @@ using SQLite
     sali::Hom(income, salary)
 end
 ```
+
+```julia
+using Catlab, Catlab.CategoricalAlgebra
+
+@present MusicSchema(FreeSchema) begin
+  (Text, Year)::Data
+
+  Album::Ob
+  (album_name, artist)::Attr(Album, Text)
+  year::Attr(Album, Year)
+
+  Song::Ob
+  album::Hom(Song, Album)
+  song_name::Attr(Song, Text)
+end
+
+const Music = ACSetType(MusicSchema, index=[:album])
+
+music = Music{String,Int}()
+```

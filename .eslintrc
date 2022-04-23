@@ -102,7 +102,21 @@
     "unicorn/prevent-abbreviations": [
       1,
       {
+        "allowList": {
+          "neo4j_config": true,
+          "neo4j_json_filename": true,
+          "neo4j_json": true,
+          "Neo4jNode": true,
+          "Neo4jNodeProperties": true,
+          "Neo4jRelationship": true,
+          "Neo4jRelationshipProperties": true,
+          "Neo4jSpecification": true,
+          "neo4j": true,
+          "neo4j-json": true,
+          "schemats-neo4j": true
+        },
         "replacements": {
+          "Neo4j": false,
           "args": false,
           "err": false,
           "prod": false,
@@ -113,7 +127,7 @@
     ],
     // import
     "import/max-dependencies": [1, { "max": 15 }],
-    // simple-import-sort with recomended settings
+    // simple-import-sort with recommended settings
     "simple-import-sort/imports": 1,
     "simple-import-sort/exports": 1,
     "sort-imports": 0,

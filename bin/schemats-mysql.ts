@@ -27,7 +27,7 @@ export const mysql = (program: Command, argv: string[]) => {
     .option('--typedb-relation-template <template>', '{{relation}}')
     .option('--typedb-attribute-template <template>', '{{attribute}}')
     .option('--no-header', "don't generate a header")
-    .option('--no-throw-on-missing-type', 'suppress type mapping erros')
+    .option('--no-throw-on-missing-type', 'suppress type mapping errors')
     .action(async (connection: string, options: CommandOptions) => {
       // const { MySQLDatabase } = await import('../src/adapters/mysql-adapter')
 
