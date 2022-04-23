@@ -55,7 +55,7 @@ interface Neo4jNodeLabel {
 }
 interface Neo4jSpecification {
   nodes: Neo4jNode[]
-  relationships: Neo4jRelationship[]
+  relationships: Neo4indexEdge[]
 }
 
 interface Neo4jNode {
@@ -72,15 +72,15 @@ interface Neo4jNodeProperties {
   constraints: string[]
 }
 
-interface Neo4jRelationship {
+interface Neo4indexEdge {
   identity: number
   start: number
   end: number
   type: string
-  properties: Neo4jRelationshipProperties
+  properties: Neo4indexEdgeProperties
 }
 
-type Neo4jRelationshipProperties = Record<string, never>
+type Neo4indexEdgeProperties = Record<string, never>
 
 //##############################################################################
 // See: https://neo4j.com/docs/graphql-manual/current/type-definitions/types/
@@ -165,13 +165,13 @@ function union_types(types: string[]) {
     return types[0]
   }
   if (types.length >= 2) {
-    return `Union{types.join(',')}`
+    return `Union{${types.join(',')}}`
   }
   return 'Nothing'
 }
 
-function cast_relationship_struct(node_identity_map: NodeIdentityMap) {
-  return (name: string, relationships: Neo4jRelationship[]) => {
+function cast_edge_struct(node_identity_map: NodeIdentityMap) {
+  return (name: string, relationships: Neo4indexEdge[]) => {
     const edges = relationships
       .map(({ start, end }) => ({
         start: node_identity_map.get(start)!,
@@ -194,7 +194,7 @@ function cast_node_name({ properties: { name } }: Neo4jNode) {
   return `${name}`
 }
 
-function cast_relationship_name({ type }: Neo4jRelationship) {
+function cast_edge_name({ type }: Neo4indexEdge) {
   return `${type}`
 }
 
@@ -210,14 +210,14 @@ const template = (
   for (const node of nodes) node_identity_map.set(node.identity, node.properties.name)
 
   const node_names = nodes.map(node => cast_node_name(node)).sort()
-  const relationship_groups = groupBy(relationships, cast_relationship_name)
-  const relationship_names = sortBy(keys(relationship_groups), name => name)
+  const edge_groups = groupBy(relationships, cast_edge_name)
+  const edge_names = sortBy(keys(edge_groups), name => name)
 
-  const names = [...node_names, ...relationship_names]
+  const names = [...node_names, ...edge_names]
 
   const node_structs = nodes.map(cast_node_struct(node_labels_map)).sort()
-  const relationship_structs = relationship_names.map(name =>
-    cast_relationship_struct(node_identity_map)(name, relationship_groups[name]),
+  const edge_structs = edge_names.map(name =>
+    cast_edge_struct(node_identity_map)(name, edge_groups[name]),
   )
 
   const octo_imports = names.map(name => render_octo_import(name, name))
@@ -228,7 +228,7 @@ const template = (
 module ckg
 
 ${node_names.map(name => `export ${name}`).join('\n')}
-${relationship_names.map(name => `export ${name}`).join('\n')}
+${edge_names.map(name => `export ${name}`).join('\n')}
 
 using Dates
 
@@ -243,10 +243,9 @@ const Maybe{T} = Union{Missing,T}
 #-------------------------------------------------------------------------------
 ${node_structs.join('')}
 #-------------------------------------------------------------------------------
-# Relationships (${relationship_structs.length})
+# Edges (${edge_structs.length})
 #-------------------------------------------------------------------------------
-${relationship_structs.join('')}
-
+${edge_structs.join('')}
 ${octo_definition}
 
 end
