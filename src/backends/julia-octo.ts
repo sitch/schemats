@@ -267,7 +267,6 @@ export const render_julia_octo = async (context: BuildContext) => {
     // Start Module
     `
 module ${inflection.underscore(context.config.database)}
-
 `,
     lines(exported, '\n'),
     type_pragma(context),
@@ -285,6 +284,7 @@ module ${inflection.underscore(context.config.database)}
     banner(backend.comment, `Octo Definitions: (${size(octo_imports)})`),
     'function octo_definitions()',
     pad_lines(lines(['import Octo.Schema', ...octo_imports], '\n'), backend.indent),
+    '    return nothing\n',
     'end\n',
 
     // End module
