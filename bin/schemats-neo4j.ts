@@ -73,7 +73,7 @@ end
 
 function cast_node_name(_node_map: NodeMap) {
   return ({ properties: { name } }: Neo4jNode) => {
-    return `export ${name}`
+    return `${name}`
   }
 }
 
@@ -82,7 +82,7 @@ function cast_relationship_name(node_map: NodeMap) {
     const source = node_map.get(start)!
     const destination = node_map.get(end)!
 
-    return `export ${source}__${type}__${destination}`
+    return `${source}__${type}__${destination}`
   }
 }
 
@@ -113,11 +113,17 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
     `,
 
     // Names
-    `#-------------------------------------------------------------------------------`,
+    `
+#-------------------------------------------------------------------------------
+`,
     ...node_names.map(name => `# ${name}`).join('\n'),
-    `#-------------------------------------------------------------------------------`,
+    `
+#-------------------------------------------------------------------------------
+`,
     ...relationship_names.map(name => `# ${name}`).join('\n'),
-    `#-------------------------------------------------------------------------------`,
+    `
+#-------------------------------------------------------------------------------
+`,
 
     // Exports
     ...node_names.map(name => `export ${name}`).join('\n'),
