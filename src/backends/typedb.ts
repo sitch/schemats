@@ -137,6 +137,7 @@ export const render_typedb = async (context: BuildContext) => {
     backend: 'typedb',
     comment: '#',
     indent: '  ',
+    character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
 

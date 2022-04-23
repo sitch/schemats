@@ -7,6 +7,7 @@ import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines } from '../formatters'
 import {
   INDENT_COMMENT_LINE,
+  JULIA_CHARACTER_LINE_LIMIT,
   JULIA_COMMENT,
   JULIA_INDENT,
   render_module,
@@ -176,6 +177,7 @@ export const render_julia_octo = async (context: BuildContext) => {
     backend: 'julia',
     comment: JULIA_COMMENT,
     indent: JULIA_INDENT,
+    character_line_limit: JULIA_CHARACTER_LINE_LIMIT,
     coreferences: cast_typedb_coreferences(context),
   }
 

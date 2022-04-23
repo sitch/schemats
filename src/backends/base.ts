@@ -13,6 +13,7 @@ export interface BackendContext {
   backend: Backend
   comment: CommentDelimiter
   indent: IndentDelimiter
+  character_line_limit: number
   coreferences: TypeDBCoreferences
 }
 

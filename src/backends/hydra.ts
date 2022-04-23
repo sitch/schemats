@@ -214,9 +214,10 @@ export const render_hydra = async (context: BuildContext) => {
   const relations = flatMap(foreign_keys, cast_relation(context))
 
   const backend: BackendContext = {
-    backend: 'julia',
+    backend: 'haskell',
     comment: '#',
     indent: '  ',
+    character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
 

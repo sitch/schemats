@@ -124,6 +124,7 @@ export const render_typescript = async (context: BuildContext) => {
     backend: 'typescript',
     comment: '//',
     indent: '  ',
+    character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
 
