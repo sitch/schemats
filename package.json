@@ -106,7 +106,8 @@
     "lodash": "^4.17.21",
     "mysql2": "^2.3.3",
     "pg": "^8.7.3",
-    "pythonia": "^0.2.16"
+    "pythonia": "^0.2.16",
+    "sort-json": "^2.0.1"
   },
   "_peerDependencies": {
     "mysql2": ">= 2",

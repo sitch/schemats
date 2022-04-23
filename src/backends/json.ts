@@ -1,3 +1,5 @@
+import sortJson from 'sort-json'
+
 import type { BuildContext } from '../compiler'
 import { pretty } from '../formatters'
 
@@ -7,7 +9,7 @@ export const build = ({
 }: BuildContext) => ({
   version,
   timestamp,
-  ...context,
+  ...sortJson(context),
 })
 
 // eslint-disable-next-line @typescript-eslint/require-await
