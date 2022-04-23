@@ -42,7 +42,7 @@ export function render_using_pragma(context: BuildContext) {
 
   let body: string[] = ['']
   let using_body: string[] = []
-  let type_alias_body: string[] = ['const Maybe{T} = Union{Missing,T}']
+  let type_alias_body: string[] = ['const Nullable{T} = Union{Missing,T}']
 
   if (
     types.includes('Dates.Date') ||

@@ -240,7 +240,7 @@ abstract type Neo4jNode end
 abstract type Neo4jEdge end
 
 const Distinct{T} = T
-const Maybe{T} = Union{Missing,T}
+const Nullable{T} = Union{Missing,T}
 
 ${divider_line()}
 # Nodes         (${node_structs.length})
