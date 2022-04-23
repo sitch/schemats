@@ -125,7 +125,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       // `    id::Int64`
     ]
 
-    const fields = [...constraint_fields, ...index_fields, ...label_fields]
+    const fields = [...constraint_fields, ...index_fields, ...label_fields].sort()
 
     return `
 @kwdef mutable struct ${name}
