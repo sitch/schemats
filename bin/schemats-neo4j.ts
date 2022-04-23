@@ -86,6 +86,12 @@ function cast_relationship_name(node_map: NodeMap) {
   }
 }
 
+function cast_relationship_type(node_map: NodeMap) {
+  return ({ type }: Neo4jRelationship) => {
+    return `${type}`
+  }
+}
+
 //##############################################################################
 
 const template = ({ nodes, relationships }: Neo4jSpecification) => {
@@ -97,7 +103,9 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
 
   const node_names = nodes.map(cast_node_name(node_map)).sort()
   const relationship_names = relationships.map(cast_relationship_name(node_map)).sort()
+  const relationship_types = relationships.map(cast_relationship_type(node_map)).sort()
 
+  cast_relationship_type
   return [
     `
 ################################################################################
@@ -108,27 +116,24 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
 #
 ################################################################################
 `,
-    `
-    module ckg
-    `,
+    '\nmodule ckg\n',
 
     // Names
-    `
-#-------------------------------------------------------------------------------
-`,
+    '\n#-------------------------------------------------------------------------------\n',
     ...node_names.map(name => `# ${name}`).join('\n'),
-    `
-#-------------------------------------------------------------------------------
-`,
-    ...relationship_names.map(name => `# ${name}`).join('\n'),
-    `
-#-------------------------------------------------------------------------------
-`,
+    '\n#-------------------------------------------------------------------------------\n',
+    ...relationship_types.map(name => `# ${name}`).join('\n'),
+    '\n#-------------------------------------------------------------------------------\n',
+
+    // ...relationship_names.map(name => `# ${name}`).join('\n'),
+    // '\n#-------------------------------------------------------------------------------\n',
 
     // Exports
     ...node_names.map(name => `export ${name}`).join('\n'),
     ...relationship_names.map(name => `export ${name}`).join('\n'),
+
     `
+
 #-------------------------------------------------------------------------------
 # Nodes (${nodes.length})
 # Relationships (${relationships.length})
