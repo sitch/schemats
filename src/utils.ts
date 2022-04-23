@@ -1,4 +1,5 @@
 import { promises, readFileSync, readJSONSync } from 'fs-extra'
+import inflection from 'inflection'
 import path from 'path'
 
 const project_directory = () => {
@@ -30,4 +31,9 @@ export const json_equal = (left: any, right: any): boolean => {
   const left_encoded = JSON.stringify(left)
   const right_encoded = JSON.stringify(right)
   return left_encoded == right_encoded
+}
+
+export function identifier_like(field: string) {
+  const name = inflection.underscore(field)
+  return name.endsWith('_id') || name.endsWith('id')
 }

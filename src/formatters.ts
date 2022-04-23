@@ -7,6 +7,8 @@ const DEFAULT_SORT_JSON_OPTIONS = {
   depth: Number.POSITIVE_INFINITY,
 }
 
+export const is_only_whitespace = (line: string) => /^\s*$/.test(line)
+
 export const pretty = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any,
@@ -56,10 +58,9 @@ export const banner = (comment: string, label: string) => {
   return `${divider(comment)}${lines.join('\n')}${divider(comment)}`
 }
 
-export const pad_lines = (content: string, padding = '  '): string =>
-  content
-    .split('\n')
-    .map(value => `${padding}${value}`)
+export const pad_lines = (content: string | string[], padding = '  '): string =>
+  (isString(content) ? content.split('\n') : content)
+    .map(value => (is_only_whitespace(value) ? `${padding}` : `${padding}${value}`))
     .join('\n')
 
 type Line = string | boolean | undefined

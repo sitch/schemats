@@ -152,7 +152,7 @@ export class Config {
     }
   }
 
-  public get commandFromCLI() {
+  public get command_from_cli() {
     return ['ts-node', 'schemats', ...this.argv.slice(2)].join(' ')
   }
 
