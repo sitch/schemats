@@ -114,11 +114,11 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
   return ({
     properties: {
       name,
-      indexes,
+      // indexes,
       // constraints
     },
   }: Neo4jNode) => {
-    const index_fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
+    // const index_fields = indexes.map(index => `    ${index}::Maybe.T{Any}`).sort()
 
     const label_fields = get(node_labels_map, name, []).map(
       ({
@@ -133,13 +133,16 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
           julia_type = `Distinct{${julia_type}}`
         }
         if (!existenceConstraint) {
-          julia_type = `Union{Missing,${julia_type}}`
+          julia_type = `Maybe.T{${julia_type}}`
         }
         return `    ${property}::${julia_type}`
       },
     )
 
-    const fields = [...index_fields, ...label_fields].sort()
+    const fields = [
+      // ...index_fields,
+      ...label_fields,
+    ].sort()
 
     const [id_fields, attribute_fields] = partition(fields, field => {
       const name = field.split('::')[0]!
@@ -152,9 +155,19 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
     ]
     const body = field_lines.length > 0 ? `\n${field_lines.join('\n')}\n` : ' '
     return `
-@kwdef mutable struct ${name}${body}end
+Base.@kwdef mutable struct ${name}${body}end
 `
   }
+}
+
+function union_types(types: string[]) {
+  if (types.length === 1) {
+    return types[0]
+  }
+  if (types.length >= 2) {
+    return `Union{types.join(',')}`
+  }
+  return 'Nothing'
 }
 
 function cast_relationship_struct(node_identity_map: NodeIdentityMap) {
@@ -168,8 +181,8 @@ function cast_relationship_struct(node_identity_map: NodeIdentityMap) {
       .sort()
 
     return `
-@kwdef mutable struct ${name}
-    edge::Union{${uniq(edges).join(',')}}
+Base.@kwdef mutable struct ${name}
+    edge::${union_types(edges)}
 end
 `
   }
@@ -218,7 +231,7 @@ ${node_names.map(name => `export ${name}`).join('\n')}
 ${relationship_names.map(name => `export ${name}`).join('\n')}
 
 using Dates
-import Base: @kwdef
+using Maybe
 
 # Distinct
 Distinct{T} = T

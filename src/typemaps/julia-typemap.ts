@@ -195,7 +195,7 @@ export const translate_type = (
   }
   if (record.is_nullable) {
     // type = `Nullable{${type}}`
-    type = `Union{Missing,${type}}`
+    type = `Maybe.T{${type}}`
   }
   return type
 }
@@ -210,7 +210,7 @@ export const translate_relation_name = (
     return type
   }
   if (record.is_nullable) {
-    type = `Union{Missing,${type}}`
+    type = `Maybe.T{${type}}`
   }
   return type
 }

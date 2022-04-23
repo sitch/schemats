@@ -46,6 +46,7 @@ export function render_using_pragma(context: BuildContext) {
     types.includes('Dates.Time')
   ) {
     using_body = using_body.concat(['using Dates'])
+    using_body = using_body.concat(['using Maybe'])
   }
   if (types.includes('UUID')) {
     using_body = using_body.concat(['using UUIDs'])
@@ -57,9 +58,9 @@ export function render_using_pragma(context: BuildContext) {
     body = body.concat(using_body)
   }
 
-  body = body.concat(['import Base: @kwdef'])
+  // body = body.concat(['import Base: @kwdef'])
   // body = body.concat([''])
-  // body = body.concat(['Nullable{T} = Union{Missing,T}'])
+  // body = body.concat(['Nullable{T} = Maybe.T{T}'])
 
   if (types.includes('Int2')) {
     type_alias_body = type_alias_body.concat(['Int2 = Int8'])
@@ -81,8 +82,8 @@ export function render_using_pragma(context: BuildContext) {
   }
   if (types.includes('JSON')) {
     // type_alias_body = type_alias_body.concat([
-    //   'JSONScalar = Union{Missing,Int32,Int64,String,Bool,Float32,Float64}',
-    //   'JSON = Union{Missing,JSONScalar,Dict{String,JSON}, Array{JSON}}',
+    //   'JSONScalar = Maybe.T{Int32,Int64,String,Bool,Float32,Float64}',
+    //   'JSON = Maybe.T{JSONScalar,Dict{String,JSON}, Array{JSON}}',
     // ])
     type_alias_body = type_alias_body.concat(['JSON = Any'])
   }
@@ -102,7 +103,7 @@ export function render_using_pragma(context: BuildContext) {
 export function render_struct(name: string, body: string, comment?: string) {
   return lines([
     comment,
-    `@kwdef mutable struct ${name}`,
+    `Base.@kwdef mutable struct ${name}`,
     pad_lines(body, JULIA_INDENT),
     'end',
   ])
@@ -113,7 +114,7 @@ export function render_julia_struct({ name, comment, fields }: JuliaStruct) {
 
   return lines([
     comment,
-    `@kwdef mutable struct ${name}`,
+    `Base.@kwdef mutable struct ${name}`,
     pad_lines(
       [
         ...get(field_groups, 'id', []),

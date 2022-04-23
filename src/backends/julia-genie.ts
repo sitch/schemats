@@ -108,8 +108,8 @@ const cast_entity = (context: BuildContext) => {
 
     return lines([
       comment,
-      `@kwdef mutable struct ${name}`,
-      // `@kwdef mutable struct ${name} <: AbstractModel {`,
+      `Base.@kwdef mutable struct ${name}`,
+      // `Base.@kwdef mutable struct ${name} <: AbstractModel {`,
       pad_lines('# iid:DbId', '  '),
       pad_lines(lines(fields), '  '),
       pad_lines('# Relations: '),
@@ -156,14 +156,12 @@ export const render_julia_genie = async (context: BuildContext) => {
     // module ${inflect(context.schema, 'pascal')}
 
     // import SearchLight: AbstractModel, DbId
-    // import Base: @kwdef
 
-    // Nullable{T} = Union{Missing,T}
+    // Nullable{T} = Maybe.T{T}
     // `,
     `
-import Base: @kwdef
 
-Nullable{T} = Union{Missing,T}
+Nullable{T} = Maybe.T{T}
 `,
     lines(exported, '\n'),
 
