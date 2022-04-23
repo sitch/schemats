@@ -267,17 +267,18 @@ export const render_julia_octo = async (context: BuildContext) => {
     // Start Module
     `
 module ${inflection.underscore(context.config.database)}
+
 `,
     lines(exported, '\n'),
     type_pragma(context),
 
     // coreference_banner(context, backend),
     // banner(backend.comment, `Relations (${size(foreign_keys)})`),
-    // banner(backend.comment, `Entities (${size(tables)})`),
+    // banner(backend.comment, `Entities  (${size(tables)})`),
 
     banner(
       backend.comment,
-      lines([`Relations (${size(foreign_keys)})`, `Entities (${size(tables)})`]),
+      lines([`Entities  (${size(tables)})`, `Relations (${size(foreign_keys)})`]),
     ),
     lines(entities, '\n\n'),
 

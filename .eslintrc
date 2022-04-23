@@ -111,11 +111,14 @@
           "Neo4jRelationship": true,
           "Neo4jRelationshipProperties": true,
           "Neo4jSpecification": true,
+          "Neo4jNodeLabel": true,
           "neo4j": true,
           "neo4j-json": true,
-          "schemats-neo4j": true
+          "schemats-neo4j": true,
+          "neo4j_nodes_config": true
         },
         "replacements": {
+          "neo4j": false,
           "Neo4j": false,
           "args": false,
           "err": false,

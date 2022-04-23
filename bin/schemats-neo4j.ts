@@ -1,16 +1,58 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import chalk from 'chalk'
 import type { Command } from 'commander'
 import fs from 'fs-extra'
-import { groupBy, keys, uniq } from 'lodash'
+import { groupBy, keys, sortBy, uniq } from 'lodash'
 
 import type { CommandOptions } from '../src/config'
 import { read_json } from '../src/utils'
 
+export const neo4j = (program: Command, _argv: string[]) => {
+  program
+    .command('neo4j')
+    .description('Generate from neo4j json')
+    .argument('<neo4j_config_json>', 'Neo4j json file')
+    .argument('<neo4j_node_labels_json>', 'Neo4j json file')
+    .argument('<output>', 'Destination file')
+    .option('--json', "don't generate a header")
+    .action(
+      (
+        neo4index_config_json: string,
+        neo4index_node_labels_json: string,
+        output: string,
+        _options: CommandOptions,
+      ) => {
+        const [specification] = read_json<Neo4jSpecification[]>(neo4index_config_json)
+
+        const node_specifications = read_json<Neo4jNodeLabel[]>(
+          neo4index_node_labels_json,
+        )
+
+        // if (specifications.length !== 1) {
+        //   throw new Error('Expected neo4j specification file to be an array of 1')
+        // }
+        const content = template(specification, node_specifications)
+        fs.writeFileSync(output, content)
+      },
+    )
+
+  program.action(() => console.error(chalk.red(program.helpInformation())))
+}
+
 //------------------------------------------------------------------------------
 
-type NodeMap = Map<number, string>
+type NodeIdentityMap = Map<number, string>
+type NodeLabelsMap = Record<string, Neo4jNodeLabel[]>
 
+interface Neo4jNodeLabel {
+  label: string
+  property: string
+  type: string
+  isIndexed: boolean
+  uniqueConstraint: boolean
+  existenceConstraint: boolean
+}
 interface Neo4jSpecification {
   nodes: Neo4jNode[]
   relationships: Neo4jRelationship[]
@@ -42,22 +84,51 @@ type Neo4jRelationshipProperties = Record<string, never>
 
 //##############################################################################
 
-function cast_node_struct({ properties: { name, indexes, constraints } }: Neo4jNode) {
-  const comments =
-    constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
-  const fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
+const JULIA_TYPES: Record<string, string> = {
+  STRING: 'String',
+  LIST: 'Array{String}',
+  INTEGER: 'Int64',
+  LOCAL_DATE_TIME: 'Dates.Datetime',
+}
 
-  return `
+function cast_node_struct(node_labels_map: NodeLabelsMap) {
+  return ({ properties: { name, indexes, constraints } }: Neo4jNode) => {
+    const comments =
+      constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
+    const index_fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
+
+    const label_fields = node_labels_map[name].map(
+      ({
+        property,
+        type,
+        // isIndexed, uniqueConstraint,
+        existenceConstraint,
+      }) => {
+        let julia_type = JULIA_TYPES[type]
+        if (!existenceConstraint) {
+          julia_type = `Union{Missing,${julia_type}}`
+        }
+
+        return `    ${property}::${julia_type}`
+      },
+    )
+
+    const fields = [...index_fields, ...label_fields]
+    return `
 ${comments}@kwdef mutable struct ${name}
 ${fields.join('\n')}
 end
 `
+  }
 }
 
-function cast_relationship_struct(node_map: NodeMap) {
+function cast_relationship_struct(node_identity_map: NodeIdentityMap) {
   return (name: string, relationships: Neo4jRelationship[]) => {
     const edges = relationships
-      .map(({ start, end }) => `Tuple{${node_map.get(start)!},${node_map.get(end)!}}`)
+      .map(
+        ({ start, end }) =>
+          `Tuple{${node_identity_map.get(start)!},${node_identity_map.get(end)!}}`,
+      )
       .sort()
 
     return `
@@ -80,22 +151,33 @@ function cast_relationship_name({ type }: Neo4jRelationship) {
 
 //##############################################################################
 
-const template = ({ nodes, relationships }: Neo4jSpecification) => {
-  const node_map = new Map<number, string>()
-  for (const node of nodes) node_map.set(node.identity, node.properties.name)
+const template = (
+  { nodes, relationships }: Neo4jSpecification,
+  node_labels: Neo4jNodeLabel[],
+) => {
+  const node_identity_map = new Map<number, string>()
+  for (const node of nodes) node_identity_map.set(node.identity, node.properties.name)
+
+  const node_labels_map = groupBy(node_labels, 'label')
 
   const node_names = nodes.map(node => cast_node_name(node)).sort()
-  const node_structs = nodes.map(node => cast_node_struct(node)).sort()
+  const node_structs = nodes.map(cast_node_struct(node_labels_map)).sort()
 
   const relationship_groups = groupBy(relationships, cast_relationship_name)
-  const relationship_names = keys(relationship_groups)
+  const relationship_names = sortBy(keys(relationship_groups), name => name)
 
   const relationship_structs = relationship_names.map(name =>
-    cast_relationship_struct(node_map)(name, relationship_groups[name]),
+    cast_relationship_struct(node_identity_map)(name, relationship_groups[name]),
   )
 
-  return [
-    `################################################################################
+  const node_octo_definitions = node_names.map(
+    name => `    Schema.model(${name}, table_name="${name}")`,
+  )
+  const relationship_octo_definitions = relationship_names.map(
+    name => `    Schema.model(${name}, table_name="${name}")`,
+  )
+
+  return `################################################################################
 #
 #  AUTO-GENERATED FILE @ __TIMESTAMP_BYPASS__ - DO NOT EDIT!
 #
@@ -106,75 +188,36 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
 module ckg
 
 ${node_names.map(name => `export ${name}`).join('\n')}
-#-------------------------------------------------------------------------------
 ${relationship_names.map(name => `export ${name}`).join('\n')}
-
-
-#-------------------------------------------------------------------------------
-# Nodes (${nodes.length})
-# Relationships (${relationships.length})
-#-------------------------------------------------------------------------------
-${node_names.map(name => `# ${name}`).join('\n')}
-#-------------------------------------------------------------------------------
-${relationship_names.map(name => `# ${name}`).join('\n')}
-#-------------------------------------------------------------------------------
-
-
-
-
-`,
-
-    `
-
-#-------------------------------------------------------------------------------
-# Nodes (${nodes.length})
-# Relationships (${relationships.length})
-#-------------------------------------------------------------------------------
 
 using Dates
 import Base: @kwdef
-`,
 
-    `
 #-------------------------------------------------------------------------------
-# Nodes (${nodes.length})
+# Nodes         (${node_structs.length})
 #-------------------------------------------------------------------------------
-`,
-    ...node_structs,
-    `
-  #-------------------------------------------------------------------------------
-  # Relationships (${relationships.length})
-  #-------------------------------------------------------------------------------
-  `,
-    ...relationship_structs,
+${node_structs.join('\n')}
 
-    // Octo Definitions
-    // TODO: implement
+#-------------------------------------------------------------------------------
+# Relationships (${relationship_structs.length})
+#-------------------------------------------------------------------------------
+${relationship_structs.join('\n')}
 
-    // end module
-    'end',
-  ].join('')
+
+#-------------------------------------------------------------------------------
+# Octo Definitions: (${
+    node_octo_definitions.length + relationship_octo_definitions.length
+  })
+#-------------------------------------------------------------------------------
+
+function octo_definitions()
+    import Octo.Schema
+${node_octo_definitions.join('\n')}
+${relationship_octo_definitions.join('\n')}
+end
+
+end
+`
 }
 
 //##############################################################################
-
-export const neo4j = (program: Command, _argv: string[]) => {
-  program
-    .command('neo4j')
-    .description('Generate from neo4j json')
-    .argument('<neo4j_config>', 'Neo4j json file')
-    .argument('<output>', 'Destination file')
-    .option('--json', "don't generate a header")
-    .action((neo4j_config: string, output: string, _options: CommandOptions) => {
-      const specifications = read_json<Neo4jSpecification[]>(neo4j_config)
-
-      if (specifications.length !== 1) {
-        // console.error(specifications)
-        throw new Error('Expected neo4j specification file to be an array of 1')
-      }
-      const content = template(specifications[0])
-      fs.writeFileSync(output, content)
-    })
-
-  program.action(() => console.error(chalk.red(program.helpInformation())))
-}
