@@ -2,6 +2,7 @@
 import chalk from 'chalk'
 import type { Command } from 'commander'
 import fs from 'fs-extra'
+import { groupBy, keys } from 'lodash'
 
 import type { CommandOptions } from '../src/config'
 import { read_json } from '../src/utils'
@@ -41,29 +42,27 @@ type Neo4jRelationshipProperties = Record<string, never>
 
 //##############################################################################
 
-function cast_node(_node_map: NodeMap) {
-  return ({ properties: { name, indexes, constraints } }: Neo4jNode) => {
-    const comments =
-      constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
-    const fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
+function cast_node_struct({ properties: { name, indexes, constraints } }: Neo4jNode) {
+  const comments =
+    constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
+  const fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
 
-    return `
+  return `
 ${comments}@kwdef mutable struct ${name}
 ${fields.join('\n')}
 end
 `
-  }
 }
 
-function cast_relationship(node_map: NodeMap) {
-  return ({ start, end, type }: Neo4jRelationship) => {
-    const source = node_map.get(start)!
-    const destination = node_map.get(end)!
+function cast_relationship_struct(node_map: NodeMap) {
+  return (name: string, relationships: Neo4jRelationship[]) => {
+    const domains = relationships.map(({ start }) => node_map.get(start)!).sort()
+    const codomains = relationships.map(({ end }) => node_map.get(end)!).sort()
 
     return `
-@kwdef mutable struct ${source}__${type}__${destination}
-    source::${source}
-    destination::${destination}
+@kwdef mutable struct ${name}
+    domains::Union{${domains.join(',')}}
+    codomains::Union{${codomains.join(',')}}
 end
 `
   }
@@ -71,26 +70,22 @@ end
 
 //------------------------------------------------------------------------------
 
-function cast_node_name(_node_map: NodeMap) {
-  return ({ properties: { name } }: Neo4jNode) => {
-    return `${name}`
-  }
+function cast_node_name({ properties: { name } }: Neo4jNode) {
+  return `${name}`
 }
 
-function cast_relationship_name(node_map: NodeMap) {
-  return ({ start, end, type }: Neo4jRelationship) => {
-    const source = node_map.get(start)!
-    const destination = node_map.get(end)!
-
-    return `${source}__${type}__${destination}`
-  }
+function cast_relationship_name({ type }: Neo4jRelationship) {
+  return `${type}`
 }
 
-function cast_relationship_type(node_map: NodeMap) {
-  return ({ type }: Neo4jRelationship) => {
-    return `${type}`
-  }
-}
+// function cast_relationship_name(node_map: NodeMap) {
+//   return ({ start, end, type }: Neo4jRelationship) => {
+//     const source = node_map.get(start)!
+//     const destination = node_map.get(end)!
+
+//     return `${source}__${type}__${destination}`
+//   }
+// }
 
 //##############################################################################
 
@@ -98,14 +93,16 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
   const node_map = new Map<number, string>()
   for (const node of nodes) node_map.set(node.identity, node.properties.name)
 
-  const node_structs = nodes.map(cast_node(node_map)).sort()
-  const relationship_structs = relationships.map(cast_relationship(node_map)).sort()
+  const node_names = nodes.map(node => cast_node_name(node)).sort()
+  const node_structs = nodes.map(node => cast_node_struct(node)).sort()
 
-  const node_names = nodes.map(cast_node_name(node_map)).sort()
-  const relationship_names = relationships.map(cast_relationship_name(node_map)).sort()
-  const relationship_types = relationships.map(cast_relationship_type(node_map)).sort()
+  const relationship_groups = groupBy(relationships, cast_relationship_name)
+  const relationship_names = keys(relationship_groups)
 
-  cast_relationship_type
+  const relationship_structs = relationship_names.map(name =>
+    cast_relationship_struct(node_map)(name, relationship_groups[name]),
+  )
+
   return [
     `
 ################################################################################
@@ -122,11 +119,8 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
     '\n#-------------------------------------------------------------------------------\n',
     ...node_names.map(name => `# ${name}`).join('\n'),
     '\n#-------------------------------------------------------------------------------\n',
-    ...relationship_types.map(name => `# ${name}`).join('\n'),
+    ...relationship_names.map(name => `# ${name}`).join('\n'),
     '\n#-------------------------------------------------------------------------------\n',
-
-    // ...relationship_names.map(name => `# ${name}`).join('\n'),
-    // '\n#-------------------------------------------------------------------------------\n',
 
     // Exports
     ...node_names.map(name => `export ${name}`).join('\n'),
