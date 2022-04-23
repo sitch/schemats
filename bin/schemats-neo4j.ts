@@ -3,7 +3,7 @@
 import chalk from 'chalk'
 import type { Command } from 'commander'
 import fs from 'fs-extra'
-import { groupBy, keys, sortBy, uniq } from 'lodash'
+import { get, groupBy, keys, sortBy, uniq } from 'lodash'
 
 import type { CommandOptions } from '../src/config'
 import { read_json } from '../src/utils'
@@ -97,7 +97,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
     const index_fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
 
-    const label_fields = node_labels_map[name].map(
+    const label_fields = get(node_labels_map, name, []).map(
       ({
         property,
         type,
@@ -171,10 +171,10 @@ const template = (
   )
 
   const node_octo_definitions = node_names.map(
-    name => `    Schema.model(${name}, table_name="${name}")`,
+    name => `    Schema.model(${name}; table_name="${name}")`,
   )
   const relationship_octo_definitions = relationship_names.map(
-    name => `    Schema.model(${name}, table_name="${name}")`,
+    name => `    Schema.model(${name}; table_name="${name}")`,
   )
 
   return `################################################################################
