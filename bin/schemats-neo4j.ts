@@ -155,7 +155,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
     ]
     const body = field_lines.length > 0 ? `\n${field_lines.join('\n')}\n` : ' '
     return `
-Base.@kwdef mutable struct ${name}${body}end
+Base.@kwdef mutable struct ${name} <: Neo4jNode${body}end
 `
   }
 }
@@ -181,7 +181,7 @@ function cast_relationship_struct(node_identity_map: NodeIdentityMap) {
       .sort()
 
     return `
-Base.@kwdef mutable struct ${name}
+Base.@kwdef mutable struct ${name} <: Neo4jEdge
     edge::${union_types(edges)}
 end
 `
@@ -231,6 +231,9 @@ ${node_names.map(name => `export ${name}`).join('\n')}
 ${relationship_names.map(name => `export ${name}`).join('\n')}
 
 using Dates
+
+abstract type Neo4jNode end
+abstract type Neo4jEdge end
 
 const Distinct{T} = T
 const Maybe{T} = Union{Missing,T}

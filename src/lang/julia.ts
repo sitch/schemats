@@ -58,8 +58,9 @@ export function render_using_pragma(context: BuildContext) {
     body = body.concat(using_body)
   }
 
+  body = body.concat(['abstract type PostgresTable end'])
+  body = body.concat([''])
   // body = body.concat(['import Base: @kwdef'])
-  // body = body.concat([''])
   // body = body.concat(['Nullable{T} = Nullable{T}'])
 
   if (types.includes('Int2')) {
@@ -103,18 +104,19 @@ export function render_using_pragma(context: BuildContext) {
 export function render_struct(name: string, body: string, comment?: string) {
   return lines([
     comment,
-    `Base.@kwdef mutable struct ${name}`,
+    `Base.@kwdef mutable struct ${name} <: PostgresTable`,
     pad_lines(body, JULIA_INDENT),
     'end',
   ])
 }
 
-export function render_julia_struct({ name, comment, fields }: JuliaStruct) {
+export function render_julia_struct({ name, comment, fields, supertype }: JuliaStruct) {
   const field_groups = groupBy(fields, 'category')
+  const parent = supertype ? ` <: ${supertype}` : ''
 
   return lines([
     comment,
-    `Base.@kwdef mutable struct ${name}`,
+    `Base.@kwdef mutable struct ${name}${parent}`,
     pad_lines(
       [
         ...get(field_groups, 'id', []),
@@ -165,6 +167,7 @@ export interface JuliaStruct {
   fields: JuliaStructField[]
   is_mutable: boolean
   is_kwdef: boolean
+  supertype?: string
 }
 
 export interface JuliaStructField {
