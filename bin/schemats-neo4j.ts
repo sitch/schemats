@@ -38,7 +38,7 @@ interface Neo4jRelationship {
 
 type Neo4jRelationshipProperties = Record<string, never>
 
-//------------------------------------------------------------------------------
+//##############################################################################
 
 function cast_node(_node_map: NodeMap) {
   return (node: Neo4jNode) => {
@@ -47,11 +47,11 @@ function cast_node(_node_map: NodeMap) {
 
     const comments =
       constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
-    const fields = indexes.map(index => `  ${index}::Union{Missing,Any}`).join('\n')
+    const fields = indexes.map(index => `  ${index}::Union{Missing,Any}`).sort()
 
     return `
 ${comments}@kwdef mutable struct ${name}
-${fields}
+${fields.join('\n')}
 end
 `
   }
@@ -76,11 +76,45 @@ end
   }
 }
 
+//------------------------------------------------------------------------------
+
+function cast_node_export(_node_map: NodeMap) {
+  return (node: Neo4jNode) => {
+    const { properties } = node
+    const { name } = properties
+    return `export ${name}`
+  }
+}
+
+function cast_relationship_export(node_map: NodeMap) {
+  return (relationship: Neo4jRelationship) => {
+    const { start, end, type } = relationship
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const source = node_map.get(start)!
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const destination = node_map.get(end)!
+
+    return `export ${source}_${type}_${destination}`
+  }
+}
+
 //##############################################################################
 
 const template = ({ nodes, relationships }: Neo4jSpecification) => {
   const node_map = new Map<number, string>()
   for (const node of nodes) node_map.set(node.identity, node.properties.name)
+
+  const node_structs = nodes.map(node => cast_node(node_map)(node)).sort()
+  const relationship_structs = relationships
+    .map(relationship => cast_relationship(node_map)(relationship))
+    .sort()
+
+  const node_exports = nodes.map(node => cast_node_export(node_map)(node)).sort()
+  const relationship_exports = relationships
+    .map(relationship => cast_relationship_export(node_map)(relationship))
+    .sort()
 
   return [
     `
@@ -93,20 +127,32 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
 ################################################################################
 `,
     'module ckg',
+
     // Exports
-    // TODO: implement
+    ...node_exports,
+    ...relationship_exports,
+    `
+#-------------------------------------------------------------------------------
+# Relationships (${relationships.length})
+# Nodes (${nodes.length})
+#-------------------------------------------------------------------------------
+
+using Dates
+import Base: @kwdef
+`,
+
     `
 #-------------------------------------------------------------------------------
 # Nodes (${nodes.length})
 #-------------------------------------------------------------------------------
 `,
-    ...nodes.map(node => cast_node(node_map)(node)),
+    ...node_structs,
     `
   #-------------------------------------------------------------------------------
   # Relationships (${relationships.length})
   #-------------------------------------------------------------------------------
   `,
-    ...relationships.map(relationship => cast_relationship(node_map)(relationship)),
+    ...relationship_structs,
 
     // Octo Definitions
     // TODO: implement

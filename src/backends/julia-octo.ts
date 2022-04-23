@@ -125,9 +125,9 @@ const cast_entity = (context: BuildContext) => {
 
     const fields = [
       ...sortBy(id_columns, ({ name }) => name.length).map(cast_field(context)),
-      size(id_columns) > 0 && size(attribute_columns) > 0
-        ? INDENT_COMMENT_LINE3
-        : false,
+      // size(id_columns) > 0 && size(attribute_columns) > 0
+      //   ? INDENT_COMMENT_LINE3
+      //   : false,
       ...sortBy(attribute_columns, column => [
         cast_julia_type(context, column),
         column.name,
@@ -193,10 +193,10 @@ const type_pragma = (context: BuildContext) => {
     types.includes('Dates.DateTime') ||
     types.includes('Dates.Time')
   ) {
-    using_body = using_body.concat(['import Dates'])
+    using_body = using_body.concat(['using Dates'])
   }
   if (types.includes('UUID')) {
-    using_body = using_body.concat(['import UUIDs'])
+    using_body = using_body.concat(['using UUIDs'])
   }
 
   // Block Line
