@@ -265,7 +265,9 @@ export const render_julia_octo = async (context: BuildContext) => {
   return lines([
     header(context, backend),
     // Start Module
-    `module ${inflection.underscore(context.config.database)}`,
+    `
+module ${inflection.underscore(context.config.database)}
+`,
     lines(exported, '\n'),
     type_pragma(context),
 
