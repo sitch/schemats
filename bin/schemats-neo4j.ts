@@ -92,19 +92,27 @@ const JULIA_TYPES: Record<string, string> = {
 }
 
 function cast_node_struct(node_labels_map: NodeLabelsMap) {
-  return ({ properties: { name, indexes, constraints } }: Neo4jNode) => {
-    const comments =
-      constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
+  return ({
+    properties: {
+      name,
+      indexes,
+      // constraints
+    },
+  }: Neo4jNode) => {
     const index_fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
 
     const label_fields = get(node_labels_map, name, []).map(
       ({
         property,
         type,
-        // isIndexed, uniqueConstraint,
+        // isIndexed,
+        uniqueConstraint,
         existenceConstraint,
       }) => {
         let julia_type = JULIA_TYPES[type]
+        if (uniqueConstraint) {
+          julia_type = `Unique{${julia_type}}`
+        }
         if (!existenceConstraint) {
           julia_type = `Union{Missing,${julia_type}}`
         }
@@ -115,7 +123,8 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
 
     const fields = [...index_fields, ...label_fields]
     return `
-${comments}@kwdef mutable struct ${name}
+@kwdef mutable struct ${name}
+    id::Int64
 ${fields.join('\n')}
 end
 `
@@ -155,6 +164,8 @@ const template = (
   { nodes, relationships }: Neo4jSpecification,
   node_labels: Neo4jNodeLabel[],
 ) => {
+  nodes = sortBy(nodes, 'properties.name')
+
   const node_identity_map = new Map<number, string>()
   for (const node of nodes) node_identity_map.set(node.identity, node.properties.name)
 
@@ -192,6 +203,9 @@ ${relationship_names.map(name => `export ${name}`).join('\n')}
 
 using Dates
 import Base: @kwdef
+
+# Distinct
+Unique{T} = T
 
 #-------------------------------------------------------------------------------
 # Nodes         (${node_structs.length})
