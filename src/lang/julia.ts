@@ -60,7 +60,7 @@ export function render_using_pragma(context: BuildContext) {
 
   // body = body.concat(['import Base: @kwdef'])
   // body = body.concat([''])
-  // body = body.concat(['Nullable{T} = Maybe.T{T}'])
+  // body = body.concat(['Nullable{T} = Union{Missing,T}'])
 
   if (types.includes('Int2')) {
     type_alias_body = type_alias_body.concat(['Int2 = Int8'])
@@ -82,8 +82,8 @@ export function render_using_pragma(context: BuildContext) {
   }
   if (types.includes('JSON')) {
     // type_alias_body = type_alias_body.concat([
-    //   'JSONScalar = Maybe.T{Int32,Int64,String,Bool,Float32,Float64}',
-    //   'JSON = Maybe.T{JSONScalar,Dict{String,JSON}, Array{JSON}}',
+    //   'JSONScalar = Union{Missing,Int32,Int64,String,Bool,Float32,Float64}',
+    //   'JSON = Union{Missing,JSONScalar,Dict{String,JSON}, Array{JSON}}',
     // ])
     type_alias_body = type_alias_body.concat(['JSON = Any'])
   }

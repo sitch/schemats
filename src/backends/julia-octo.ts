@@ -77,7 +77,7 @@ const Relation = {
   type: (context: BuildContext, foreign_key: ForeignKey): string => {
     const column = { name: foreign_key.foreign_table, columns: [] }
     const name = Entity.name(context, column)
-    return `Maybe.T{${name}}`
+    return `Union{Missing,${name}}`
   },
 }
 

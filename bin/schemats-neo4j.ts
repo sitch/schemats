@@ -118,7 +118,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       // constraints
     },
   }: Neo4jNode) => {
-    // const index_fields = indexes.map(index => `    ${index}::Maybe.T{Any}`).sort()
+    // const index_fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
 
     const label_fields = get(node_labels_map, name, []).map(
       ({
@@ -133,7 +133,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
           julia_type = `Distinct{${julia_type}}`
         }
         if (!existenceConstraint) {
-          julia_type = `Maybe.T{${julia_type}}`
+          julia_type = `Union{Missing,${julia_type}}`
         }
         return `    ${property}::${julia_type}`
       },
