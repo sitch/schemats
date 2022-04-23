@@ -56,13 +56,13 @@ end
 
 function cast_relationship_struct(node_map: NodeMap) {
   return (name: string, relationships: Neo4jRelationship[]) => {
-    const domains = relationships.map(({ start }) => node_map.get(start)!).sort()
-    const codomains = relationships.map(({ end }) => node_map.get(end)!).sort()
+    const edges = relationships
+      .map(({ start, end }) => `Tuple{${node_map.get(start)!},${node_map.get(end)!}}`)
+      .sort()
 
     return `
 @kwdef mutable struct ${name}
-    domains::Union{${domains.join(',')}}
-    codomains::Union{${codomains.join(',')}}
+    edge::Union{${edges.join(',')}}
 end
 `
   }
