@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import chalk from 'chalk'
 import type { Command } from 'commander'
 import fs from 'fs-extra'
@@ -41,13 +42,10 @@ type Neo4jRelationshipProperties = Record<string, never>
 //##############################################################################
 
 function cast_node(_node_map: NodeMap) {
-  return (node: Neo4jNode) => {
-    const { properties } = node
-    const { name, indexes, constraints } = properties
-
+  return ({ properties: { name, indexes, constraints } }: Neo4jNode) => {
     const comments =
       constraints.length > 0 ? `# constraints: ${constraints.join(',')}\n` : ''
-    const fields = indexes.map(index => `  ${index}::Union{Missing,Any}`).sort()
+    const fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
 
     return `
 ${comments}@kwdef mutable struct ${name}
@@ -58,19 +56,14 @@ end
 }
 
 function cast_relationship(node_map: NodeMap) {
-  return (relationship: Neo4jRelationship) => {
-    const { start, end, type } = relationship
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  return ({ start, end, type }: Neo4jRelationship) => {
     const source = node_map.get(start)!
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const destination = node_map.get(end)!
 
     return `
-@kwdef mutable struct ${source}_${type}_${destination}
-  source::${source}
-  destination::${destination}
+@kwdef mutable struct ${source}__${type}__${destination}
+    source::${source}
+    destination::${destination}
 end
 `
   }
@@ -78,25 +71,18 @@ end
 
 //------------------------------------------------------------------------------
 
-function cast_node_export(_node_map: NodeMap) {
-  return (node: Neo4jNode) => {
-    const { properties } = node
-    const { name } = properties
+function cast_node_name(_node_map: NodeMap) {
+  return ({ properties: { name } }: Neo4jNode) => {
     return `export ${name}`
   }
 }
 
-function cast_relationship_export(node_map: NodeMap) {
-  return (relationship: Neo4jRelationship) => {
-    const { start, end, type } = relationship
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+function cast_relationship_name(node_map: NodeMap) {
+  return ({ start, end, type }: Neo4jRelationship) => {
     const source = node_map.get(start)!
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const destination = node_map.get(end)!
 
-    return `export ${source}_${type}_${destination}`
+    return `export ${source}__${type}__${destination}`
   }
 }
 
@@ -106,15 +92,11 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
   const node_map = new Map<number, string>()
   for (const node of nodes) node_map.set(node.identity, node.properties.name)
 
-  const node_structs = nodes.map(node => cast_node(node_map)(node)).sort()
-  const relationship_structs = relationships
-    .map(relationship => cast_relationship(node_map)(relationship))
-    .sort()
+  const node_structs = nodes.map(cast_node(node_map)).sort()
+  const relationship_structs = relationships.map(cast_relationship(node_map)).sort()
 
-  const node_exports = nodes.map(node => cast_node_export(node_map)(node)).sort()
-  const relationship_exports = relationships
-    .map(relationship => cast_relationship_export(node_map)(relationship))
-    .sort()
+  const node_names = nodes.map(cast_node_name(node_map)).sort()
+  const relationship_names = relationships.map(cast_relationship_name(node_map)).sort()
 
   return [
     `
@@ -126,15 +108,24 @@ const template = ({ nodes, relationships }: Neo4jSpecification) => {
 #
 ################################################################################
 `,
-    'module ckg',
+    `
+    module ckg
+    `,
+
+    // Names
+    `#-------------------------------------------------------------------------------`,
+    ...node_names.map(name => `# ${name}`).join('\n'),
+    `#-------------------------------------------------------------------------------`,
+    ...relationship_names.map(name => `# ${name}`).join('\n'),
+    `#-------------------------------------------------------------------------------`,
 
     // Exports
-    ...node_exports,
-    ...relationship_exports,
+    ...node_names.map(name => `export ${name}`).join('\n'),
+    ...relationship_names.map(name => `export ${name}`).join('\n'),
     `
 #-------------------------------------------------------------------------------
-# Relationships (${relationships.length})
 # Nodes (${nodes.length})
+# Relationships (${relationships.length})
 #-------------------------------------------------------------------------------
 
 using Dates
