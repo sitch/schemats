@@ -133,7 +133,7 @@ export function render_julia_struct_field({ comment, name, type }: JuliaStructFi
 //------------------------------------------------------------------------------
 
 export function render_octo_import(name: string, table: string) {
-  return `Schema.model(${name}, table_name="${table}")`
+  return `Schema.model(${name}; table_name="${table}")`
 }
 
 export function render_octo_definitions(octo_imports: string[]) {

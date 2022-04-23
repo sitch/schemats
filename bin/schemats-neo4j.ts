@@ -146,11 +146,13 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       return identifier_like(name)
     })
 
+    const field_lines = [
+      ...sortBy(id_fields, field => field.length),
+      ...attribute_fields,
+    ]
+    const body = field_lines.length > 0 ? `\n${field_lines.join('\n')}\n` : ' '
     return `
-@kwdef mutable struct ${name}
-${sortBy(id_fields, field => field.length).join('\n')}
-${attribute_fields.join('\n')}
-end
+@kwdef mutable struct ${name}${body}end
 `
   }
 }
