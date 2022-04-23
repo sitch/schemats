@@ -245,8 +245,7 @@ ${node_structs.join('')}
 #-------------------------------------------------------------------------------
 # Edges (${edge_structs.length})
 #-------------------------------------------------------------------------------
-${edge_structs.join('')}
-${octo_definition}
+${edge_structs.join('')}${octo_definition}
 
 end
 `
