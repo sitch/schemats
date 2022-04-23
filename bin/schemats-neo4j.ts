@@ -233,6 +233,7 @@ function octo_definitions()
 
 ${node_octo_definitions.join('\n')}
 ${relationship_octo_definitions.join('\n')}
+
     return nothing
 end
 

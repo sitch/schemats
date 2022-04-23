@@ -284,7 +284,7 @@ module ${inflection.underscore(context.config.database)}
     banner(backend.comment, `Octo Definitions: (${size(octo_imports)})`),
     'function octo_definitions()',
     pad_lines(lines(['import Octo.Schema\n', ...octo_imports], '\n'), backend.indent),
-    '    return nothing\n',
+    '\n    return nothing\n',
     'end\n',
 
     // End module
