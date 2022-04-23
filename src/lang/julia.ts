@@ -144,7 +144,7 @@ function octo_definitions()
 ${pad_lines(octo_imports.join('\n'), JULIA_INDENT)}
 
     return nothing
-end\n`
+end`
 }
 
 //------------------------------------------------------------------------------
