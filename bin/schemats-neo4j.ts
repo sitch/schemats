@@ -118,7 +118,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
       // constraints
     },
   }: Neo4jNode) => {
-    // const index_fields = indexes.map(index => `    ${index}::Union{Missing,Any}`).sort()
+    // const index_fields = indexes.map(index => `    ${index}::Nullable{Any}`).sort()
 
     const label_fields = get(node_labels_map, name, []).map(
       ({
@@ -133,7 +133,7 @@ function cast_node_struct(node_labels_map: NodeLabelsMap) {
           julia_type = `Distinct{${julia_type}}`
         }
         if (!existenceConstraint) {
-          julia_type = `Union{Missing,${julia_type}}`
+          julia_type = `Nullable{${julia_type}}`
         }
         return `    ${property}::${julia_type}`
       },
@@ -231,10 +231,9 @@ ${node_names.map(name => `export ${name}`).join('\n')}
 ${relationship_names.map(name => `export ${name}`).join('\n')}
 
 using Dates
-using Maybe
 
-# Distinct
-Distinct{T} = T
+const Distinct{T} = T
+const Maybe{T} = Union{Missing,T}
 
 #-------------------------------------------------------------------------------
 # Nodes         (${node_structs.length})

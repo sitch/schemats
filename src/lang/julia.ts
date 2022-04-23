@@ -38,7 +38,7 @@ export function render_using_pragma(context: BuildContext) {
 
   let body: string[] = ['']
   let using_body: string[] = []
-  let type_alias_body: string[] = []
+  let type_alias_body: string[] = ['const Maybe{T} = Union{Missing,T}']
 
   if (
     types.includes('Dates.Date') ||
@@ -60,32 +60,32 @@ export function render_using_pragma(context: BuildContext) {
 
   // body = body.concat(['import Base: @kwdef'])
   // body = body.concat([''])
-  // body = body.concat(['Nullable{T} = Union{Missing,T}'])
+  // body = body.concat(['Nullable{T} = Nullable{T}'])
 
   if (types.includes('Int2')) {
-    type_alias_body = type_alias_body.concat(['Int2 = Int8'])
+    type_alias_body = type_alias_body.concat(['const Int2 = Int8'])
   }
   if (types.includes('Int3')) {
-    type_alias_body = type_alias_body.concat(['Int3 = Int8'])
+    type_alias_body = type_alias_body.concat(['const Int3 = Int8'])
   }
   if (types.includes('Int4')) {
-    type_alias_body = type_alias_body.concat(['Int4 = Int8'])
+    type_alias_body = type_alias_body.concat(['const Int4 = Int8'])
   }
   if (types.includes('Float2')) {
-    type_alias_body = type_alias_body.concat(['Float2 = Float16'])
+    type_alias_body = type_alias_body.concat(['const Float2 = Float16'])
   }
   if (types.includes('Float4')) {
-    type_alias_body = type_alias_body.concat(['Float4 = Float16'])
+    type_alias_body = type_alias_body.concat(['const Float4 = Float16'])
   }
   if (types.includes('Float8')) {
-    type_alias_body = type_alias_body.concat(['Float8 = Float16'])
+    type_alias_body = type_alias_body.concat(['const Float8 = Float16'])
   }
   if (types.includes('JSON')) {
     // type_alias_body = type_alias_body.concat([
-    //   'JSONScalar = Union{Missing,Int32,Int64,String,Bool,Float32,Float64}',
-    //   'JSON = Union{Missing,JSONScalar,Dict{String,JSON}, Array{JSON}}',
+    //   'JSONScalar = Nullable{Int32,Int64,String,Bool,Float32,Float64}',
+    //   'JSON = Nullable{JSONScalar,Dict{String,JSON}, Array{JSON}}',
     // ])
-    type_alias_body = type_alias_body.concat(['JSON = Any'])
+    type_alias_body = type_alias_body.concat(['const JSON = Any'])
   }
 
   // Block Line
@@ -163,6 +163,8 @@ export interface JuliaStruct {
   comment?: string | undefined
   name: string
   fields: JuliaStructField[]
+  is_mutable: boolean
+  is_kwdef: boolean
 }
 
 export interface JuliaStructField {

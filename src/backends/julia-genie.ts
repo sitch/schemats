@@ -157,11 +157,11 @@ export const render_julia_genie = async (context: BuildContext) => {
 
     // import SearchLight: AbstractModel, DbId
 
-    // Nullable{T} = Union{Missing,T}
+    // Nullable{T} = Nullable{T}
     // `,
     `
 
-Nullable{T} = Union{Missing,T}
+Nullable{T} = Nullable{T}
 `,
     lines(exported, '\n'),
 
