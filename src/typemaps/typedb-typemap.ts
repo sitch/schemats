@@ -1,5 +1,6 @@
 import type { ColumnDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
+import { DataSource, DataSourceEnum } from '../config'
 import type { UDTTypeMap } from '../coreference'
 
 export type TypeDBType = string
@@ -135,6 +136,9 @@ export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
 }
 
 export const NEO4J_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
+  string: 'string',
+  long: 'long',
+  localdatetime: 'datetime',
   String: 'string',
   Long: 'long',
   LocalDateTime: 'datetime',
@@ -142,29 +146,32 @@ export const NEO4J_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
 }
 
 export const TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
+  ...NEO4J_TO_TYPEDB_TYPEMAP,
   ...MYSQL_TO_TYPEDB_TYPEMAP,
   ...POSTGRES_TO_TYPEDB_TYPEMAP,
-  ...NEO4J_TO_TYPEDB_TYPEMAP,
+}
+
+export const DATA_SOURCE_TYPEDB_TYPEMAP: Record<DataSource, UDTTypeMap<TypeDBType>> = {
+  [DataSourceEnum.neo4j]: NEO4J_TO_TYPEDB_TYPEMAP,
+  [DataSourceEnum.mysql]: MYSQL_TO_TYPEDB_TYPEMAP,
+  [DataSourceEnum.postgres]: POSTGRES_TO_TYPEDB_TYPEMAP,
 }
 
 //------------------------------------------------------------------------------
 
 export const cast_typedb_type = (
-  { config, enums }: BuildContext,
+  { data_source, config, enums }: BuildContext,
   { udt_name }: ColumnDefinition,
 ): TypeDBType => {
-  const type = TYPEDB_TYPEMAP[udt_name]
+  const type = DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name]
   if (type && !['unknown'].includes(type)) {
     return type
   }
-
   const enum_definition = enums.find(({ name }) => name === udt_name)
   if (enum_definition) {
     const enum_type = config.formatEnumName(enum_definition.name)
     return `string; # enum: ${enum_type}`
   }
-
-  console.log(udt_name)
 
   const warning = `Type "${udt_name}" has been mapped to [any] because no specific type has been found.`
   if (config.throwOnMissingType) {

@@ -47,11 +47,7 @@ export const neo4j = (program: Command, argv: string[]) => {
         connection: string,
         options: CommandOptions,
       ) => {
-        console.log(options)
-
         const config = new Config(argv, connection, options)
-
-        console.log(config)
 
         const [spec1] = read_json<Neo4jSpecification[]>(neo4j_config_json)
         const spec2 = read_json<Neo4jNodeLabel[]>(neo4j_node_labels_json)
