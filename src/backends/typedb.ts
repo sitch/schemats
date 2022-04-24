@@ -100,8 +100,12 @@ const cast_entity =
     const type = Entity.type(context, record)
     const comment = Entity.comment(context, record)
 
-    const fields = record.columns.map(cast_field(context))
-    const attributes = record.columns.map(cast_attribute(context))
+    const columns = record.columns.filter(
+      ({ name }) => !(name in backend.coreferences.error),
+    )
+
+    const fields = columns.map(cast_field(context))
+    const attributes = columns.map(cast_attribute(context))
 
     const line = `${name} sub ${type}`
     const text = lines([
@@ -112,9 +116,9 @@ const cast_entity =
       lines(attributes),
     ])
 
-    if (name in backend.coreferences.error) {
-      return pad_lines(TYPEDB_COMMENT, text)
-    }
+    // if (name in backend.coreferences.error) {
+    //   return pad_lines(TYPEDB_COMMENT, text)
+    // }
     return text
   }
 
