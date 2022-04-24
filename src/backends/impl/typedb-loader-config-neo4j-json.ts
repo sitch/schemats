@@ -137,7 +137,7 @@ function cast_edge_name({ type }: Neo4indexEdge) {
 
 //##############################################################################
 
-export const render_typedb_neo4j_json = (
+export const render_typedb_loader_config_neo4j_json = (
   { nodes, relationships }: Neo4jSpecification,
   node_labels: Neo4jNodeLabel[],
   _reflect: Neo4jReflection,
