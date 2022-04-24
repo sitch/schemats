@@ -21,7 +21,7 @@ import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
-import type { Backend, Config, UserImport } from './config'
+import type { Backend, Config, DataSource, UserImport } from './config'
 import { BACKENDS, get_user_imports } from './config'
 import type { Coreferences } from './coreference'
 import { build_coreferences } from './coreference'
@@ -33,6 +33,7 @@ import { validate_coreferences, validate_enums, validate_tables } from './valida
 //------------------------------------------------------------------------------
 
 export interface BuildContext {
+  data_source: DataSource
   schema: SchemaName
   config: Config
   user_imports: UserImport[]
@@ -50,7 +51,11 @@ export interface BuildContext {
 
 //------------------------------------------------------------------------------
 
-const compile = async (config: Config, database: Database): Promise<BuildContext> => {
+const compile = async (
+  config: Config,
+  database: Database,
+  data_source: DataSource,
+): Promise<BuildContext> => {
   //----------------------------------------------------------------------------
   // Database
   //----------------------------------------------------------------------------
@@ -110,6 +115,7 @@ const compile = async (config: Config, database: Database): Promise<BuildContext
 
   sortBy
   return {
+    data_source,
     schema,
     config,
     coreferences,
@@ -161,8 +167,12 @@ export const render = async (context: BuildContext, backend: Backend) => {
   throw `Invalid backend: ${backend} must be one of: ${backends}`
 }
 
-export async function generate(config: Config, database: Database): Promise<string> {
-  const context = await compile(config, database)
+export async function generate(
+  config: Config,
+  database: Database,
+  data_source: DataSource,
+): Promise<string> {
+  const context = await compile(config, database, data_source)
   const backend = context.config.backend
   return await render(context, backend)
 }

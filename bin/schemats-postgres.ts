@@ -34,7 +34,7 @@ export const postgres = (program: Command, argv: string[]) => {
       const config = new Config(argv, connection, options)
       const database = new PostgresDatabase(config, connection)
       await database.isReady()
-      const schema = await generate(config, database)
+      const schema = await generate(config, database, 'postgres')
 
       if (config.outputPath) {
         await write_relative_file_async(schema, config.outputPath)

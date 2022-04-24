@@ -18,7 +18,7 @@ import type { RelationshipEdge, RelationshipEdgeName } from '../relationships'
 const TYPEMAP: Record<string, string> = {
   String: 'string',
   Long: 'long',
-  LocalDateTime: 'DateTime',
+  LocalDateTime: 'datetime',
   StringArray: 'string',
 }
 
@@ -50,11 +50,11 @@ function cast_property({
 }
 
 function cast_table({
+  // relationships,
+  // labels,
   typeId,
   properties,
-}: // relationships,
-// labels,
-Neo4jReflectionNode) {
+}: Neo4jReflectionNode) {
   return {
     name: cast_node_name(typeId),
     columns: properties.map(property => cast_property(property)),
@@ -84,6 +84,7 @@ export function build_context(
   const edges = Object.values(relationships).flatMap(cast_edge_list(table_map))
 
   return {
+    data_source: 'neo4j',
     schema: config.schema,
     config,
     user_imports: [],

@@ -134,9 +134,17 @@ export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
   // point: "{ x: number, y: number }",
 }
 
+export const NEO4J_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
+  String: 'string',
+  Long: 'long',
+  LocalDateTime: 'datetime',
+  StringArray: 'string',
+}
+
 export const TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
   ...MYSQL_TO_TYPEDB_TYPEMAP,
   ...POSTGRES_TO_TYPEDB_TYPEMAP,
+  ...NEO4J_TO_TYPEDB_TYPEMAP,
 }
 
 //------------------------------------------------------------------------------
@@ -156,7 +164,9 @@ export const cast_typedb_type = (
     return `string; # enum: ${enum_type}`
   }
 
-  const warning = `Type [${udt_name} has been mapped to [any] because no specific type has been found.`
+  console.log(udt_name)
+
+  const warning = `Type "${udt_name}" has been mapped to [any] because no specific type has been found.`
   if (config.throwOnMissingType) {
     throw new Error(warning)
   }

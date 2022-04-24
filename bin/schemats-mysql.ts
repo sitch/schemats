@@ -13,7 +13,7 @@ export const mysql = (program: Command, argv: string[]) => {
     .description('Generate a typescript schema from mysql')
     .argument('<connection>', 'if left empty will use env variables')
     .option('-d, --database <database>', 'the database to use')
-    .option('-I, --ignore-attribute-collisions <attribute...>')
+    .option('-I, --ignore-attribute-collisions <attribute...>', '')
     .option('-s, --schema <schema>', 'the schema to use', 'public')
     .option('-o, --output <path>', 'generated file relative to the cwd')
     .option('-F, --backend <backend>', 'the output format', 'typescript')
@@ -34,7 +34,7 @@ export const mysql = (program: Command, argv: string[]) => {
       const config = new Config(argv, connection, options)
       const database = new MySQLDatabase(config, connection)
       await database.isReady()
-      const schema = await generate(config, database)
+      const schema = await generate(config, database, 'mysql')
 
       if (config.outputPath) {
         await write_relative_file_async(schema, config.outputPath)

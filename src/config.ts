@@ -5,6 +5,15 @@ import type { TableDefinition } from './adapters/types'
 import { inflect, pretty } from './formatters'
 import { caller_relative_path } from './utils'
 
+export enum DataSourceEnum {
+  neo4j = 'neo4j',
+  postgres = 'postgres',
+  mysql = 'mysql',
+}
+// export type DataSource = DataSourceEnum.neo4j | DataSourceEnum.postgres | DataSourceEnum.mysql
+
+export type DataSource = keyof typeof DataSourceEnum
+
 //------------------------------------------------------------------------------
 
 export const ENUM_DELIMITER = '::'
