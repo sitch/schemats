@@ -28,7 +28,7 @@ const Attribute = {
   name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
     return normalize_name(config.formatAttributeName(name))
   },
-  type: (context: BuildContext, _record: ColumnDefinition): string => {
+  type: (_context: BuildContext, _record: ColumnDefinition): string => {
     // return `${prefix(context)}attribute`
     return 'attribute'
   },
@@ -121,7 +121,7 @@ const cast_entity =
 //------------------------------------------------------------------------------
 
 const cast_relation =
-  (context: BuildContext, backend: BackendContext) => (record: ForeignKey) => {
+  (context: BuildContext, _backend: BackendContext) => (record: ForeignKey) => {
     const { config } = context
     const { primary_table, primary_column, foreign_table, foreign_column } = record
 
