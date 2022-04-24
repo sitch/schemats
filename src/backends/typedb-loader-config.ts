@@ -41,13 +41,10 @@ export function data_paths(
   return [`${csvDir}/${database}/${name}.csv`]
 }
 
-export const cast_entities = (
-  context: BuildContext,
-  { coreferences: { error } }: BackendContext,
-) => {
-  const entities: Record<string, GeneratorEntity> = {}
-  for (const table of context.tables) {
-    entities[table.name] = {
+export const cast_table =
+  (context: BuildContext, { coreferences: { error } }: BackendContext) =>
+  (table: TableDefinition) => {
+    return {
       data: data_paths(context, table),
       insert: {
         entity: inflect(table.name, 'pascal'),
@@ -60,6 +57,12 @@ export const cast_entities = (
           })),
       },
     }
+  }
+
+export const cast_entities = (context: BuildContext, backend: BackendContext) => {
+  const entities: Record<string, GeneratorEntity> = {}
+  for (const table of context.tables) {
+    entities[table.name] = cast_table(context, backend)(table)
   }
   return entities
 }
@@ -97,6 +100,11 @@ export const build = (context: BuildContext): Configuration => {
     coreferences: cast_typedb_coreferences(context),
   }
 
+  const entities = cast_entities(context, backend)
+
+  // const attributes =  cast_attributes(context, backend)
+  // const relations =  cast_relations(context, backend)
+
   return {
     globalConfig: {
       separator: ',',
@@ -104,9 +112,9 @@ export const build = (context: BuildContext): Configuration => {
       parallelisation: 24,
       schema: context.schema,
     },
-    // attributes: cast_attributes(context, backend),
-    entities: cast_entities(context, backend),
-    // relations: cast_relations(context, backend),
+    entities,
+    // attributes,
+    // relations,
   }
 }
 
