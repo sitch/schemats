@@ -4,6 +4,7 @@ import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/
 import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
+import type { RelationshipEdge } from '../relationships'
 import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
 import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
@@ -71,6 +72,24 @@ const Relation = {
   },
 }
 
+const Edge = {
+  comment: (_context: BuildContext, { comment }: RelationshipEdge): string => {
+    return comment ? `# ${comment}` : ''
+  },
+  name: (
+    { config }: BuildContext,
+    { name, domain, codomain }: RelationshipEdge,
+  ): string => {
+    const domain_name = config.formatRelationName(domain.name)
+    const codomain_name = config.formatRelationName(codomain.name)
+
+    return normalize_name(`${domain_name}-${name}-${codomain_name}`)
+  },
+  type: (context: BuildContext, _foreign_key: RelationshipEdge): string => {
+    return `${prefix(context)}relation`
+  },
+}
+
 //------------------------------------------------------------------------------
 
 const cast_attribute = (context: BuildContext) => (column: ColumnDefinition) => {
@@ -111,18 +130,13 @@ const cast_entity =
     const attributes = columns.map(cast_attribute(context))
 
     const line = `${name} sub ${type}`
-    const text = lines([
+    return lines([
       comment,
       line,
       pad_lines(lines(fields), '  '),
       ';',
       lines(attributes),
     ])
-
-    // if (name in backend.coreferences.error) {
-    //   return pad_lines(TYPEDB_COMMENT, text)
-    // }
-    return text
   }
 
 //------------------------------------------------------------------------------
@@ -144,12 +158,26 @@ const cast_relation =
       `, relates ${config.formatEntityName(foreign_table)}`,
     ]
 
-    const text = lines([comment, line, pad_lines(lines(relations), '  '), ';'])
+    return lines([comment, line, pad_lines(lines(relations), '  '), ';'])
+  }
 
-    // if(name in backend.coreferences.error) {
-    //   return pad_lines(TYPEDB_COMMENT, text)
-    // }
-    return text
+const cast_edge =
+  (context: BuildContext, _backend: BackendContext) => (record: RelationshipEdge) => {
+    const { config } = context
+    const { domain, codomain, properties } = record
+
+    const name = Edge.name(context, record)
+    const type = Edge.type(context, record)
+    const comment = Edge.comment(context, record)
+
+    const line = `${name} sub ${type}`
+    const relations = [
+      ...properties.map(({ name }) => `, owns ${config.formatAttributeName(name)}`),
+      `, relates ${config.formatEntityName(domain.name)}`,
+      `, relates ${config.formatEntityName(codomain.name)}`,
+    ]
+
+    return lines([comment, line, pad_lines(lines(relations), '  '), ';'])
   }
 
 //------------------------------------------------------------------------------
@@ -168,6 +196,7 @@ export const render_typedb = async (context: BuildContext) => {
   const foreign_keys = context.foreign_keys.flat()
   const entities = flatMap(tables, cast_entity(context, backend))
   const relations = flatMap(foreign_keys, cast_relation(context, backend))
+  const edges = flatMap(foreign_keys, cast_edge(context, backend))
 
   return lines([
     header(context, backend),
@@ -177,5 +206,6 @@ export const render_typedb = async (context: BuildContext) => {
     lines(entities, '\n\n'),
     banner(backend.comment, `Relations (${size(foreign_keys)})`),
     lines(relations, '\n\n'),
+    lines(edges, '\n\n'),
   ])
 }

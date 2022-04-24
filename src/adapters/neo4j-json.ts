@@ -49,7 +49,7 @@ function cast_property({
   }
 }
 
-function cast_table({
+function cast_node({
   // relationships,
   // labels,
   typeId,
@@ -79,7 +79,7 @@ export function build_context(
   config: Config,
   { nodes, relationships }: Neo4jReflection,
 ): BuildContext {
-  const tables = Object.values(nodes).map(node => cast_table(node))
+  const tables = Object.values(nodes).map(node => cast_node(node))
   const table_map = groupBy(tables, 'name')
   const edges = Object.values(relationships).flatMap(cast_edge_list(table_map))
 
@@ -94,7 +94,7 @@ export function build_context(
     column_comments: [],
     enums: [],
     relationships: [],
-    tables,
+    tables: [],
     edges,
     nodes: tables,
     coreferences: build_coreferences(config, tables),

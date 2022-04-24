@@ -19,6 +19,7 @@ export interface RelationshipEdge {
   domain: TableDefinition
   codomain: TableDefinition
   properties: ColumnDefinition[]
+  comment?: string
 }
 
 export type RelationshipNode = TableDefinition
