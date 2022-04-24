@@ -103,37 +103,18 @@
       1,
       {
         "allowList": {
-          "neo4j_config": true,
-          "neo4j_json_filename": true,
-          "neo4j_json": true,
-          "Neo4jNode": true,
-          "Neo4jNodeProperties": true,
-          "Neo4jRelationship": true,
-          "Neo4jRelationshipProperties": true,
-          "Neo4jSpecification": true,
-          "Neo4jNodeLabel": true,
-          "Neo4jReflection": true,
-          "Neo4jReflectionNode": true,
-          "Neo4jReflectionProperty": true,
-          "Neo4jReflectionEdge": true,
-          "Neo4jReflectionEdgePath": true,
-          "Neo4jReflectionNameSymbol": true,
-          "neo4j": true,
-          "neo4j-json": true,
-          "schemats-neo4j": true,
-          "neo4j_nodes_config": true
+
         },
         "replacements": {
-          "neo4j": false,
-          "Neo4j": false,
-          "Neo4J": false,
-          "4J": false,
-          "4j": false,
           "args": false,
           "err": false,
           "prod": false,
           "ref": false,
-          "params": false
+          "params": false,
+          "j": {
+            // Fix Neo4J -> Neo4Index
+            "index": false
+          }
         }
       }
     ],

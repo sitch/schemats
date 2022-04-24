@@ -22,17 +22,15 @@ export const neo4j = (program: Command, _argv: string[]) => {
     .option('--json', 'Backend to use')
     .action(
       (
-        neo4index_config_json: string,
-        neo4index_node_labels_json: string,
-        neo4index_reflect_json: string,
+        neo4j_config_json: string,
+        neo4j_node_labels_json: string,
+        neo4j_reflect_json: string,
         output: string,
         _options: CommandOptions,
       ) => {
-        const [specification] = read_json<Neo4jSpecification[]>(neo4index_config_json)
-        const node_specifications = read_json<Neo4jNodeLabel[]>(
-          neo4index_node_labels_json,
-        )
-        const node_reflect = read_json<Neo4jReflection>(neo4index_reflect_json)
+        const [specification] = read_json<Neo4jSpecification[]>(neo4j_config_json)
+        const node_specifications = read_json<Neo4jNodeLabel[]>(neo4j_node_labels_json)
+        const node_reflect = read_json<Neo4jReflection>(neo4j_reflect_json)
 
         const julia_octo_content = render_julia_octo_from_neo4index_json(
           specification,
@@ -45,4 +43,3 @@ export const neo4j = (program: Command, _argv: string[]) => {
 
   program.action(() => console.error(chalk.red(program.helpInformation())))
 }
-
