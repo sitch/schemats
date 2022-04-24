@@ -122,7 +122,8 @@ export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
 
   bool: 'boolean',
 
-  json: 'JSON',
+  json: 'string',
+  // json: 'JSON',
   // jsonb: 'JSONB',
 
   date: 'datetime',
@@ -164,6 +165,7 @@ export const cast_typedb_type = (
 }
 
 export const pragma = ({ config }: BuildContext): string => `
+define
+
 ${config.database}-entity sub entity, abstract;
-${config.database}-relation sub relation, abstract;
-${config.database}-attribute sub attribute, abstract;`
+${config.database}-relation sub relation, abstract;`

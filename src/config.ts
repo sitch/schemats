@@ -20,6 +20,7 @@ export const BACKENDS = [
   'hydra',
   'julia-genie',
   'julia-octo',
+  'typedb-loader-config',
 ] as const
 export type Backends = typeof BACKENDS
 // export type Backend = "typescript" | "json" | "typedb" | "julia";

@@ -1,3 +1,5 @@
+/* eslint-disable import/max-dependencies */
+
 import { isEmpty, sortBy } from 'lodash'
 
 import type {
@@ -17,6 +19,7 @@ import { render_julia } from './backends/julia'
 import { render_julia_genie } from './backends/julia-genie'
 import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
+import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
 import type { Backend, Config, UserImport } from './config'
 import { BACKENDS, get_user_imports } from './config'
@@ -145,6 +148,10 @@ const render = async (context: BuildContext, backend: Backend) => {
   if (backend === 'hydra') {
     return await render_hydra(context)
   }
+  if (backend === 'typedb-loader-config') {
+    return await render_typedb_loader_config(context)
+  }
+
   const backends = BACKENDS.join(', ')
   throw `Invalid backend: ${backend} must be one of: ${backends}`
 }

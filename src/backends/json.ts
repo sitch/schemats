@@ -9,10 +9,10 @@ export const build = ({
 }: BuildContext) => ({
   version,
   timestamp,
-  ...sortJson(context),
+  ...context,
 })
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_json = async (context: BuildContext) => {
-  return pretty(build(context))
+  return pretty(sortJson(build(context)))
 }

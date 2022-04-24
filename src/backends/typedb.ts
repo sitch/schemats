@@ -27,7 +27,8 @@ const Attribute = {
     return normalize_name(config.formatAttributeName(name))
   },
   type: (context: BuildContext, _record: ColumnDefinition): string => {
-    return `${prefix(context)}attribute`
+    // return `${prefix(context)}attribute`
+    return 'attribute'
   },
 }
 
