@@ -9,10 +9,13 @@ import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
 
 export const TYPEDB_COMMENT = '#'
+export const TYPEDB_INDENT = '  '
+// export const TYPEDB_CHARACTER_LINE_LIMIT = 92
+export const TYPEDB_CHARACTER_LINE_LIMIT = 80
 
 //------------------------------------------------------------------------------
 
-const normalize_name = (name: string): string =>
+export const normalize_name = (name: string): string =>
   is_reserved_word(name) ? `${name}_` : name
 
 const prefix = (context: BuildContext) => {

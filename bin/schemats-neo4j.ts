@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import chalk from 'chalk'
@@ -20,12 +21,14 @@ export const neo4j = (program: Command, _argv: string[]) => {
     .description('Generate from neo4j json')
     .argument('<neo4j_config_json>', 'Neo4j json file')
     .argument('<neo4j_node_labels_json>', 'Neo4j json file')
+    .argument('<neo4j_reflect_json>', 'Neo4j json file')
     .argument('<output>', 'Destination file')
     .option('--json', "don't generate a header")
     .action(
       (
         neo4index_config_json: string,
         neo4index_node_labels_json: string,
+        neo4index_reflect_json: string,
         output: string,
         _options: CommandOptions,
       ) => {
@@ -33,7 +36,8 @@ export const neo4j = (program: Command, _argv: string[]) => {
         const node_specifications = read_json<Neo4jNodeLabel[]>(
           neo4index_node_labels_json,
         )
-        const content = template(specification, node_specifications)
+        const node_reflect = read_json<Neo4jReflection>(neo4index_reflect_json)
+        const content = template(specification, node_specifications, node_reflect)
         fs.writeFileSync(output, content)
       },
     )
@@ -42,6 +46,38 @@ export const neo4j = (program: Command, _argv: string[]) => {
 }
 
 //------------------------------------------------------------------------------
+
+type Neo4jReflectionNameSymbol = string // Example: ":`NAME`"
+interface Neo4jReflection {
+  nodes: Record<Neo4jReflectionNameSymbol, Neo4jReflectionNode[]>
+  relationships: Record<string, Neo4jReflectionEdge[]>
+}
+
+interface Neo4jReflectionNode {
+  properties: Neo4jReflectionProperty[]
+  // relationships: Neo4jReflectionNodeEdge[]
+  relationships: never[]
+  typeId: Neo4jReflectionNameSymbol
+  labels: string[]
+}
+
+interface Neo4jReflectionProperty {
+  name: string
+  types: string[]
+  mandatory: boolean
+}
+
+interface Neo4jReflectionEdge {
+  paths: Neo4jReflectionEdgePath[]
+  properties: Neo4jReflectionProperty[]
+}
+
+interface Neo4jReflectionEdgePath {
+  fromTypeId: Neo4jReflectionNameSymbol
+  toTypeId: Neo4jReflectionNameSymbol
+}
+
+//i------------------------------------------------------------------------------
 
 type NodeIdentityMap = Map<number, string>
 type NodeLabelsMap = Record<string, Neo4jNodeLabel[]>
@@ -207,6 +243,7 @@ function cast_edge_name({ type }: Neo4indexEdge) {
 const template = (
   { nodes, relationships }: Neo4jSpecification,
   node_labels: Neo4jNodeLabel[],
+  reflect: Neo4jReflection,
 ) => {
   nodes = sortBy(nodes, 'properties.name')
   const node_labels_map = groupBy(node_labels, 'label')

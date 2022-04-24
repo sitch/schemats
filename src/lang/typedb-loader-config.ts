@@ -32,7 +32,7 @@ export interface GlobalConfig {
 //-----------------------------------------------------------------------
 
 export interface Generator {
-  data?: string[]
+  data: string[]
   config?: GeneratorConfig
 }
 
@@ -43,37 +43,25 @@ export interface GeneratorConfig {
 
 //-----------------------------------------------------------------------
 
-export interface PreprocessorConfig {
-  type?: string
-  parameters?: PreprocessorParameters
-}
-
-export interface PreprocessorParameters {
-  regexMatch?: RegExpString
-  regexReplace?: RegExpString
-}
-
-//-----------------------------------------------------------------------
-
 export interface GeneratorAttribute extends Generator {
-  insert?: DefinitionAttribute
+  insert: DefinitionAttribute
 }
 
 export interface GeneratorEntity extends Generator {
-  insert?: GeneratorEntityInsert
-}
-
-export interface GeneratorEntityInsert {
-  entity?: string
-  ownerships?: DefinitionAttribute[]
+  insert: GeneratorEntityInsert
 }
 
 export interface GeneratorRelation extends Generator {
-  insert?: GeneratorRelationInsert
+  insert: GeneratorRelationInsert
+}
+
+export interface GeneratorEntityInsert {
+  entity: string
+  ownerships: DefinitionAttribute[]
 }
 
 export interface GeneratorRelationInsert {
-  relation?: string
+  relation: string
   ownerships?: DefinitionAttribute[]
   players?: DefinitionPlayer[]
 }
@@ -84,15 +72,27 @@ export interface GeneratorAppendAttribute extends Generator {
 }
 
 export interface GeneratorAppendAttributeMatch {
-  type?: string
-  ownerships?: DefinitionAttribute[]
+  type: string
+  ownerships: DefinitionAttribute[]
 }
 
 export interface GeneratorAppendAttributeInsert {
-  ownerships?: DefinitionAttribute[]
+  ownerships: DefinitionAttribute[]
 }
 
 type GeneratorAppendAttributeOrInsertThing = GeneratorAppendAttribute
+
+//-----------------------------------------------------------------------
+
+export interface PreprocessorConfig {
+  type: string
+  parameters: PreprocessorParameters
+}
+
+export interface PreprocessorParameters {
+  regexMatch?: RegExpString
+  regexReplace?: RegExpString
+}
 
 //-----------------------------------------------------------------------
 // Definition

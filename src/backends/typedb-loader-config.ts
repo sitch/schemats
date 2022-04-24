@@ -3,8 +3,13 @@ import sortJson from 'sort-json'
 import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
-import type { Configuration, GeneratorEntity } from '../lang/typedb-loader-config'
+import type {
+  Configuration,
+  GeneratorEntity,
+  GeneratorRelation,
+} from '../lang/typedb-loader-config'
 import type { BackendContext } from './base'
+import { normalize_name } from './typedb'
 
 //-----------------------------------------------------------------------
 
@@ -46,10 +51,42 @@ export const cast_entities = (
         ownerships: columns
           .filter(({ name }) => !(name in error))
           .map(({ name, is_nullable }) => ({
-            attribute: name,
+            attribute: normalize_name(name),
             column: name,
             required: !is_nullable,
           })),
+      },
+    }
+  }
+  return entities
+}
+
+export const cast_relations = (
+  { config, tables }: BuildContext,
+  {
+    coreferences: {
+      // all,
+      error,
+      // warning
+    },
+  }: BackendContext,
+) => {
+  const entities: Record<string, GeneratorRelation> = {}
+  for (const { name: table, columns } of tables) {
+    entities[table] = {
+      data: [
+        `/home/sitch/sites/fortress/SelfAssemble.jl/data/dumps/${config.database}/${table}.csv`,
+      ],
+      insert: {
+        relation: inflect(table, 'pascal'),
+        ownerships: columns
+          .filter(({ name }) => !(name in error))
+          .map(({ name, is_nullable }) => ({
+            attribute: normalize_name(name),
+            column: name,
+            required: !is_nullable,
+          })),
+        players: [],
       },
     }
   }
@@ -75,6 +112,7 @@ export const build = (context: BuildContext): Configuration => {
     },
     // attributes: cast_attributes(context, backend),
     entities: cast_entities(context, backend),
+    // relations: cast_relations(context, backend),
   }
 }
 
