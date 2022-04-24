@@ -1,4 +1,9 @@
-import type { ForeignKey, TableDefinition, TableName } from './adapters/types'
+import type {
+  ColumnDefinition,
+  ForeignKey,
+  TableDefinition,
+  TableName,
+} from './adapters/types'
 import type { Config } from './config'
 
 //------------------------------------------------------------------------------
@@ -9,6 +14,14 @@ export interface Relationship {
   type: RelationshipType
 }
 
+export interface RelationshipEdge {
+  name: RelationshipEdgeName
+  domain: TableDefinition
+  codomain: TableDefinition
+  properties: ColumnDefinition[]
+}
+
+export type RelationshipEdgeName = string
 export type RelationshipType = string
 export type RelationshipMap = Record<TableName, Relationship[]>
 

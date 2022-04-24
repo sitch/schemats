@@ -62,7 +62,7 @@ export interface ConfigValues {
 
   // NOT USED
 
-  tables: string[]
+  tables?: string[]
   // eslint-disable-next-line @typescript-eslint/naming-convention
   writeHeader?: boolean
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -71,11 +71,11 @@ export interface ConfigValues {
   throwOnMissingType?: boolean
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  typedbEntityTemplate: string
+  typedbEntityTemplate?: string
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  typedbRelationTemplate: string
+  typedbRelationTemplate?: string
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  typedbAttributeTemplate: string
+  typedbAttributeTemplate?: string
 }
 
 export type CommandOptions = Partial<ConfigValues> &
@@ -171,6 +171,10 @@ export class Config {
 
   public get backend() {
     return this.config.backend
+  }
+
+  public get output() {
+    return this.config.output
   }
 
   public get enums() {

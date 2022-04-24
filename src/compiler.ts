@@ -25,7 +25,7 @@ import type { Backend, Config, UserImport } from './config'
 import { BACKENDS, get_user_imports } from './config'
 import type { Coreferences } from './coreference'
 import { build_coreferences } from './coreference'
-import type { Relationship } from './relationships'
+import type { Relationship, RelationshipEdge } from './relationships'
 import { build_relationships } from './relationships'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
@@ -35,6 +35,7 @@ import { validate_coreferences, validate_enums, validate_tables } from './valida
 export interface BuildContext {
   schema: SchemaName
   config: Config
+  user_imports: UserImport[]
   primary_keys: PrimaryKey[]
   foreign_keys: ForeignKey[]
   table_comments: TableComment[]
@@ -43,7 +44,7 @@ export interface BuildContext {
   tables: TableDefinition[]
   relationships: Relationship[]
   coreferences: Coreferences
-  user_imports: UserImport[]
+  edges: RelationshipEdge[]
 }
 
 //------------------------------------------------------------------------------
@@ -78,7 +79,8 @@ const compile = async (config: Config, database: Database): Promise<BuildContext
   config.log('[db] Fetched column_comments', column_comments)
 
   const table_list = await Promise.all(
-    table_names.map(table => database.getTable(schema, table)),
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    table_names!.map(table => database.getTable(schema, table)),
   )
   config.log('[db] Fetched tables', table_list)
 
@@ -118,10 +120,11 @@ const compile = async (config: Config, database: Database): Promise<BuildContext
     relationships: sortBy(relationships, 'foreign.name'),
     table_comments: sortBy(table_comments, 'table'),
     column_comments: sortBy(column_comments, 'column'),
+    edges: [],
   }
 }
 
-const render = async (context: BuildContext, backend: Backend) => {
+export const render = async (context: BuildContext, backend: Backend) => {
   validate_coreferences(context, backend)
 
   if (backend === 'typescript') {

@@ -2,8 +2,8 @@
 
 export type Neo4jReflectionNameSymbol = string // Example: ":`NAME`"
 export interface Neo4jReflection {
-  nodes: Record<Neo4jReflectionNameSymbol, Neo4jReflectionNode[]>
-  relationships: Record<string, Neo4jReflectionEdge[]>
+  nodes: Record<Neo4jReflectionNameSymbol, Neo4jReflectionNode>
+  relationships: Record<string, Neo4jReflectionEdge>
 }
 
 export interface Neo4jReflectionNode {
@@ -21,6 +21,7 @@ export interface Neo4jReflectionProperty {
 }
 
 export interface Neo4jReflectionEdge {
+  type: string
   paths: Neo4jReflectionEdgePath[]
   properties: Neo4jReflectionProperty[]
 }
