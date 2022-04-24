@@ -16,23 +16,6 @@ import { normalize_name } from './typedb'
 
 //-----------------------------------------------------------------------
 
-// export const cast_attributes = ({ tables }: BuildContext) => {
-//   const attributes: Record<string, GeneratorAttribute> = {}
-
-//   for (const { name: table, columns } of tables) {
-//     for (const { name: column } of columns) {
-//       attributes[column] = {
-//         data: [],
-//         insert: {
-//           attribute: column,
-//           column: column,
-//         },
-//       }
-//     }
-//   }
-//   return attributes
-// }
-
 function cast_definition_attribute({
   name,
   is_nullable,
@@ -54,6 +37,10 @@ export function data_paths(
   return [`${csvDir}/${database}/${name}.csv`]
 }
 
+function is_valid_attribute(backend: BackendContext) {
+  return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
+}
+
 export function cast_table_entity(context: BuildContext, backend: BackendContext) {
   return (table: TableDefinition) => {
     return {
@@ -61,7 +48,7 @@ export function cast_table_entity(context: BuildContext, backend: BackendContext
       insert: {
         entity: inflect(table.name, 'pascal'),
         ownerships: table.columns
-          .filter(({ name }) => !(name in backend.coreferences.error))
+          .filter(is_valid_attribute(backend))
           .map(table => cast_definition_attribute(table)),
       },
     }
@@ -75,7 +62,7 @@ export function cast_node_entity(context: BuildContext, backend: BackendContext)
       insert: {
         entity: inflect(node.name, 'pascal'),
         ownerships: node.columns
-          .filter(({ name }) => !(name in backend.coreferences.error))
+          .filter(is_valid_attribute(backend))
           .map(table => cast_definition_attribute(table)),
       },
     }
@@ -89,7 +76,7 @@ export function cast_edge_relation(context: BuildContext, backend: BackendContex
       insert: {
         relation: inflect(edge.name, 'pascal'),
         ownerships: edge.properties
-          .filter(({ name }) => !(name in backend.coreferences.error))
+          .filter(is_valid_attribute(backend))
           .map(table => cast_definition_attribute(table)),
         players: [],
       },
@@ -126,7 +113,6 @@ export const build = (context: BuildContext): Configuration => {
   }
 
   const entities = cast_entities(context, backend)
-
   // const attributes =  cast_attributes(context, backend)
   // const relations =  cast_relations(context, backend)
 
