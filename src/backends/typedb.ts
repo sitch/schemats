@@ -191,18 +191,16 @@ export const render_typedb = async (context: BuildContext) => {
     character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
-
-  const tables = context.tables
   const foreign_keys = context.foreign_keys.flat()
-  const entities = flatMap(tables, cast_entity(context, backend))
+  const entities = flatMap(context.tables, cast_entity(context, backend))
   const relations = flatMap(foreign_keys, cast_relation(context, backend))
-  const edges = flatMap(foreign_keys, cast_edge(context, backend))
+  const edges = flatMap(context.edges, cast_edge(context, backend))
 
   return lines([
     header(context, backend),
     pragma(context),
     coreference_banner(context, backend),
-    banner(backend.comment, `Entities (${size(tables)})`),
+    banner(backend.comment, `Entities (${size(entities)})`),
     lines(entities, '\n\n'),
     banner(backend.comment, `Relations (${size(foreign_keys)})`),
     lines(relations, '\n\n'),
