@@ -8,7 +8,7 @@ import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-t
 import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
 
-const TYPEDB_COMMENT = '# '
+export const TYPEDB_COMMENT = '#'
 
 //------------------------------------------------------------------------------
 

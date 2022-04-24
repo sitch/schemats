@@ -27,7 +27,13 @@ import type { BackendContext } from './base'
 
 export const cast_entities = (
   { config, tables }: BuildContext,
-  { coreferences: { all, error, warning } }: BackendContext,
+  {
+    coreferences: {
+      // all,
+      error,
+      // warning
+    },
+  }: BackendContext,
 ) => {
   const entities: Record<string, GeneratorEntity> = {}
   for (const { name: table, columns } of tables) {
