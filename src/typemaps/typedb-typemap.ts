@@ -161,9 +161,11 @@ export const DATA_SOURCE_TYPEDB_TYPEMAP: Record<DataSource, UDTTypeMap<TypeDBTyp
 
 export const cast_typedb_type = (
   { data_source, config, enums }: BuildContext,
-  { udt_name }: ColumnDefinition,
+  column: ColumnDefinition,
 ): TypeDBType => {
-  const type = DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name]
+  const { udt_name } = column
+  const type =
+    DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name] || TYPEDB_TYPEMAP[udt_name]
   if (type && !['unknown'].includes(type)) {
     return type
   }
@@ -175,6 +177,8 @@ export const cast_typedb_type = (
 
   const warning = `Type "${udt_name}" has been mapped to [any] because no specific type has been found.`
   if (config.throwOnMissingType) {
+    console.log({ data_source, column, backend: config.backend })
+
     throw new Error(warning)
   }
   console.warn(warning)
