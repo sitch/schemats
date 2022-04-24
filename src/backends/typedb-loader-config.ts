@@ -54,51 +54,42 @@ export function data_paths(
   return [`${csvDir}/${database}/${name}.csv`]
 }
 
-export function cast_table_entity(
-  context: BuildContext,
-  { coreferences: { error } }: BackendContext,
-) {
+export function cast_table_entity(context: BuildContext, backend: BackendContext) {
   return (table: TableDefinition) => {
     return {
       data: data_paths(context, table),
       insert: {
         entity: inflect(table.name, 'pascal'),
         ownerships: table.columns
-          .filter(({ name }) => !(name in error))
+          .filter(({ name }) => !(name in backend.coreferences.error))
           .map(table => cast_definition_attribute(table)),
       },
     }
   }
 }
 
-export function cast_node_entity(
-  context: BuildContext,
-  { coreferences: { error } }: BackendContext,
-) {
+export function cast_node_entity(context: BuildContext, backend: BackendContext) {
   return (node: RelationshipNode) => {
     return {
       data: data_paths(context, node),
       insert: {
         entity: inflect(node.name, 'pascal'),
         ownerships: node.columns
-          .filter(({ name }) => !(name in error))
+          .filter(({ name }) => !(name in backend.coreferences.error))
           .map(table => cast_definition_attribute(table)),
       },
     }
   }
 }
 
-export function cast_edge_relation(
-  context: BuildContext,
-  { coreferences: { error } }: BackendContext,
-) {
+export function cast_edge_relation(context: BuildContext, backend: BackendContext) {
   return (edge: RelationshipEdge) => {
     return {
       data: data_paths(context, edge),
       insert: {
         relation: inflect(edge.name, 'pascal'),
         ownerships: edge.properties
-          .filter(({ name }) => !(name in error))
+          .filter(({ name }) => !(name in backend.coreferences.error))
           .map(table => cast_definition_attribute(table)),
         players: [],
       },
