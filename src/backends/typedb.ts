@@ -8,6 +8,8 @@ import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-t
 import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
 
+const TYPEDB_COMMENT = '# '
+
 //------------------------------------------------------------------------------
 
 const normalize_name = (name: string): string =>
@@ -92,48 +94,61 @@ const cast_field =
 
 //------------------------------------------------------------------------------
 
-const cast_entity = (context: BuildContext) => (record: TableDefinition) => {
-  const name = Entity.name(context, record)
-  const type = Entity.type(context, record)
-  const comment = Entity.comment(context, record)
+const cast_entity =
+  (context: BuildContext, backend: BackendContext) => (record: TableDefinition) => {
+    const name = Entity.name(context, record)
+    const type = Entity.type(context, record)
+    const comment = Entity.comment(context, record)
 
-  const fields = record.columns.map(cast_field(context))
-  const attributes = record.columns.map(cast_attribute(context))
+    const fields = record.columns.map(cast_field(context))
+    const attributes = record.columns.map(cast_attribute(context))
 
-  const line = `${name} sub ${type}`
-  return lines([comment, line, pad_lines(lines(fields), '  '), ';', lines(attributes)])
-}
+    const line = `${name} sub ${type}`
+    const text = lines([
+      comment,
+      line,
+      pad_lines(lines(fields), '  '),
+      ';',
+      lines(attributes),
+    ])
+
+    if (name in backend.coreferences.error) {
+      return pad_lines(TYPEDB_COMMENT, text)
+    }
+    return text
+  }
 
 //------------------------------------------------------------------------------
 
-const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
-  const { config } = context
-  const { primary_table, primary_column, foreign_table, foreign_column } = record
+const cast_relation =
+  (context: BuildContext, backend: BackendContext) => (record: ForeignKey) => {
+    const { config } = context
+    const { primary_table, primary_column, foreign_table, foreign_column } = record
 
-  const name = Relation.name(context, record)
-  const type = Relation.type(context, record)
-  const comment = Relation.comment(context, record)
+    const name = Relation.name(context, record)
+    const type = Relation.type(context, record)
+    const comment = Relation.comment(context, record)
 
-  const line = `${name} sub ${type}`
-  const relations = [
-    `, owns ${config.formatAttributeName(primary_column)}`,
-    `, owns ${config.formatAttributeName(foreign_column)}`,
-    `, relates ${config.formatEntityName(primary_table)}`,
-    `, relates ${config.formatEntityName(foreign_table)}`,
-  ]
+    const line = `${name} sub ${type}`
+    const relations = [
+      `, owns ${config.formatAttributeName(primary_column)}`,
+      `, owns ${config.formatAttributeName(foreign_column)}`,
+      `, relates ${config.formatEntityName(primary_table)}`,
+      `, relates ${config.formatEntityName(foreign_table)}`,
+    ]
 
-  return lines([comment, line, pad_lines(lines(relations), '  '), ';'])
-}
+    const text = lines([comment, line, pad_lines(lines(relations), '  '), ';'])
+
+    // if(name in backend.coreferences.error) {
+    //   return pad_lines(TYPEDB_COMMENT, text)
+    // }
+    return text
+  }
 
 //------------------------------------------------------------------------------
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_typedb = async (context: BuildContext) => {
-  const tables = context.tables
-  const foreign_keys = context.foreign_keys.flat()
-  const entities = flatMap(tables, cast_entity(context))
-  const relations = flatMap(foreign_keys, cast_relation(context))
-
   const backend: BackendContext = {
     backend: 'typedb',
     comment: '#',
@@ -141,6 +156,11 @@ export const render_typedb = async (context: BuildContext) => {
     character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
+
+  const tables = context.tables
+  const foreign_keys = context.foreign_keys.flat()
+  const entities = flatMap(tables, cast_entity(context, backend))
+  const relations = flatMap(foreign_keys, cast_relation(context, backend))
 
   return lines([
     header(context, backend),

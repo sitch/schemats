@@ -3,11 +3,7 @@ import sortJson from 'sort-json'
 import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
-import type {
-  Configuration,
-  // GeneratorAttribute,
-  GeneratorEntity,
-} from '../lang/typedb-loader-config'
+import type { Configuration, GeneratorEntity } from '../lang/typedb-loader-config'
 import type { BackendContext } from './base'
 
 //-----------------------------------------------------------------------
@@ -31,7 +27,7 @@ import type { BackendContext } from './base'
 
 export const cast_entities = (
   { config, tables }: BuildContext,
-  { comment, indent, coreferences: { all, error, warning } }: BackendContext,
+  { coreferences: { all, error, warning } }: BackendContext,
 ) => {
   const entities: Record<string, GeneratorEntity> = {}
   for (const { name: table, columns } of tables) {
