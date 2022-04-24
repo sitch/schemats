@@ -3,6 +3,8 @@ import inflection from 'inflection'
 import { castArray, isString } from 'lodash'
 import sortJson, { VisitOptions } from 'sort-json'
 
+import type { BackendContext } from './backends/base'
+
 const DEFAULT_SORT_JSON_OPTIONS = {
   depth: Number.POSITIVE_INFINITY,
 }
@@ -75,3 +77,9 @@ export const lines = (lineOrLines: LineOrLines, delimiter = '\n'): string => {
 
 export const single_quote = (value: string): string => `"${value}"`
 export const double_quote = (value: string): string => `"${value}"`
+
+export const code_section =
+  (backend: BackendContext) => (name: string, count: number, content: string[]) =>
+    count > 0
+      ? [banner(backend.comment, `${name} (${count})`), lines(content, '\n\n')]
+      : []
