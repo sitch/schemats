@@ -9,6 +9,7 @@ import type {
   GeneratorEntity,
   GeneratorRelation,
 } from '../lang/typedb-loader-config'
+import type { RelationshipEdge, RelationshipNode } from '../relationships'
 import type { BackendContext } from './base'
 import { normalize_name } from './typedb'
 
@@ -33,7 +34,7 @@ import { normalize_name } from './typedb'
 
 export function data_paths(
   { config: { database, csvDir, overrideCsvPath } }: BuildContext,
-  { name }: TableDefinition,
+  { name }: TableDefinition | RelationshipEdge | RelationshipNode,
 ): string[] {
   if (overrideCsvPath) {
     return [overrideCsvPath]
@@ -41,7 +42,7 @@ export function data_paths(
   return [`${csvDir}/${database}/${name}.csv`]
 }
 
-export const cast_table =
+export const cast_table_entity =
   (context: BuildContext, { coreferences: { error } }: BackendContext) =>
   (table: TableDefinition) => {
     return {
@@ -59,25 +60,32 @@ export const cast_table =
     }
   }
 
-export const cast_entities = (context: BuildContext, backend: BackendContext) => {
-  const entities: Record<string, GeneratorEntity> = {}
-  for (const table of context.tables) {
-    entities[table.name] = cast_table(context, backend)(table)
-  }
-  return entities
-}
-
-export const cast_relations = (
-  context: BuildContext,
-  { coreferences: { error } }: BackendContext,
-) => {
-  const entities: Record<string, GeneratorRelation> = {}
-  for (const table of context.tables) {
-    entities[table.name] = {
-      data: data_paths(context, table),
+export const cast_node_entity =
+  (context: BuildContext, { coreferences: { error } }: BackendContext) =>
+  (node: RelationshipNode) => {
+    return {
+      data: data_paths(context, node),
       insert: {
-        relation: inflect(table.name, 'pascal'),
-        ownerships: table.columns
+        entity: inflect(node.name, 'pascal'),
+        ownerships: node.columns
+          .filter(({ name }) => !(name in error))
+          .map(({ name, is_nullable }) => ({
+            attribute: normalize_name(name),
+            column: name,
+            required: !is_nullable,
+          })),
+      },
+    }
+  }
+
+export const cast_edge_relation =
+  (context: BuildContext, { coreferences: { error } }: BackendContext) =>
+  (edge: RelationshipEdge) => {
+    return {
+      data: data_paths(context, edge),
+      insert: {
+        relation: inflect(edge.name, 'pascal'),
+        ownerships: edge.properties
           .filter(({ name }) => !(name in error))
           .map(({ name, is_nullable }) => ({
             attribute: normalize_name(name),
@@ -87,6 +95,23 @@ export const cast_relations = (
         players: [],
       },
     }
+  }
+
+export const cast_entities = (context: BuildContext, backend: BackendContext) => {
+  const entities: Record<string, GeneratorEntity> = {}
+  for (const table of context.tables) {
+    entities[table.name] = cast_table_entity(context, backend)(table)
+  }
+  for (const node of context.nodes) {
+    entities[node.name] = cast_node_entity(context, backend)(node)
+  }
+  return entities
+}
+
+export const cast_relations = (context: BuildContext, backend: BackendContext) => {
+  const entities: Record<string, GeneratorRelation> = {}
+  for (const edge of context.edges) {
+    entities[edge.name] = cast_edge_relation(context, backend)(edge)
   }
   return entities
 }
