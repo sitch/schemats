@@ -43,13 +43,7 @@ export function data_paths(
 
 export const cast_entities = (
   context: BuildContext,
-  {
-    coreferences: {
-      // all,
-      error,
-      // warning
-    },
-  }: BackendContext,
+  { coreferences: { error } }: BackendContext,
 ) => {
   const entities: Record<string, GeneratorEntity> = {}
   for (const table of context.tables) {
@@ -71,24 +65,16 @@ export const cast_entities = (
 }
 
 export const cast_relations = (
-  { config, tables }: BuildContext,
-  {
-    coreferences: {
-      // all,
-      error,
-      // warning
-    },
-  }: BackendContext,
+  context: BuildContext,
+  { coreferences: { error } }: BackendContext,
 ) => {
   const entities: Record<string, GeneratorRelation> = {}
-  for (const { name: table, columns } of tables) {
-    entities[table] = {
-      data: [
-        `/home/sitch/sites/fortress/SelfAssemble.jl/data/dumps/${config.database}/${table}.csv`,
-      ],
+  for (const table of context.tables) {
+    entities[table.name] = {
+      data: data_paths(context, table),
       insert: {
-        relation: inflect(table, 'pascal'),
-        ownerships: columns
+        relation: inflect(table.name, 'pascal'),
+        ownerships: table.columns
           .filter(({ name }) => !(name in error))
           .map(({ name, is_nullable }) => ({
             attribute: normalize_name(name),
@@ -116,8 +102,7 @@ export const build = (context: BuildContext): Configuration => {
       separator: ',',
       rowsPerCommit: 50,
       parallelisation: 24,
-      // schema: '/home/sitch/sites/fortress/SelfAssemble.jl/typedb/schema.tql',
-      schema: `/home/sitch/sites/fortress/SelfAssemble.jl/@generated/db/typedb/${context.config.database}.tql`,
+      schema: context.schema,
     },
     // attributes: cast_attributes(context, backend),
     entities: cast_entities(context, backend),
