@@ -75,13 +75,15 @@ export enum InferredPTypeEnum {
   string = 'string',
 }
 
-export type InferredPType =
-  | InferredPTypeEnum.boolean
-  | InferredPTypeEnum.categorical
-  | InferredPTypeEnum.date
-  | InferredPTypeEnum.float
-  | InferredPTypeEnum.integer
-  | InferredPTypeEnum.string
+// export type InferredPType =
+//   | InferredPTypeEnum.boolean
+//   | InferredPTypeEnum.categorical
+//   | InferredPTypeEnum.date
+//   | InferredPTypeEnum.float
+//   | InferredPTypeEnum.integer
+//   | InferredPTypeEnum.string
+
+export type InferredPType = keyof typeof InferredPTypeEnum
 
 interface PType<T> {
   inferred_ptype: InferredPType
