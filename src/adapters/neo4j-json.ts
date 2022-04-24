@@ -95,6 +95,7 @@ export function build_context(
     relationships: [],
     tables,
     edges,
+    nodes: tables,
     coreferences: build_coreferences(config, tables),
   }
 }

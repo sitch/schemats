@@ -21,6 +21,8 @@ export interface RelationshipEdge {
   properties: ColumnDefinition[]
 }
 
+export type RelationshipNode = TableDefinition
+
 export type RelationshipEdgeName = string
 export type RelationshipType = string
 export type RelationshipMap = Record<TableName, Relationship[]>

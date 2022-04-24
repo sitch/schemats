@@ -25,7 +25,7 @@ import type { Backend, Config, UserImport } from './config'
 import { BACKENDS, get_user_imports } from './config'
 import type { Coreferences } from './coreference'
 import { build_coreferences } from './coreference'
-import type { Relationship, RelationshipEdge } from './relationships'
+import type { Relationship, RelationshipEdge, RelationshipNode } from './relationships'
 import { build_relationships } from './relationships'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
@@ -44,6 +44,7 @@ export interface BuildContext {
   tables: TableDefinition[]
   relationships: Relationship[]
   coreferences: Coreferences
+  nodes: RelationshipNode[]
   edges: RelationshipEdge[]
 }
 
@@ -120,6 +121,7 @@ const compile = async (config: Config, database: Database): Promise<BuildContext
     relationships: sortBy(relationships, 'foreign.name'),
     table_comments: sortBy(table_comments, 'table'),
     column_comments: sortBy(column_comments, 'column'),
+    nodes: [],
     edges: [],
   }
 }
