@@ -122,7 +122,7 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
     `, relates ${config.formatEntityName(foreign_table)}`,
   ]
 
-  return lines([comment, line, ...pad_lines(lines(relations), '  '), ';'])
+  return lines([comment, line, pad_lines(lines(relations), '  '), ';'])
 }
 
 //------------------------------------------------------------------------------

@@ -1,12 +1,14 @@
 import sortJson from 'sort-json'
 
 import type { BuildContext } from '../compiler'
+import { cast_typedb_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
 import type {
   Configuration,
   // GeneratorAttribute,
   GeneratorEntity,
 } from '../lang/typedb-loader-config'
+import type { BackendContext } from './base'
 
 //-----------------------------------------------------------------------
 
@@ -27,7 +29,10 @@ import type {
 //   return attributes
 // }
 
-export const cast_entities = ({ config, tables }: BuildContext) => {
+export const cast_entities = (
+  { config, tables }: BuildContext,
+  { comment, indent, coreferences: { all, error, warning } }: BackendContext,
+) => {
   const entities: Record<string, GeneratorEntity> = {}
   for (const { name: table, columns } of tables) {
     entities[table] = {
@@ -36,11 +41,13 @@ export const cast_entities = ({ config, tables }: BuildContext) => {
       ],
       insert: {
         entity: inflect(table, 'pascal'),
-        ownerships: columns.map(({ name, is_nullable }) => ({
-          attribute: name,
-          column: name,
-          required: !is_nullable,
-        })),
+        ownerships: columns
+          .filter(({ name }) => !(name in error))
+          .map(({ name, is_nullable }) => ({
+            attribute: name,
+            column: name,
+            required: !is_nullable,
+          })),
       },
     }
   }
@@ -48,6 +55,14 @@ export const cast_entities = ({ config, tables }: BuildContext) => {
 }
 
 export const build = (context: BuildContext): Configuration => {
+  const backend: BackendContext = {
+    backend: 'typedb',
+    comment: '#',
+    indent: '  ',
+    character_line_limit: 80,
+    coreferences: cast_typedb_coreferences(context),
+  }
+
   return {
     globalConfig: {
       separator: ',',
@@ -56,8 +71,8 @@ export const build = (context: BuildContext): Configuration => {
       // schema: '/home/sitch/sites/fortress/SelfAssemble.jl/typedb/schema.tql',
       schema: `/home/sitch/sites/fortress/SelfAssemble.jl/@generated/db/typedb/${context.config.database}.tql`,
     },
-    // attributes: cast_attributes(context),
-    entities: cast_entities(context),
+    // attributes: cast_attributes(context, backend),
+    entities: cast_entities(context, backend),
   }
 }
 
