@@ -63,6 +63,8 @@ export interface ConfigValues {
   enumFormatter?: string
   tableFormatter?: string
   columnFormatter?: string
+
+  csvDir: string
   overrideCsvPath?: string
 
   // NOT USED
@@ -86,6 +88,7 @@ export type CommandOptions = Partial<ConfigValues> &
     | 'backend'
     | 'database'
     | 'connection'
+    | 'csvDir'
     | 'overrideCsvPath'
     | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
@@ -103,6 +106,7 @@ export type ConfigOptions = Partial<ConfigValues> &
     | 'backend'
     | 'database'
     | 'connection'
+    | 'csvDir'
     | 'overrideCsvPath'
     | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
@@ -199,6 +203,10 @@ export class Config {
 
   public get overrideCsvPath() {
     return this.config.overrideCsvPath
+  }
+
+  public get csvDir() {
+    return this.config.csvDir
   }
 
   public get throwOnMissingType() {

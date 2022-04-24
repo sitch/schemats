@@ -39,6 +39,7 @@ export const neo4j = (program: Command, argv: string[]) => {
     .option('--typedb-attribute-template <template>', '{{attribute}}')
     .option('--no-header', "don't generate a header")
     .option('--no-throw-on-missing-type', 'suppress type mapping errors')
+    .option('--csv-dir <directory>', 'CSV base dir', '.')
     .option('--override-csv-path <csv_path>', 'Force override csv path')
     .action(
       async (

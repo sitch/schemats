@@ -31,13 +31,14 @@ import { normalize_name } from './typedb'
 //   return attributes
 // }
 
-export function data_paths(context: BuildContext, table: TableDefinition) {
-  if (context.config.overrideCsvPath) {
-    return [context.config.overrideCsvPath]
+export function data_paths(
+  { config: { database, csvDir, overrideCsvPath } }: BuildContext,
+  { name }: TableDefinition,
+): string[] {
+  if (overrideCsvPath) {
+    return [overrideCsvPath]
   }
-  return [
-    `/home/sitch/sites/fortress/SelfAssemble.jl/data/dumps/${context.config.database}/${table}.csv`,
-  ]
+  return [`${csvDir}/${database}/${name}.csv`]
 }
 
 export const cast_entities = (
