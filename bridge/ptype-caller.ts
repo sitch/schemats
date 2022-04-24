@@ -40,9 +40,9 @@
 
 // const runner = await PTypeCaller.init()
 
-// console.log('3 * 3 =', await runner.mul(3, 3)) // 9 !
-// console.log('tan(360deg) =', await runner.tan(360)) // 0 !
-// console.log('6 / 3 =', await runner.div(6, 3)) // 2 !
+// console.info('3 * 3 =', await runner.mul(3, 3)) // 9 !
+// console.info('tan(360deg) =', await runner.tan(360)) // 0 !
+// console.info('6 / 3 =', await runner.div(6, 3)) // 2 !
 
 // // python.exit()
 

@@ -1,5 +1,6 @@
 import sortJson from 'sort-json'
 
+import type { TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
@@ -30,8 +31,14 @@ import { normalize_name } from './typedb'
 //   return attributes
 // }
 
+export function data_paths(context: BuildContext, table: TableDefinition) {
+  return [
+    `/home/sitch/sites/fortress/SelfAssemble.jl/data/dumps/${context.config.database}/${table}.csv`,
+  ]
+}
+
 export const cast_entities = (
-  { config, tables }: BuildContext,
+  context: BuildContext,
   {
     coreferences: {
       // all,
@@ -41,14 +48,12 @@ export const cast_entities = (
   }: BackendContext,
 ) => {
   const entities: Record<string, GeneratorEntity> = {}
-  for (const { name: table, columns } of tables) {
-    entities[table] = {
-      data: [
-        `/home/sitch/sites/fortress/SelfAssemble.jl/data/dumps/${config.database}/${table}.csv`,
-      ],
+  for (const table of context.tables) {
+    entities[table.name] = {
+      data: data_paths(context, table),
       insert: {
-        entity: inflect(table, 'pascal'),
-        ownerships: columns
+        entity: inflect(table.name, 'pascal'),
+        ownerships: table.columns
           .filter(({ name }) => !(name in error))
           .map(({ name, is_nullable }) => ({
             attribute: normalize_name(name),

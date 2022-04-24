@@ -13,7 +13,7 @@ export const mysql = (program: Command, argv: string[]) => {
     .description('Generate a typescript schema from mysql')
     .argument('<connection>', 'if left empty will use env variables')
     .option('-d, --database <database>', 'the database to use')
-    .option('-I, --ignore-attribute-collisions <attribute...>', '')
+    .option('-I, --ignore-attribute-collisions <attribute...>', 'Ignore collisions')
     .option('-s, --schema <schema>', 'the schema to use', 'public')
     .option('-o, --output <path>', 'generated file relative to the cwd')
     .option('-F, --backend <backend>', 'the output format', 'typescript')
@@ -28,9 +28,8 @@ export const mysql = (program: Command, argv: string[]) => {
     .option('--typedb-attribute-template <template>', '{{attribute}}')
     .option('--no-header', "don't generate a header")
     .option('--no-throw-on-missing-type', 'suppress type mapping errors')
+    .option('--override-csv-path <csv_path>', 'Force override csv path')
     .action(async (connection: string, options: CommandOptions) => {
-      // const { MySQLDatabase } = await import('../src/adapters/mysql-adapter')
-
       const config = new Config(argv, connection, options)
       const database = new MySQLDatabase(config, connection)
       await database.isReady()

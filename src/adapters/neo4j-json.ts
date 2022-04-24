@@ -29,7 +29,7 @@ const cast_edge_name = (type: string): RelationshipEdgeName => type
 
 function cast_udt_name([type, ...types]: string[]) {
   if (types.length > 0) {
-    console.warn([type, ...types])
+    console.error([type, ...types])
   }
   return TYPEMAP[type]!
 }
