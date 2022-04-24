@@ -55,6 +55,7 @@ export interface ConfigValues {
   outputPath: string | undefined
 
   schema: string
+  typedbSchema?: string
   backend: string
   database: string
   connection: string
@@ -68,7 +69,7 @@ export interface ConfigValues {
   overrideCsvPath?: string
 
   // NOT USED
-  tables?: string[]
+  tables: string[]
   writeHeader?: boolean
   typesFile?: string
   throwOnMissingType?: boolean
@@ -90,6 +91,7 @@ export type CommandOptions = Partial<ConfigValues> &
     | 'connection'
     | 'csvDir'
     | 'overrideCsvPath'
+    | 'typedbSchema'
     | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
     | 'typedbRelationTemplate'
@@ -108,6 +110,7 @@ export type ConfigOptions = Partial<ConfigValues> &
     | 'connection'
     | 'csvDir'
     | 'overrideCsvPath'
+    | 'typedbSchema'
     | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
     | 'typedbRelationTemplate'
@@ -179,6 +182,10 @@ export class Config {
 
   public get output() {
     return this.config.output
+  }
+
+  public get typedbSchema() {
+    return this.config.typedbSchema
   }
 
   public get enums() {

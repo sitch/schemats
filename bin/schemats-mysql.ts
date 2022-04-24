@@ -30,6 +30,7 @@ export const mysql = (program: Command, argv: string[]) => {
     .option('--no-throw-on-missing-type', 'suppress type mapping errors')
     .option('--csv-dir <directory>', 'CSV base dir', '.')
     .option('--override-csv-path <csv_path>', 'Force override csv path')
+    .option('--typedb-schema <typedb_schema>', 'TQL Schema')
     .action(async (connection: string, options: CommandOptions) => {
       const config = new Config(argv, connection, options)
       const database = new MySQLDatabase(config, connection)

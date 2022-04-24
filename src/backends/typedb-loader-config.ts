@@ -113,6 +113,16 @@ export const build = (context: BuildContext): Configuration => {
   }
 
   const entities = cast_entities(context, backend)
+
+  console.log('entities')
+  console.log('entities')
+  console.log('entities')
+  console.log('entities')
+  console.log('entities')
+  console.log('entities')
+  console.log('entities')
+  console.log(entities)
+
   // const attributes =  cast_attributes(context, backend)
   // const relations =  cast_relations(context, backend)
 
@@ -121,7 +131,8 @@ export const build = (context: BuildContext): Configuration => {
       separator: ',',
       rowsPerCommit: 50,
       parallelisation: 24,
-      schema: context.schema,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      schema: context.config.typedbSchema!,
     },
     entities,
     // attributes,
@@ -131,5 +142,12 @@ export const build = (context: BuildContext): Configuration => {
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_typedb_loader_config = async (context: BuildContext) => {
+  console.log(context.config.database)
+  console.log(context.config.database)
+  console.log(context.config.database)
+  console.log(context.config.database)
+  console.log(context.config.database)
+  console.log(context.schema)
+  console.log(context.tables)
   return pretty(sortJson(build(context)))
 }

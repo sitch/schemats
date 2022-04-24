@@ -85,8 +85,7 @@ const compile = async (
   config.log('[db] Fetched column_comments', column_comments)
 
   const table_list = await Promise.all(
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    table_names!.map(table => database.getTable(schema, table)),
+    table_names.map(table => database.getTable(schema, table)),
   )
   config.log('[db] Fetched tables', table_list)
 

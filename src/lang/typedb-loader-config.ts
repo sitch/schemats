@@ -107,13 +107,7 @@ enum AttributeValueTypeEnum {
   INVALID = 'INVALID',
 }
 
-type AttributeValueType =
-  | AttributeValueTypeEnum.STRING
-  | AttributeValueTypeEnum.LONG
-  | AttributeValueTypeEnum.DOUBLE
-  | AttributeValueTypeEnum.BOOLEAN
-  | AttributeValueTypeEnum.DATETIME
-  | AttributeValueTypeEnum.INVALID
+type AttributeValueType = keyof typeof AttributeValueTypeEnum
 
 export interface DefinitionAttribute {
   attribute?: string
