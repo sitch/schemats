@@ -32,6 +32,9 @@ import { normalize_name } from './typedb'
 // }
 
 export function data_paths(context: BuildContext, table: TableDefinition) {
+  if (context.config.overrideCsvPath) {
+    return [context.config.overrideCsvPath]
+  }
   return [
     `/home/sitch/sites/fortress/SelfAssemble.jl/data/dumps/${context.config.database}/${table}.csv`,
   ]

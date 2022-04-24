@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import chalk from 'chalk'
 
 import { version } from '../package.json'
@@ -49,10 +50,8 @@ export const get_user_imports = (
 //------------------------------------------------------------------------------
 
 export interface ConfigValues {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   logLevel: string
   output?: string | undefined
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   outputPath: string | undefined
 
   schema: string
@@ -60,30 +59,20 @@ export interface ConfigValues {
   database: string
   connection: string
   enums?: boolean
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  ignoreAttributeCollisions: string[]
-  // eslint-disable-next-line @typescript-eslint/naming-convention
+  ignoreAttributeCollisions?: string[]
   enumFormatter?: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   tableFormatter?: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   columnFormatter?: string
+  overrideCsvPath?: string
 
   // NOT USED
-
   tables?: string[]
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   writeHeader?: boolean
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   typesFile?: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   throwOnMissingType?: boolean
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   typedbEntityTemplate?: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   typedbRelationTemplate?: string
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   typedbAttributeTemplate?: string
 }
 
@@ -97,6 +86,7 @@ export type CommandOptions = Partial<ConfigValues> &
     | 'backend'
     | 'database'
     | 'connection'
+    | 'overrideCsvPath'
     | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
     | 'typedbRelationTemplate'
@@ -113,6 +103,7 @@ export type ConfigOptions = Partial<ConfigValues> &
     | 'backend'
     | 'database'
     | 'connection'
+    | 'overrideCsvPath'
     | 'ignoreAttributeCollisions'
     | 'typedbEntityTemplate'
     | 'typedbRelationTemplate'
@@ -154,7 +145,7 @@ export class Config {
       throwOnMissingType: true,
       enums: false,
       ...config,
-      ignoreAttributeCollisions: config.ignoreAttributeCollisions.filter(
+      ignoreAttributeCollisions: (config.ignoreAttributeCollisions || []).filter(
         value => !!value,
       ),
       outputPath: config.output ? caller_relative_path(config.output) : config.output,
@@ -206,12 +197,16 @@ export class Config {
     return this.config.typesFile
   }
 
+  public get overrideCsvPath() {
+    return this.config.overrideCsvPath
+  }
+
   public get throwOnMissingType() {
     return this.config.throwOnMissingType
   }
 
   public get ignoreAttributeCollisions(): string[] {
-    return this.config.ignoreAttributeCollisions
+    return this.config.ignoreAttributeCollisions || []
   }
 
   public formatEnumName(name: string): string {
