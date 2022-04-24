@@ -1,11 +1,12 @@
 import sortJson from 'sort-json'
 
-import type { TableDefinition } from '../adapters/types'
+import type { ColumnDefinition, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
 import type {
   Configuration,
+  DefinitionAttribute,
   GeneratorEntity,
   GeneratorRelation,
 } from '../lang/typedb-loader-config'
@@ -32,6 +33,17 @@ import { normalize_name } from './typedb'
 //   return attributes
 // }
 
+function cast_definition_attribute({
+  name,
+  is_nullable,
+}: ColumnDefinition): DefinitionAttribute {
+  return {
+    attribute: normalize_name(name),
+    column: name,
+    required: !is_nullable,
+  }
+}
+
 export function data_paths(
   { config: { database, csvDir, overrideCsvPath } }: BuildContext,
   { name }: TableDefinition | RelationshipEdge | RelationshipNode,
@@ -42,60 +54,57 @@ export function data_paths(
   return [`${csvDir}/${database}/${name}.csv`]
 }
 
-export const cast_table_entity =
-  (context: BuildContext, { coreferences: { error } }: BackendContext) =>
-  (table: TableDefinition) => {
+export function cast_table_entity(
+  context: BuildContext,
+  { coreferences: { error } }: BackendContext,
+) {
+  return (table: TableDefinition) => {
     return {
       data: data_paths(context, table),
       insert: {
         entity: inflect(table.name, 'pascal'),
         ownerships: table.columns
           .filter(({ name }) => !(name in error))
-          .map(({ name, is_nullable }) => ({
-            attribute: normalize_name(name),
-            column: name,
-            required: !is_nullable,
-          })),
+          .map(table => cast_definition_attribute(table)),
       },
     }
   }
+}
 
-export const cast_node_entity =
-  (context: BuildContext, { coreferences: { error } }: BackendContext) =>
-  (node: RelationshipNode) => {
+export function cast_node_entity(
+  context: BuildContext,
+  { coreferences: { error } }: BackendContext,
+) {
+  return (node: RelationshipNode) => {
     return {
       data: data_paths(context, node),
       insert: {
         entity: inflect(node.name, 'pascal'),
         ownerships: node.columns
           .filter(({ name }) => !(name in error))
-          .map(({ name, is_nullable }) => ({
-            attribute: normalize_name(name),
-            column: name,
-            required: !is_nullable,
-          })),
+          .map(table => cast_definition_attribute(table)),
       },
     }
   }
+}
 
-export const cast_edge_relation =
-  (context: BuildContext, { coreferences: { error } }: BackendContext) =>
-  (edge: RelationshipEdge) => {
+export function cast_edge_relation(
+  context: BuildContext,
+  { coreferences: { error } }: BackendContext,
+) {
+  return (edge: RelationshipEdge) => {
     return {
       data: data_paths(context, edge),
       insert: {
         relation: inflect(edge.name, 'pascal'),
         ownerships: edge.properties
           .filter(({ name }) => !(name in error))
-          .map(({ name, is_nullable }) => ({
-            attribute: normalize_name(name),
-            column: name,
-            required: !is_nullable,
-          })),
+          .map(table => cast_definition_attribute(table)),
         players: [],
       },
     }
   }
+}
 
 export const cast_entities = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorEntity> = {}
