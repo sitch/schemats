@@ -9,6 +9,7 @@ import { DATA_SOURCE_TYPEDB_TYPEMAP } from './typemaps/typedb-typemap'
 
 //------------------------------------------------------------------------------
 
+export type AbstractTypeMap = Record<UDTName, string>
 export type UDTTypeMap<T> = Record<UDTName, T>
 
 //------------------------------------------------------------------------------
@@ -35,14 +36,7 @@ export interface TypeQualifiedCoreferences {
 
 //------------------------------------------------------------------------------
 
-const coreference_sorter = (records: CoreferenceType[]) => sortBy(records)
-const attribute_filter = (records: CoreferenceType[]) => records.length > 1
-const source_type_filter = (records: CoreferenceType[]) =>
-  uniq(map(records, 'source_type')).length > 1
-const dest_type_filter = (records: CoreferenceType[]) =>
-  uniq(map(records, 'dest_type')).length > 1
-
-function get_typemap({ data_source }: BuildContext, backend?: Backend) {
+function get_typemap( { data_source }: BuildContext, backend?: Backend ): AbstractTypeMap {
   if (backend === 'typedb') {
     return DATA_SOURCE_TYPEDB_TYPEMAP[data_source]
   }
@@ -52,6 +46,19 @@ function get_typemap({ data_source }: BuildContext, backend?: Backend) {
   return {}
 }
 
+function lookup_typemap(source_type: string, typemap?: AbstractTypeMap) {
+  return get(typemap, source_type.toLowerCase())
+}
+
+//------------------------------------------------------------------------------
+
+const coreference_sorter = (records: CoreferenceType[]) => sortBy(records)
+const attribute_filter = (records: CoreferenceType[]) => records.length > 1
+const source_type_filter = (records: CoreferenceType[]) =>
+  uniq(map(records, 'source_type')).length > 1
+const dest_type_filter = (records: CoreferenceType[]) =>
+  uniq(map(records, 'dest_type')).length > 1
+
 function entity_parts(
   entity: TableDefinition | RelationshipNode | RelationshipEdge,
   typemap?: Record<string, string>,
@@ -60,7 +67,7 @@ function entity_parts(
     table_name: entity.name,
     column_name: column.name,
     source_type: column.udt_name,
-    dest_type: get(typemap, column.udt_name),
+    dest_type: lookup_typemap(column.udt_name, typemap),
   }))
 }
 
