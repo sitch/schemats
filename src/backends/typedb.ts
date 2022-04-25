@@ -38,45 +38,37 @@ export function is_valid_foreign_key(backend: BackendContext) {
 
 export function verify_foreign_key(backend: BackendContext) {
   return (foreign_key: ForeignKey) => {
-    if (!is_valid_foreign_key(backend)(foreign_key)) {
-      console.error('Skipping table foreign_key', foreign_key)
-      return []
+    if (is_valid_foreign_key(backend)(foreign_key)) {
+      return [foreign_key]
     }
-    return [foreign_key]
+    console.error('Skipping table foreign_key', foreign_key)
+    return []
   }
 }
 
 export function verify_node_or_table(backend: BackendContext) {
   return (table: TableDefinition) => {
-    return [
-      {
-        ...table,
-        columns: table.columns.filter(column => {
-          const valid = is_valid_attribute(backend)(column)
-          if (!valid) {
-            console.error('Skipping table column', table, column)
-          }
-          return valid
-        }),
-      },
-    ]
+    const columns = table.columns.filter(column => {
+      const valid = is_valid_attribute(backend)(column)
+      if (!valid) {
+        console.error('Skipping table column', table.name, column)
+      }
+      return valid
+    })
+    return [{ ...table, columns }]
   }
 }
 
 export function verify_edge(backend: BackendContext) {
   return (edge: RelationshipEdge) => {
-    return [
-      {
-        ...edge,
-        columns: edge.properties.filter(column => {
-          const valid = is_valid_attribute(backend)(column)
-          if (!valid) {
-            console.error('Skipping edge property', edge, column)
-          }
-          return valid
-        }),
-      },
-    ]
+    const properties = edge.properties.filter(property => {
+      const valid = is_valid_attribute(backend)(property)
+      if (!valid) {
+        console.error('Skipping edge property', edge.name, property)
+      }
+      return valid
+    })
+    return [{ ...edge, properties }]
   }
 }
 //------------------------------------------------------------------------------
