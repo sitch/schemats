@@ -141,6 +141,7 @@ export const NEO4J_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
   long: 'long',
   integer: 'long',
   float: 'double',
+  double: 'double',
 
   string: 'string',
   stringarray: 'string',
