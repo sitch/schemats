@@ -29,7 +29,7 @@ import { validate_coreferences, validate_enums, validate_tables } from './valida
 
 //------------------------------------------------------------------------------
 
-enum DataSourceEnum {
+export enum DataSourceEnum {
   neo4j = 'neo4j',
   postgres = 'postgres',
   mysql = 'mysql',

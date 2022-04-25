@@ -2,8 +2,7 @@ import { mapValues, size } from 'lodash'
 import sortJson from 'sort-json'
 
 import { version } from '../../package.json'
-import type { BuildContext } from '../compiler'
-import type { BackendName } from '../config'
+import type { BackendName, BuildContext } from '../compiler'
 import type {
   CoreferenceMap,
   CoreferenceType,

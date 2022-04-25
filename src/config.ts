@@ -3,37 +3,15 @@ import chalk from 'chalk'
 
 import { version } from '../package.json'
 import type { TableDefinition } from './adapters/types'
+import type { BackendName } from './compiler'
 import { inflect, pretty } from './formatters'
 import { caller_relative_path } from './utils'
 
-export enum DataSourceEnum {
-  neo4j = 'neo4j',
-  postgres = 'postgres',
-  mysql = 'mysql',
-}
-// export type DataSource = DataSourceEnum.neo4j | DataSourceEnum.postgres | DataSourceEnum.mysql
-
-export type DataSource = keyof typeof DataSourceEnum
-
 //------------------------------------------------------------------------------
 
-export const ENUM_DELIMITER = '::'
+const ENUM_DELIMITER = '::'
 
 //------------------------------------------------------------------------------
-
-export enum BackendEnum {
-  typescript = 'typescript',
-  json = 'json',
-  typedb = 'typedb',
-  julia = 'julia',
-  algebraic_julia = 'algebraic_julia',
-  hydra = 'hydra',
-  julia_genie = 'julia_genie',
-  julia_octo = 'julia_octo',
-  haskell = 'haskell',
-  typedb_loader_config = 'typedb_loader_config',
-}
-export type BackendName = keyof typeof BackendEnum
 
 //------------------------------------------------------------------------------
 
