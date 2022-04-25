@@ -138,7 +138,7 @@ function cast_edge_name({ type }: Neo4indexEdge) {
 
 //##############################################################################
 
-export const render_julia_octo_from_neo4j_json = (
+export const render_julia_octo_neo4j_json = (
   config: Config,
   { nodes, relationships }: Neo4jSpecification,
   node_labels: Neo4jNodeLabel[],

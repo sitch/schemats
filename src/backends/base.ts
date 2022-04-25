@@ -1,4 +1,5 @@
 import { size } from 'lodash'
+import sortJson from 'sort-json'
 
 import { version } from '../../package.json'
 import type { BuildContext } from '../compiler'
@@ -53,15 +54,15 @@ export const coreference_banner = (
     `###############################################################################
   ⛔ ERROR ⛔ - (${size(error)}) - Attribute Conflicts
 ###############################################################################
-${pad_lines(pretty(error), indent)}
+${pad_lines(pretty(sortJson(error)), indent)}
 ===============================================================================
   ⚠️ WARNING ⚠️ - (${size(warning)}) - UDT Conflicts
 ===============================================================================
-${pad_lines(pretty(warning), indent)}
+${pad_lines(pretty(sortJson(warning)), indent)}
 -------------------------------------------------------------------------------
   ❎ ALL ❎ - (${size(all)}) - Attribute Overlaps
 -------------------------------------------------------------------------------
-${pad_lines(pretty(all), indent)}
+${pad_lines(pretty(sortJson(all)), indent)}
 ###############################################################################`,
     comment,
   )
