@@ -106,7 +106,7 @@ export function cast_edge_relation(context: BuildContext, backend: BackendContex
   }
 }
 
-function cast_players({
+function cast_foreign_key_relation_players({
   primary_table,
   primary_column,
   foreign_table,
@@ -144,7 +144,7 @@ export function cast_foreign_key_relation(
       insert: {
         relation: cast_foreign_key_name(foreign_key),
         ownerships: [],
-        players: cast_players(foreign_key),
+        players: cast_foreign_key_relation_players(foreign_key),
       },
     }
   }
