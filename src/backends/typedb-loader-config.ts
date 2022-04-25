@@ -111,6 +111,7 @@ export function cast_foreign_key_relation(
   _backend: BackendContext,
 ) {
   return (foreign_key: ForeignKey): GeneratorRelation => {
+    const { primary_table, primary_column, foreign_table, foreign_column } = foreign_key
     return {
       data: data_paths(context, foreign_key),
       insert: {
@@ -118,20 +119,20 @@ export function cast_foreign_key_relation(
         ownerships: [],
         players: [
           {
-            role: foreign_key.primary_table,
+            role: primary_table,
             match: {
-              type: foreign_key.primary_column,
+              type: primary_column,
               attribute: {
-                column: foreign_key.primary_column,
+                column: primary_column,
               },
             },
           },
           {
-            role: foreign_key.foreign_table,
+            role: foreign_table,
             match: {
-              type: foreign_key.foreign_column,
+              type: foreign_column,
               attribute: {
-                column: foreign_key.foreign_column,
+                column: foreign_column,
               },
             },
           },
