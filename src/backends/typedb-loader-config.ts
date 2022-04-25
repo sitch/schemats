@@ -157,13 +157,15 @@ const cast_entities = (context: BuildContext, backend: BackendContext) => {
 const cast_relations = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorRelation> = {}
 
-  // for (const foreign_key of context.foreign_keys.filter(
-  //   is_valid_foreign_key(backend),
-  // )) {
-  //   const name = Relation.name(context, foreign_key)
-  //   const relation = cast_foreign_key_relation(context, backend)(foreign_key)
-  //   entities[name] = relation
-  // }
+  for (const foreign_key of context.foreign_keys.filter(
+    is_valid_foreign_key(backend),
+  )) {
+    const name = Relation.name(context, foreign_key)
+    const relation = cast_foreign_key_relation(context, backend)(foreign_key)
+
+    console.info(name, relation)
+    // entities[name] = relation
+  }
 
   for (const edge of context.edges.filter(is_valid_edge(backend))) {
     entities[edge.name] = cast_edge_relation(context, backend)(edge)
