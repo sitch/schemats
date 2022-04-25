@@ -1,1 +1,0 @@
-export type RandomPetFacts = Record<string, string>

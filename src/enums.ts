@@ -24,3 +24,16 @@ export enum BackendEnum {
 export type BackendName = keyof typeof BackendEnum
 
 //------------------------------------------------------------------------------
+
+export enum InferredPTypeEnum {
+  boolean = 'boolean',
+  categorical = 'categorical',
+  date = 'date',
+  float = 'float',
+  integer = 'integer',
+  string = 'string',
+}
+
+export type InferredPType = keyof typeof InferredPTypeEnum
+
+//------------------------------------------------------------------------------

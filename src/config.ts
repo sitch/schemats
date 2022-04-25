@@ -3,7 +3,7 @@ import chalk from 'chalk'
 
 import { version } from '../package.json'
 import type { TableDefinition } from './adapters/types'
-import type { BackendName } from './backends'
+import type { BackendName } from './enums'
 import { inflect, pretty } from './formatters'
 import { caller_relative_path } from './utils'
 

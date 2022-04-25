@@ -1,7 +1,7 @@
 import type { PropertyDefinition } from '../adapters/types'
-import { DataSource, DataSourceEnum } from '../backends'
 import type { BuildContext } from '../compiler'
 import type { UDTTypeMap } from '../coreference'
+import { DataSource, DataSourceEnum } from '../enums'
 
 export type TypeDBType = string
 

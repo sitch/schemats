@@ -7,8 +7,8 @@ import type {
   TableDefinition,
   UDTName,
 } from './adapters/types'
-import type { BackendName } from './backends'
 import type { BuildContext } from './compiler'
+import type { BackendName } from './enums'
 import { DATA_SOURCE_JULIA_TYPEMAP } from './typemaps/julia-typemap'
 import { DATA_SOURCE_TYPEDB_TYPEMAP } from './typemaps/typedb-typemap'
 

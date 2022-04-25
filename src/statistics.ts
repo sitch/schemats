@@ -1,3 +1,5 @@
+import type { InferredPType } from './enums'
+
 export interface EntityStatistics {
   cardinality: number
   statistics?: PropertyStatistics[]
@@ -9,25 +11,6 @@ export interface CategoricalStatistics<T> {
   frequency: number
   relative_frequency: number
 }
-
-export enum InferredPTypeEnum {
-  boolean = 'boolean',
-  categorical = 'categorical',
-  date = 'date',
-  float = 'float',
-  integer = 'integer',
-  string = 'string',
-}
-
-// export type InferredPType =
-//   | InferredPTypeEnum.boolean
-//   | InferredPTypeEnum.categorical
-//   | InferredPTypeEnum.date
-//   | InferredPTypeEnum.float
-//   | InferredPTypeEnum.integer
-//   | InferredPTypeEnum.string
-
-export type InferredPType = keyof typeof InferredPTypeEnum
 
 interface PType<T> {
   inferred_ptype: InferredPType

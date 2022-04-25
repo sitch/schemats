@@ -1,9 +1,9 @@
 import { difference, size, uniqWith } from 'lodash'
 
 import type { EnumDefinition, TableDefinition } from './adapters/types'
-import type { BackendName } from './backends'
 import type { BuildContext } from './compiler'
 import type { Config } from './config'
+import type { BackendName } from './enums'
 import { pretty } from './formatters'
 import { json_equal } from './utils'
 

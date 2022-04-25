@@ -14,8 +14,8 @@ import type {
   TableCommentDefinition,
   TableDefinition,
 } from './adapters/types'
-import { BackendEnum, BackendName, DataSource } from './backends'
 import { render_algebraic_julia } from './backends/algebraic-julia'
+import type { BackendContext } from './backends/base'
 import { render_hydra } from './backends/hydra'
 import { render_json } from './backends/json'
 import { render_julia } from './backends/julia'
@@ -25,6 +25,7 @@ import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
 import { Config, get_user_imports, UserImport } from './config'
+import { BackendEnum, BackendName, DataSource } from './enums'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
 
@@ -118,34 +119,58 @@ const compile = async (
   }
 }
 
+type ApplyBackend = (context: BuildContext) => Promise<string>
+
+const not_implemented = (_context: BuildContext) => {
+  throw new Error('Not Implemented')
+}
+
 const apply_backend = (backend: BackendName) => {
-  if (backend === 'typescript') {
-    return render_typescript
+  // if (backend === 'typescript') {
+  //   return render_typescript
+  // }
+  // if (backend === 'json') {
+  //   return render_json
+  // }
+  // if (backend === 'typedb') {
+  //   return render_typedb
+  // }
+  // if (backend === 'julia') {
+  //   return render_julia
+  // }
+  // if (backend === 'algebraic_julia') {
+  //   return render_algebraic_julia
+  // }
+  // if (backend === 'julia_genie') {
+  //   return render_julia_genie
+  // }
+  // if (backend === 'julia_octo') {
+  //   return render_julia_octo
+  // }
+  // if (backend === 'hydra') {
+  //   return render_hydra
+  // }
+  // if (backend === 'typedb_loader_config') {
+  //   return render_typedb_loader_config
+  // }
+
+  const dispatch: Record<BackendName, ApplyBackend> = {
+    [BackendEnum.haskell]: not_implemented,
+    [BackendEnum.typescript]: render_typescript,
+    [BackendEnum.json]: render_json,
+    [BackendEnum.typedb]: render_typedb,
+    [BackendEnum.julia]: render_julia,
+    [BackendEnum.algebraic_julia]: render_algebraic_julia,
+    [BackendEnum.julia_genie]: render_julia_genie,
+    [BackendEnum.julia_octo]: render_julia_octo,
+    [BackendEnum.hydra]: render_hydra,
+    [BackendEnum.typedb_loader_config]: render_typedb_loader_config,
   }
-  if (backend === 'json') {
-    return render_json
+
+  if (backend in dispatch) {
+    return dispatch[backend]
   }
-  if (backend === 'typedb') {
-    return render_typedb
-  }
-  if (backend === 'julia') {
-    return render_julia
-  }
-  if (backend === 'algebraic_julia') {
-    return render_algebraic_julia
-  }
-  if (backend === 'julia_genie') {
-    return render_julia_genie
-  }
-  if (backend === 'julia_octo') {
-    return render_julia_octo
-  }
-  if (backend === 'hydra') {
-    return render_hydra
-  }
-  if (backend === 'typedb_loader_config') {
-    return render_typedb_loader_config
-  }
+
   throw `Invalid backend: ${backend} must be one of: ${Object.values(BackendEnum).join(
     ',',
   )}`

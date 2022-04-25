@@ -2,13 +2,13 @@ import { mapValues, size } from 'lodash'
 import sortJson from 'sort-json'
 
 import { version } from '../../package.json'
-import type { BackendName } from '../backends'
 import type { BuildContext } from '../compiler'
 import type {
   CoreferenceMap,
   CoreferenceType,
   TypeQualifiedCoreferences,
 } from '../coreference'
+import type { BackendName } from '../enums'
 import { pad_lines, pretty } from '../formatters'
 
 //------------------------------------------------------------------------------
