@@ -51,7 +51,7 @@ export function verify_node_or_table(backend: BackendContext) {
     const columns = table.columns.filter(column => {
       const valid = is_valid_attribute(backend)(column)
       if (!valid) {
-        console.error('Skipping table column', table.name, column)
+        console.error(`Skipping table: ${table.name}`, column)
       }
       return valid
     })
@@ -64,7 +64,7 @@ export function verify_edge(backend: BackendContext) {
     const properties = edge.properties.filter(property => {
       const valid = is_valid_attribute(backend)(property)
       if (!valid) {
-        console.error('Skipping edge property', edge.name, property)
+        console.error(`Skipping edge: ${edge.name}`, property)
       }
       return valid
     })

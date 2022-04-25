@@ -136,16 +136,23 @@ export const POSTGRES_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
 }
 
 export const NEO4J_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
-  string: 'string',
+  boolean: 'boolean',
+
   long: 'long',
+  integer: 'long',
+  float: 'double',
+
+  string: 'string',
+  stringarray: 'string',
+
+  date: 'datetime',
+  time: 'datetime',
   datetime: 'datetime',
-  DateTime: 'datetime',
-  Datetime: 'datetime',
+  localtime: 'datetime',
   localdatetime: 'datetime',
-  String: 'string',
-  Long: 'long',
-  LocalDateTime: 'datetime',
-  StringArray: 'string',
+
+  // duration: 'datetime',
+  // point: 'point',
 }
 
 export const TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
@@ -167,8 +174,8 @@ export const cast_typedb_type = (
   column: ColumnDefinition,
 ): TypeDBType => {
   const { udt_name } = column
-  const type = DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name]
-  //  || TYPEDB_TYPEMAP[udt_name]
+  const type = DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name.toLowerCase()]
+
   if (type && !['unknown'].includes(type)) {
     return type
   }
