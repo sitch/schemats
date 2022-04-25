@@ -36,7 +36,10 @@ export interface TypeQualifiedCoreferences {
 
 //------------------------------------------------------------------------------
 
-function get_typemap( { data_source }: BuildContext, backend?: Backend ): AbstractTypeMap {
+function get_typemap(
+  { data_source }: BuildContext,
+  backend?: Backend,
+): AbstractTypeMap {
   if (backend === 'typedb') {
     return DATA_SOURCE_TYPEDB_TYPEMAP[data_source]
   }
