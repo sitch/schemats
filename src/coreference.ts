@@ -151,7 +151,7 @@ const with_typedb_type = (value: string): string => {
 
   const typedb_type = inferType<TypeDBType>(TYPEDB_TYPEMAP, udt_name)
 
-  return [typedb_type, , udt_name, table].join(ENUM_DELIMITER)
+  return [typedb_type, udt_name, table].join(ENUM_DELIMITER)
 }
 
 const invalid_typedb_overlaps = (overlaps: CoreferenceMap): CoreferenceMap => {
