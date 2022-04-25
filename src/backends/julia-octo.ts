@@ -171,7 +171,8 @@ export const render_julia_octo = async (context: BuildContext) => {
   const octo_imports = flatMap(tables, cast_octo_import(context))
 
   const entities = flatMap(tables, cast_entity(context))
-  const relations = flatMap(foreign_keys, cast_relation(context))
+  // TODO: fix
+  // const relations = flatMap(foreign_keys, cast_relation(context))
 
   const backend: BackendContext = {
     backend: 'julia',
