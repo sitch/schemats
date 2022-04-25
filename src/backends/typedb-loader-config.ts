@@ -13,7 +13,12 @@ import type {
 } from '../lang/typedb-loader-config'
 import type { RelationshipEdge, RelationshipNode } from '../relationships'
 import type { BackendContext } from './base'
-import { normalize_name, Relation } from './typedb'
+import {
+  is_valid_attribute,
+  is_valid_foreign_key,
+  normalize_name,
+  Relation,
+} from './typedb'
 
 type AbstractTypedbDataType =
   | TableDefinition
@@ -22,22 +27,6 @@ type AbstractTypedbDataType =
   | ForeignKey
 
 //-----------------------------------------------------------------------
-
-// TODO: eliminate this
-// Filter out error coreference values
-function is_valid_attribute(backend: BackendContext) {
-  return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
-}
-
-function is_valid_foreign_key(backend: BackendContext) {
-  return ({ primary_column, foreign_column }: ForeignKey) =>
-    !(primary_column in backend.coreferences.error) &&
-    !(foreign_column in backend.coreferences.error)
-}
-
-function is_valid_edge(_backend: BackendContext) {
-  return (_edge: RelationshipEdge) => true
-}
 
 function cast_definition_attribute({
   name,
@@ -163,11 +152,13 @@ const cast_relations = (context: BuildContext, backend: BackendContext) => {
     const name = Relation.name(context, foreign_key)
     const relation = cast_foreign_key_relation(context, backend)(foreign_key)
 
-    console.info(name, relation)
+    console.info(name, relation.insert.players)
+    // TODO: Fix
     // entities[name] = relation
   }
 
-  for (const edge of context.edges.filter(is_valid_edge(backend))) {
+  // for (const edge of context.edges.filter(is_valid_edge(backend))) {
+  for (const edge of context.edges) {
     entities[edge.name] = cast_edge_relation(context, backend)(edge)
   }
   return entities

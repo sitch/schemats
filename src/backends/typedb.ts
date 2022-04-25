@@ -24,6 +24,63 @@ const prefix = (context: BuildContext) => {
 
 //------------------------------------------------------------------------------
 
+// TODO: eliminate this
+// Filter out error coreference values
+export function is_valid_attribute(backend: BackendContext) {
+  return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
+}
+
+export function is_valid_foreign_key(backend: BackendContext) {
+  return ({ primary_column, foreign_column }: ForeignKey) =>
+    !(primary_column in backend.coreferences.error) &&
+    !(foreign_column in backend.coreferences.error)
+}
+
+export function verify_foreign_key(backend: BackendContext) {
+  return (foreign_key: ForeignKey) => {
+    if (!is_valid_foreign_key(backend)(foreign_key)) {
+      console.error('Skipping table foreign_key', foreign_key)
+      return []
+    }
+    return [foreign_key]
+  }
+}
+
+export function verify_node_or_table(backend: BackendContext) {
+  return (table: TableDefinition) => {
+    return [
+      {
+        ...table,
+        columns: table.columns.filter(column => {
+          const valid = is_valid_attribute(backend)(column)
+          if (!valid) {
+            console.error('Skipping table column', table, column)
+          }
+          return valid
+        }),
+      },
+    ]
+  }
+}
+
+export function verify_edge(backend: BackendContext) {
+  return (edge: RelationshipEdge) => {
+    return [
+      {
+        ...edge,
+        columns: edge.properties.filter(column => {
+          const valid = is_valid_attribute(backend)(column)
+          if (!valid) {
+            console.error('Skipping edge property', edge, column)
+          }
+          return valid
+        }),
+      },
+    ]
+  }
+}
+//------------------------------------------------------------------------------
+
 export const Attribute = {
   comment: (_context: BuildContext, _column: ColumnDefinition): string => {
     return ``
@@ -124,7 +181,6 @@ const cast_node_or_entity =
     const columns = record.columns.filter(
       ({ name }) => !(name in backend.coreferences.error),
     )
-
     const fields = columns.map(cast_field(context))
     const attributes = columns.map(cast_attribute(context))
 
@@ -181,6 +237,18 @@ const cast_edge =
 
 //------------------------------------------------------------------------------
 
+export function preprocess_context(
+  context: BuildContext,
+  backend: BackendContext,
+): BuildContext {
+  const nodes = context.nodes.flatMap(verify_node_or_table(backend))
+  const edges = context.edges.flatMap(verify_edge(backend))
+  const tables = context.tables.flatMap(verify_node_or_table(backend))
+  const foreign_keys = context.foreign_keys.flat().flatMap(verify_foreign_key(backend))
+
+  return { ...context, nodes, edges, tables, foreign_keys }
+}
+
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_typedb = async (context: BuildContext) => {
   const backend: BackendContext = {
@@ -191,11 +259,12 @@ export const render_typedb = async (context: BuildContext) => {
     coreferences: cast_typedb_coreferences(context),
   }
 
-  const foreign_keys = context.foreign_keys.flat()
-  const nodes = flatMap(context.nodes, cast_node_or_entity(context, backend))
-  const entities = flatMap(context.tables, cast_node_or_entity(context, backend))
-  const relations = flatMap(foreign_keys, cast_relation(context, backend))
-  const edges = flatMap(context.edges, cast_edge(context, backend))
+  const { nodes, edges, tables, foreign_keys } = preprocess_context(context, backend)
+
+  const node_content = flatMap(nodes, cast_node_or_entity(context, backend))
+  const edge_content = flatMap(edges, cast_edge(context, backend))
+  const entity_content = flatMap(tables, cast_node_or_entity(context, backend))
+  const relation_content = flatMap(foreign_keys, cast_relation(context, backend))
 
   const section = code_section(backend)
 
@@ -203,9 +272,9 @@ export const render_typedb = async (context: BuildContext) => {
     header(context, backend),
     pragma(context),
     coreference_banner(context, backend),
-    ...section('Nodes', size(context.nodes), nodes),
-    ...section('Edges', size(context.edges), edges),
-    ...section('Entities', size(context.tables), entities),
-    ...section('Relations', size(foreign_keys), relations),
+    ...section('Nodes', size(nodes), node_content),
+    ...section('Edges', size(edges), edge_content),
+    ...section('Entities', size(tables), entity_content),
+    ...section('Relations', size(foreign_keys), relation_content),
   ])
 }
