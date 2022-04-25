@@ -15,13 +15,6 @@ import type {
 } from '../lang/neo4j'
 import type { RelationshipEdge, RelationshipEdgeName } from '../relationships'
 
-const TYPEMAP: Record<string, string> = {
-  String: 'string',
-  Long: 'long',
-  LocalDateTime: 'datetime',
-  StringArray: 'string',
-}
-
 const cast_node_name = (typeId: Neo4jReflectionNameSymbol): string =>
   trimEnd(trimStart(typeId, ':`'), '`')
 
@@ -31,7 +24,7 @@ function cast_udt_name([type, ...types]: string[]) {
   if (types.length > 0) {
     console.error([type, ...types])
   }
-  return TYPEMAP[type]!
+  return type
 }
 
 function cast_property({
