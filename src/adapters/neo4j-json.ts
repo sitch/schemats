@@ -75,13 +75,10 @@ function cast_edge_list(table_map: Record<string, TableDefinition[]>) {
 }
 //##############################################################################
 
-export function build_context(
-  config: Config,
-  { nodes, relationships }: Neo4jReflection,
-): BuildContext {
-  const tables = Object.values(nodes).map(node => cast_node(node))
-  const table_map = groupBy(tables, 'name')
-  const edges = Object.values(relationships).flatMap(cast_edge_list(table_map))
+export function build_context(config: Config, spec: Neo4jReflection): BuildContext {
+  const nodes = Object.values(spec.nodes).map(node => cast_node(node))
+  const node_map = groupBy(nodes, 'name')
+  const edges = Object.values(spec.relationships).flatMap(cast_edge_list(node_map))
 
   return {
     data_source: 'neo4j',
@@ -96,8 +93,8 @@ export function build_context(
     relationships: [],
     tables: [],
     edges,
-    nodes: tables,
-    coreferences: build_coreferences(config, tables),
+    nodes,
+    coreferences: build_coreferences(config, [], [], nodes, edges),
   }
 }
 

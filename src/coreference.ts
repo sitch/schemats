@@ -4,6 +4,7 @@ import type { ColumnName, TableDefinition, TableName, UDTName } from './adapters
 import type { BuildContext } from './compiler'
 import type { Config } from './config'
 import { ENUM_DELIMITER } from './config'
+import type { Relationship, RelationshipEdge, RelationshipNode } from './relationships'
 import { TYPEDB_TYPEMAP, TypeDBType } from './typemaps/typedb-typemap'
 
 //------------------------------------------------------------------------------
@@ -33,8 +34,11 @@ export interface TypeDBCoreferences {
 export const build_coreferences = (
   _config: Config,
   tables: TableDefinition[],
+  relationships: Relationship[],
+  nodes: RelationshipNode[],
+  edges: RelationshipEdge[],
 ): Coreferences => {
-  const all = attribute_overlap_grouping(tables)
+  const all = attribute_overlap_grouping(tables, relationships, nodes, edges)
 
   return {
     all,
@@ -59,6 +63,18 @@ const find_table_column_type = (
   return column?.udt_name
 }
 
+const find_edge_property_type = (
+  edges: RelationshipEdge[],
+  table_name: TableName,
+  columnName: ColumnName,
+) => {
+  const edge_map = keyBy(edges, 'name')
+
+  const edge = edge_map[table_name]
+  const column = edge.properties.find(({ name }) => name === columnName)
+  return column?.udt_name
+}
+
 const attribute_grouping_pairs = (table_list: TableDefinition[]) => {
   const table_column_names = uniq(
     flatMap(table_list.map(({ columns }) => columns.map(({ name }) => name))),
@@ -77,8 +93,36 @@ const attribute_grouping_pairs = (table_list: TableDefinition[]) => {
   return sortBy(pairs, ([_key, values]) => values.length)
 }
 
-const attribute_overlap_grouping = (tables: TableDefinition[]): CoreferenceMap => {
-  const grouping_pairs = attribute_grouping_pairs(tables)
+const property_grouping_pairs = (edges: RelationshipEdge[]) => {
+  const edge_property_names = uniq(
+    flatMap(edges.map(({ properties }) => properties.map(({ name }) => name))),
+  )
+
+  const pairs = edge_property_names.map(columnName => {
+    const tables = edges.filter(({ properties }) =>
+      properties.map(({ name }) => name).includes(columnName),
+    )
+    const table_names = tables.map(({ name }) =>
+      [find_edge_property_type(edges, name, columnName), name].join(ENUM_DELIMITER),
+    )
+    return [columnName, table_names]
+  })
+
+  return sortBy(pairs, ([_key, values]) => values.length)
+}
+
+const attribute_overlap_grouping = (
+  tables: TableDefinition[],
+
+  _relationships: Relationship[],
+  nodes: RelationshipNode[],
+  edges: RelationshipEdge[],
+): CoreferenceMap => {
+  const grouping_pairs = [
+    ...attribute_grouping_pairs(tables),
+    ...attribute_grouping_pairs(nodes),
+    ...property_grouping_pairs(edges),
+  ]
   return fromPairs(grouping_pairs.filter(([_key, values]) => values.length > 1))
 }
 

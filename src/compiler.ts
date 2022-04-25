@@ -106,11 +106,11 @@ const compile = async (
   const user_imports = get_user_imports(config, tables)
   config.log('[build] Compiled user_imports', user_imports)
 
-  const coreferences = build_coreferences(config, tables)
-  config.log('[build] Compiled coreferences', coreferences)
-
   const relationships = build_relationships(config, tables)
   config.log('[build] Compiled relationships', relationships)
+
+  const coreferences = build_coreferences(config, tables, relationships, [], [])
+  config.log('[build] Compiled coreferences', coreferences)
 
   sortBy
   return {
