@@ -29,14 +29,14 @@ import { validate_coreferences, validate_enums, validate_tables } from './valida
 
 //------------------------------------------------------------------------------
 
-export enum DataSourceEnum {
+enum DataSourceEnum {
   neo4j = 'neo4j',
   postgres = 'postgres',
   mysql = 'mysql',
 }
 export type DataSource = keyof typeof DataSourceEnum
 
-export enum BackendEnum {
+enum BackendEnum {
   typescript = 'typescript',
   json = 'json',
   typedb = 'typedb',
@@ -61,7 +61,6 @@ export interface BuildContext {
   column_comments: ColumnCommentDefinition[]
   enums: EnumDefinition[]
   tables: TableDefinition[]
-  // relationships: Relationship[]
   nodes: NodeDefinition[]
   edges: EdgeDefinition[]
 }
@@ -123,9 +122,6 @@ const compile = async (
   const user_imports = get_user_imports(config, tables)
   config.log('[build] Compiled user_imports', user_imports)
 
-  // const relationships = build_relationships(config, tables)
-  // config.log('[build] Compiled relationships', relationships)
-
   return {
     data_source,
     schema,
@@ -135,7 +131,6 @@ const compile = async (
     tables: sortBy(tables, 'name'),
     primary_keys: sortBy(primary_keys, 'table'),
     foreign_keys: sortBy(foreign_keys, 'source_table'),
-    // relationships: sortBy(relationships, 'foreign.name'),
     table_comments: sortBy(table_comments, 'table'),
     column_comments: sortBy(column_comments, 'column'),
     nodes: [],
@@ -173,9 +168,9 @@ export const render = async (context: BuildContext, backend: BackendName) => {
   if (backend === 'typedb_loader_config') {
     return await render_typedb_loader_config(context)
   }
-
-  // throw `Invalid backend: ${backend} must be one of: ${BackendEnum}`
-  throw `Invalid backend: ${backend}`
+  throw `Invalid backend: ${backend} must be one of: ${Object.values(BackendEnum).join(
+    ',',
+  )}`
 }
 
 export async function generate(
