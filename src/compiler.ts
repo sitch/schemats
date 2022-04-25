@@ -23,11 +23,32 @@ import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
-import { BackendName, Config, DataSource, get_user_imports, UserImport } from './config'
+import { Config, get_user_imports, UserImport } from './config'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
 
 //------------------------------------------------------------------------------
+
+export enum DataSourceEnum {
+  neo4j = 'neo4j',
+  postgres = 'postgres',
+  mysql = 'mysql',
+}
+export type DataSource = keyof typeof DataSourceEnum
+
+export enum BackendEnum {
+  typescript = 'typescript',
+  json = 'json',
+  typedb = 'typedb',
+  julia = 'julia',
+  algebraic_julia = 'algebraic_julia',
+  hydra = 'hydra',
+  julia_genie = 'julia_genie',
+  julia_octo = 'julia_octo',
+  haskell = 'haskell',
+  typedb_loader_config = 'typedb_loader_config',
+}
+export type BackendName = keyof typeof BackendEnum
 
 export interface BuildContext {
   data_source: DataSource
