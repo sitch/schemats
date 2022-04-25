@@ -1,6 +1,6 @@
 import sortJson from 'sort-json'
 
-import type { ColumnDefinition, TableDefinition } from '../adapters/types'
+import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { cast_typedb_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
@@ -9,12 +9,37 @@ import type {
   DefinitionAttribute,
   GeneratorEntity,
   GeneratorRelation,
+  GeneratorRelationInsert,
 } from '../lang/typedb-loader-config'
 import type { RelationshipEdge, RelationshipNode } from '../relationships'
 import type { BackendContext } from './base'
 import { normalize_name } from './typedb'
 
+type AbstractTypedbDataType =
+  | TableDefinition
+  | RelationshipEdge
+  | RelationshipNode
+  | ForeignKey
+
 //-----------------------------------------------------------------------
+
+function cast_foreign_key_name({
+  primary_table,
+  primary_column,
+  foreign_table,
+  foreign_column,
+}: ForeignKey): string {
+  return inflect(
+    `${primary_table}-${primary_column}-${foreign_table}-${foreign_column}`,
+    'pascal',
+  )
+}
+
+// TODO: eliminate this
+// Filter out error coreference values
+function is_valid_attribute(backend: BackendContext) {
+  return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
+}
 
 function cast_definition_attribute({
   name,
@@ -28,17 +53,14 @@ function cast_definition_attribute({
 }
 
 export function data_paths(
-  { config: { database, csvDir, overrideCsvPath } }: BuildContext,
-  { name }: TableDefinition | RelationshipEdge | RelationshipNode,
+  { config }: BuildContext,
+  record: AbstractTypedbDataType,
 ): string[] {
-  if (overrideCsvPath) {
-    return [overrideCsvPath]
+  if (config.overrideCsvPath) {
+    return [config.overrideCsvPath]
   }
-  return [`${csvDir}/${database}/${name}.csv`]
-}
-
-function is_valid_attribute(backend: BackendContext) {
-  return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
+  const filename = 'name' in record ? record.name : cast_foreign_key_name(record)
+  return [`${config.csvDir}/${config.database}/${filename}.csv`]
 }
 
 export function cast_table_entity(context: BuildContext, backend: BackendContext) {
@@ -84,6 +106,35 @@ export function cast_edge_relation(context: BuildContext, backend: BackendContex
   }
 }
 
+export function cast_foreign_key_relation(
+  context: BuildContext,
+  _backend: BackendContext,
+) {
+  return (foreign_key: ForeignKey): GeneratorRelation => {
+    return {
+      data: data_paths(context, foreign_key),
+      insert: {
+        relation: cast_foreign_key_name(foreign_key),
+        ownerships: [],
+        players: [
+          // export interface DefinitionPlayer {
+          //   role?: string
+          //   required?: boolean
+          //   match?: DefinitionThing
+          // }
+
+          {
+            role: `${foreign_key.primary_table}:${foreign_key.primary_column}`,
+          },
+          {
+            role: `${foreign_key.foreign_table}:${foreign_key.foreign_column}`,
+          },
+        ],
+      },
+    }
+  }
+}
+
 export const cast_entities = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorEntity> = {}
   for (const table of context.tables) {
@@ -97,6 +148,12 @@ export const cast_entities = (context: BuildContext, backend: BackendContext) =>
 
 export const cast_relations = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorRelation> = {}
+  for (const foreign_key of context.foreign_keys) {
+    const name = cast_foreign_key_name(foreign_key)
+    const relation = cast_foreign_key_relation(context, backend)(foreign_key)
+    entities[name] = relation
+  }
+
   for (const edge of context.edges) {
     entities[edge.name] = cast_edge_relation(context, backend)(edge)
   }
@@ -113,15 +170,6 @@ export const build = (context: BuildContext): Configuration => {
   }
 
   const entities = cast_entities(context, backend)
-
-  console.log('entities')
-  console.log('entities')
-  console.log('entities')
-  console.log('entities')
-  console.log('entities')
-  console.log('entities')
-  console.log('entities')
-  console.log(entities)
 
   // const attributes =  cast_attributes(context, backend)
   // const relations =  cast_relations(context, backend)
@@ -142,12 +190,5 @@ export const build = (context: BuildContext): Configuration => {
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_typedb_loader_config = async (context: BuildContext) => {
-  console.log(context.config.database)
-  console.log(context.config.database)
-  console.log(context.config.database)
-  console.log(context.config.database)
-  console.log(context.config.database)
-  console.log(context.schema)
-  console.log(context.tables)
   return pretty(sortJson(build(context)))
 }
