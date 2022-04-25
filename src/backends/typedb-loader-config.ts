@@ -7,6 +7,7 @@ import { inflect, pretty } from '../formatters'
 import type {
   Configuration,
   DefinitionAttribute,
+  DefinitionPlayer,
   GeneratorEntity,
   GeneratorRelation,
 } from '../lang/typedb-loader-config'
@@ -127,6 +128,12 @@ export function cast_foreign_key_relation(
           },
           {
             role: foreign_key.foreign_table,
+            match: {
+              type: foreign_key.foreign_column,
+              attribute: {
+                column: foreign_key.foreign_column,
+              },
+            },
           },
         ],
       },
