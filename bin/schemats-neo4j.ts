@@ -3,8 +3,8 @@ import type { Command } from 'commander'
 import fs from 'fs-extra'
 
 import { build_context } from '../src/adapters/neo4j-json'
+import { render } from '../src/backends'
 import { render_julia_octo_neo4j_json } from '../src/backends/impl/julia-octo-neo4j-json'
-import { render } from '../src/compiler'
 import { CommandOptions, Config } from '../src/config'
 import type {
   Neo4jNodeLabel,

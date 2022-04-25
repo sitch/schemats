@@ -6,7 +6,7 @@ import type {
   ForeignKeyDefinition,
   PropertyDefinition,
 } from './adapters/types'
-import type { BackendContext } from './backends/base'
+import type { BackendContext } from './backends'
 import type { BuildContext } from './compiler'
 
 // TODO: eliminate this

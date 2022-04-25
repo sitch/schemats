@@ -7,6 +7,7 @@ import type {
   PropertyDefinition,
   TableDefinition,
 } from '../adapters/types'
+import type { BackendContext } from '../backends'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import {
@@ -22,7 +23,6 @@ import type {
   GeneratorEntity,
   GeneratorRelation,
 } from '../lang/typedb-loader-config'
-import type { BackendContext } from './base'
 import { normalize_name, TypedbRelation } from './typedb'
 
 type AbstractTypedbDataType =

@@ -3,7 +3,7 @@ import inflection from 'inflection'
 import { castArray, isString } from 'lodash'
 import sortJson, { VisitOptions } from 'sort-json'
 
-import type { BackendContext } from './backends/base'
+import type { BackendContext } from './backends'
 
 const DEFAULT_SORT_JSON_OPTIONS = {
   depth: Number.POSITIVE_INFINITY,

@@ -14,41 +14,12 @@ import type {
   TableCommentDefinition,
   TableDefinition,
 } from './adapters/types'
-import { render_algebraic_julia } from './backends/algebraic-julia'
-import { render_hydra } from './backends/hydra'
-import { render_json } from './backends/json'
-import { render_julia } from './backends/julia'
-import { render_julia_genie } from './backends/julia-genie'
-import { render_julia_octo } from './backends/julia-octo'
-import { render_typedb } from './backends/typedb'
-import { render_typedb_loader_config } from './backends/typedb-loader-config'
-import { render_typescript } from './backends/typescript'
+import { DataSource, render } from './backends'
 import { Config, get_user_imports, UserImport } from './config'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
 
 //------------------------------------------------------------------------------
-
-export enum DataSourceEnum {
-  neo4j = 'neo4j',
-  postgres = 'postgres',
-  mysql = 'mysql',
-}
-export type DataSource = keyof typeof DataSourceEnum
-
-enum BackendEnum {
-  typescript = 'typescript',
-  json = 'json',
-  typedb = 'typedb',
-  julia = 'julia',
-  algebraic_julia = 'algebraic_julia',
-  hydra = 'hydra',
-  julia_genie = 'julia_genie',
-  julia_octo = 'julia_octo',
-  haskell = 'haskell',
-  typedb_loader_config = 'typedb_loader_config',
-}
-export type BackendName = keyof typeof BackendEnum
 
 export interface BuildContext {
   data_source: DataSource
@@ -138,41 +109,6 @@ const compile = async (
   }
 }
 
-export const render = async (context: BuildContext, backend: BackendName) => {
-  validate_coreferences(context, backend)
-
-  if (backend === 'typescript') {
-    return await render_typescript(context)
-  }
-  if (backend === 'json') {
-    return await render_json(context)
-  }
-  if (backend === 'typedb') {
-    return await render_typedb(context)
-  }
-  if (backend === 'julia') {
-    return await render_julia(context)
-  }
-  if (backend === 'algebraic_julia') {
-    return await render_algebraic_julia(context)
-  }
-  if (backend === 'julia_genie') {
-    return await render_julia_genie(context)
-  }
-  if (backend === 'julia_octo') {
-    return await render_julia_octo(context)
-  }
-  if (backend === 'hydra') {
-    return await render_hydra(context)
-  }
-  if (backend === 'typedb_loader_config') {
-    return await render_typedb_loader_config(context)
-  }
-  throw `Invalid backend: ${backend} must be one of: ${Object.values(BackendEnum).join(
-    ',',
-  )}`
-}
-
 export async function generate(
   config: Config,
   database: Database,
@@ -180,5 +116,6 @@ export async function generate(
 ): Promise<string> {
   const context = await compile(config, database, data_source)
   const backend = context.config.backend
+  validate_coreferences(context, backend)
   return await render(context, backend)
 }
