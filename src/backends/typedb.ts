@@ -100,7 +100,7 @@ export const NodeOrEntity = {
 
 export const Relation = {
   comment: ({ config }: BuildContext, { constraint }: ForeignKey): string => {
-    return `# Source: '${config.schema}.${constraint}'`
+    return `${TYPEDB_COMMENT} Source: '${config.schema}.${constraint}'`
   },
   name: (
     { config }: BuildContext,
@@ -122,7 +122,7 @@ export const Relation = {
 
 export const Edge = {
   comment: (_context: BuildContext, { comment }: RelationshipEdge): string => {
-    return comment ? `# ${comment}` : ''
+    return comment ? `${TYPEDB_COMMENT} ${comment}` : ''
   },
   name: (
     { config }: BuildContext,
@@ -178,7 +178,7 @@ const cast_node_or_entity =
     return lines([
       comment,
       `${name} sub ${type}`,
-      pad_lines(lines(fields), '  '),
+      pad_lines(lines(fields), TYPEDB_INDENT),
       ';',
       lines(attributes),
     ])
@@ -205,7 +205,7 @@ const cast_relation =
     return lines([
       comment,
       `${name} sub ${type}`,
-      pad_lines(lines(relations), '  '),
+      pad_lines(lines(relations), TYPEDB_INDENT),
       ';',
     ])
   }
@@ -229,7 +229,7 @@ const cast_edge =
     return lines([
       comment,
       `${name} sub ${type}`,
-      pad_lines(lines(relations), '  '),
+      pad_lines(lines(relations), TYPEDB_INDENT),
       ';',
       lines(attributes),
     ])
@@ -253,8 +253,8 @@ export function preprocess_context(
 export const render_typedb = async (context: BuildContext) => {
   const backend: BackendContext = {
     backend: 'typedb',
-    comment: '#',
-    indent: '  ',
+    comment: TYPEDB_COMMENT,
+    indent: TYPEDB_INDENT,
     character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
