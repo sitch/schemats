@@ -191,7 +191,6 @@ export const build = (context: BuildContext): Configuration => {
       separator: ',',
       rowsPerCommit: 50,
       parallelisation: 24,
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       schema: context.config.typedbSchema,
     },
     // attributes: cast_attributes(context, backend),

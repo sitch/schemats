@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import chalk from 'chalk'
 import type { Command } from 'commander'
 import fs from 'fs-extra'
