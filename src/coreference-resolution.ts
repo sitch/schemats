@@ -8,16 +8,17 @@ import type {
 } from './adapters/types'
 import type { BackendContext } from './backends/base'
 import type { BuildContext } from './compiler'
+import { key } from './coreference'
 
 // TODO: eliminate this
 // Filter out error coreference values
 export function is_valid_attribute({ coreferences: { error } }: BackendContext) {
-  return ({ name }: PropertyDefinition) => !(name.toLowerCase() in error)
+  return ({ name }: PropertyDefinition) => !(key(name) in error)
 }
 
 export function is_valid_foreign_key({ coreferences: { error } }: BackendContext) {
   return ({ source_column, target_column }: ForeignKeyDefinition) =>
-    !(source_column.toLowerCase() in error) && !(target_column.toLowerCase() in error)
+    !(key(source_column) in error) && !(key(target_column) in error)
 }
 
 export function postprocess_foreign_key(backend: BackendContext) {

@@ -151,10 +151,10 @@ const cast_relation =
     const comment = TypedbRelation.comment(context, record)
 
     const relations = [
-      `, owns ${config.formatAttributeName(source_column)}`,
-      `, owns ${config.formatAttributeName(target_column)}`,
-      `, relates ${config.formatEntityName(source_table)}`,
-      `, relates ${config.formatEntityName(target_table)}`,
+      `, owns ${normalize_name(config.formatAttributeName(source_column))}`,
+      `, owns ${normalize_name(config.formatAttributeName(target_column))}`,
+      `, relates ${normalize_name(config.formatEntityName(source_table))}`,
+      `, relates ${normalize_name(config.formatEntityName(target_table))}`,
     ]
 
     return lines([
@@ -175,9 +175,11 @@ const cast_edge =
     const comment = TypedbEdge.comment(context, record)
 
     const relations = [
-      ...columns.map(({ name }) => `, owns ${config.formatAttributeName(name)}`),
-      `, relates ${config.formatEntityName(source.name)}`,
-      `, relates ${config.formatEntityName(target.name)}`,
+      ...columns.map(
+        ({ name }) => `, owns ${normalize_name(config.formatAttributeName(name))}`,
+      ),
+      `, relates ${normalize_name(config.formatEntityName(source.name))}`,
+      `, relates ${normalize_name(config.formatEntityName(target.name))}`,
     ]
     const attributes = columns.map(cast_attribute(context))
 
@@ -192,17 +194,25 @@ const cast_edge =
 
 //------------------------------------------------------------------------------
 
-// eslint-disable-next-line @typescript-eslint/require-await
-export const render_typedb = async (prev_context: BuildContext) => {
-  const backend: BackendContext = {
+function build_context(prev_context: BuildContext) {
+  const prev_coreferences = build_type_qualified_coreferences(prev_context, 'typedb')
+  const prev_backend: BackendContext = {
     backend: 'typedb',
     comment: TYPEDB_COMMENT,
     indent: TYPEDB_INDENT,
     character_line_limit: 80,
-    coreferences: build_type_qualified_coreferences(prev_context, 'typedb'),
+    coreferences: prev_coreferences,
   }
+  const next_context = postprocess_context(prev_context, prev_backend)
+  const next_coreferences = build_type_qualified_coreferences(next_context, 'typedb')
+  const next_backend = { ...prev_backend, coreferences: next_coreferences }
 
-  const context = postprocess_context(prev_context, backend)
+  return { context: next_context, backend: next_backend }
+}
+
+// eslint-disable-next-line @typescript-eslint/require-await
+export const render_typedb = async (prev_context: BuildContext) => {
+  const { context, backend } = build_context(prev_context)
   const { nodes, edges, tables, foreign_keys } = context
 
   const node_content = flatMap(nodes, cast_entity(context, backend))
@@ -216,7 +226,6 @@ export const render_typedb = async (prev_context: BuildContext) => {
     header(context, backend),
     pragma(context),
     coreference_banner(context, backend),
-    coreference_banner(prev_context, backend),
     ...section('Nodes', size(nodes), node_content),
     ...section('Edges', size(edges), edge_content),
     ...section('Entities', size(tables), entity_content),

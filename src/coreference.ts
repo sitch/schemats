@@ -41,6 +41,14 @@ export interface TypeQualifiedCoreferences {
 
 //------------------------------------------------------------------------------
 
+export function key(coreference_name: string) {
+  return coreference_name.toLowerCase()
+}
+
+export function maybe_key(coreference_name: string | undefined) {
+  return coreference_name ? key(coreference_name) : undefined
+}
+
 function get_typemap(
   { data_source }: BuildContext,
   backend_name?: BackendName,
@@ -55,7 +63,7 @@ function get_typemap(
 }
 
 function lookup_typemap(source_type: string, typemap?: AbstractTypeMap) {
-  return get(typemap, source_type.toLowerCase())
+  return get(typemap, key(source_type))
 }
 
 //------------------------------------------------------------------------------
@@ -68,9 +76,9 @@ function entity_parts(
     table_name: entity.name,
     column_name: column.name,
     source_type: column.udt_name,
-    source_type_key: column.udt_name.toLowerCase(),
+    source_type_key: key(column.udt_name),
     dest_type: lookup_typemap(column.udt_name, typemap),
-    dest_type_key: lookup_typemap(column.udt_name, typemap)?.toLowerCase(),
+    dest_type_key: maybe_key(lookup_typemap(column.udt_name, typemap)),
   }))
 }
 
@@ -86,7 +94,7 @@ function build_mapping(context: BuildContext, backend?: BackendName) {
   const records = [...context.tables, ...context.nodes, ...context.edges].flatMap(
     entity => entity_parts(entity, typemap),
   )
-  return groupBy(records, record => record.column_name.toLowerCase())
+  return groupBy(records, record => key(record.column_name))
 }
 
 const attribute_overlaps = (mapping: CoreferenceMap): CoreferenceMap => {

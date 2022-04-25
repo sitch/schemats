@@ -15,7 +15,6 @@ import type {
   TableDefinition,
 } from './adapters/types'
 import { render_algebraic_julia } from './backends/algebraic-julia'
-import type { BackendContext } from './backends/base'
 import { render_hydra } from './backends/hydra'
 import { render_json } from './backends/json'
 import { render_julia } from './backends/julia'

@@ -1,6 +1,6 @@
 {
   "name": "@vramework/schemats",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "Generate typescript interface definitions from postgres SQL database schema",
   "keywords": [
     "postgres",
@@ -29,7 +29,12 @@
     "tscheck": "tsc --noEmit",
     "up": "yarn upgrade-interactive --latest",
     "lint": "yarn run eslint && yarn run tscheck",
-    "format": "yarn run format:src && yarn run lint:fix && yarn run tscheck"
+    "format": "yarn run format:src && yarn run lint:fix && yarn run tscheck",
+    "reflect:mysql": "ts-node ./bin/schemats.ts mysql",
+    "reflect:postgres": "ts-node ./bin/schemats.ts postgres",
+    "reflect:neo4j:json": "ts-node ./bin/schemats.ts neo4j",
+    "reflect:neo4j": "ts-node ./bin/neo4j-introspect.ts",
+    "reflect:postgraphile": "ts-node ./bin/postgraphile-introspect.ts"
   },
   "bin": {
     "schemats": "dist/bin/schemats.js"
@@ -42,13 +47,30 @@
     "url": "https://github.com/vramework/schemats/issues"
   },
   "author": "sitch <michael.sitchenko@gmail.com>",
-  "contributors": [
-    "Mengxuan Xia <xiamx2004@gmail.com>",
-    "Arnaud Benhamdine <arnaud.benhamdine@gmail.com>",
-    "zigomir <zigomir@gmail.com>",
-    "Mark Crisp <macr1324@gmail.com>"
-  ],
-  "license": "MIT",
+  "__DEPS__": {
+    "graphqlviz": "^3.1.0"
+  },
+  "dependencies": {
+    "@neo4j/introspector": "^1.0.1",
+    "camelcase": "^6.3.0",
+    "chalk": "4.1.2",
+    "commander": "^9.2.0",
+    "inflection": "^1.13.2",
+    "json5": "^2.2.1",
+    "lodash": "^4.17.21",
+    "mysql2": "^2.3.3",
+    "neo4j-driver": "^4.4.5",
+    "pg": "^8.7.3",
+    "@graphile-contrib/pg-many-to-many": "^1.0.1",
+    "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
+    "postgraphile": "^4.12.9",
+    "postgraphile-index-to-unique-constraint-plugin": "^1.0.1",
+    "postgraphile-polymorphic-relation-plugin": "^1.1.6",
+    "postgraphile-remove-foreign-key-fields-plugin": "^1.2.0",
+    "pythonia": "^0.2.16",
+    "sort-json": "^2.0.1",
+    "tslog": "^3.3.3"
+  },
   "devDependencies": {
     "@stryker-mutator/core": "^5.6.1",
     "@swc/cli": "^0.1.57",
@@ -97,20 +119,9 @@
     "typescript": "^4.6.3",
     "ultra-runner": "^3.10.5"
   },
-  "dependencies": {
-    "camelcase": "^6.3.0",
-    "chalk": "4.1.2",
-    "commander": "^9.2.0",
-    "inflection": "^1.13.2",
-    "json5": "^2.2.1",
-    "lodash": "^4.17.21",
-    "mysql2": "^2.3.3",
-    "pg": "^8.7.3",
-    "pythonia": "^0.2.16",
-    "sort-json": "^2.0.1"
-  },
   "_peerDependencies": {
     "mysql2": ">= 2",
+    "neo4j-driver": ">= 4",
     "pg": ">= 8"
   },
   "_peerDependenciesMeta": {
