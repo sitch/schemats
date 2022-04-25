@@ -52,7 +52,7 @@ function coreference_type_display({
   dest_type,
   source_type,
 }: CoreferenceType) {
-  return [dest_type, source_type, table_name].filter(Boolean).join('::')
+  return [dest_type, source_type, table_name].join('::')
 }
 
 function display(coreference: CoreferenceMap) {
