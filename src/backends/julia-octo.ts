@@ -173,8 +173,6 @@ export const render_julia_octo = async (context: BuildContext) => {
   const entities = flatMap(tables, cast_entity(context))
   const relations = flatMap(foreign_keys, cast_relation(context))
 
-  console.log(relations)
-
   const backend: BackendContext = {
     backend: 'julia',
     comment: JULIA_COMMENT,

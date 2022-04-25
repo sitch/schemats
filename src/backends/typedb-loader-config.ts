@@ -9,7 +9,6 @@ import type {
   DefinitionAttribute,
   GeneratorEntity,
   GeneratorRelation,
-  GeneratorRelationInsert,
 } from '../lang/typedb-loader-config'
 import type { RelationshipEdge, RelationshipNode } from '../relationships'
 import type { BackendContext } from './base'
