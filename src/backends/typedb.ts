@@ -223,8 +223,15 @@ const cast_edge =
       `, relates ${config.formatEntityName(domain.name)}`,
       `, relates ${config.formatEntityName(codomain.name)}`,
     ]
+    const attributes = properties.map(cast_attribute(context))
 
-    return lines([comment, line, pad_lines(lines(relations), '  '), ';'])
+    return lines([
+      comment,
+      line,
+      pad_lines(lines(relations), '  '),
+      ';',
+      lines(attributes),
+    ])
   }
 
 //------------------------------------------------------------------------------
