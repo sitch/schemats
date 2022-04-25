@@ -37,9 +37,11 @@ export function is_valid_foreign_key(backend: BackendContext) {
     !(foreign_column.toLowerCase() in backend.coreferences.error)
 }
 
-export function verify_foreign_key(backend: BackendContext) {
+export function postprocess_foreign_key(backend: BackendContext) {
+  const validator = is_valid_foreign_key(backend)
+
   return (foreign_key: ForeignKey) => {
-    if (is_valid_foreign_key(backend)(foreign_key)) {
+    if (validator(foreign_key)) {
       return [foreign_key]
     }
     console.error('Skipping table foreign_key', foreign_key)
@@ -47,10 +49,12 @@ export function verify_foreign_key(backend: BackendContext) {
   }
 }
 
-export function verify_node_or_table(backend: BackendContext) {
+export function postprocess_node_or_table(backend: BackendContext) {
+  const validator = is_valid_attribute(backend)
+
   return (table: TableDefinition) => {
     const columns = table.columns.filter(column => {
-      const valid = is_valid_attribute(backend)(column)
+      const valid = validator(column)
       if (!valid) {
         console.error(`Skipping table: ${table.name}`, column)
       }
@@ -60,12 +64,14 @@ export function verify_node_or_table(backend: BackendContext) {
   }
 }
 
-export function verify_edge(backend: BackendContext) {
+export function postprocess_edge(backend: BackendContext) {
+  const validator = is_valid_attribute(backend)
+
   return (edge: RelationshipEdge) => {
-    const properties = edge.columns.filter(property => {
-      const valid = is_valid_attribute(backend)(property)
+    const properties = edge.columns.filter(column => {
+      const valid = validator(column)
       if (!valid) {
-        console.error(`Skipping edge: ${edge.name}`, property)
+        console.error(`Skipping edge: ${edge.name}`, column)
       }
       return valid
     })
@@ -242,10 +248,10 @@ export function postprocess_context(
   context: BuildContext,
   backend: BackendContext,
 ): BuildContext {
-  const nodes = context.nodes.flatMap(verify_node_or_table(backend))
-  const edges = context.edges.flatMap(verify_edge(backend))
-  const tables = context.tables.flatMap(verify_node_or_table(backend))
-  const foreign_keys = context.foreign_keys.flatMap(verify_foreign_key(backend))
+  const nodes = context.nodes.flatMap(postprocess_node_or_table(backend))
+  const edges = context.edges.flatMap(postprocess_edge(backend))
+  const tables = context.tables.flatMap(postprocess_node_or_table(backend))
+  const foreign_keys = context.foreign_keys.flatMap(postprocess_foreign_key(backend))
 
   return { ...context, nodes, edges, tables, foreign_keys }
 }

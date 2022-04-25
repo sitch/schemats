@@ -81,7 +81,7 @@ function build_mapping(context: BuildContext, backend?: Backend) {
   const records = [...context.tables, ...context.nodes, ...context.edges].flatMap(
     entity => entity_parts(entity, typemap),
   )
-  return groupBy(records, 'column_name')
+  return groupBy(records, record => record.column_name.toLowerCase())
 }
 
 const attribute_overlaps = (mapping: CoreferenceMap): CoreferenceMap => {
