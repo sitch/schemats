@@ -29,6 +29,16 @@ function is_valid_attribute(backend: BackendContext) {
   return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
 }
 
+function is_valid_foreign_key(backend: BackendContext) {
+  return ({ primary_column, foreign_column }: ForeignKey) =>
+    !(primary_column in backend.coreferences.error) &&
+    !(foreign_column in backend.coreferences.error)
+}
+
+function is_valid_edge(_backend: BackendContext) {
+  return (_edge: RelationshipEdge) => true
+}
+
 function cast_definition_attribute({
   name,
   is_nullable,
@@ -153,13 +163,15 @@ export const cast_entities = (context: BuildContext, backend: BackendContext) =>
 export const cast_relations = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorRelation> = {}
 
-  // for (const foreign_key of context.foreign_keys) {
-  //   const name = Relation.name(context, foreign_key)
-  //   const relation = cast_foreign_key_relation(context, backend)(foreign_key)
-  //   entities[name] = relation
-  // }
+  for (const foreign_key of context.foreign_keys.filter(
+    is_valid_foreign_key(backend),
+  )) {
+    const name = Relation.name(context, foreign_key)
+    const relation = cast_foreign_key_relation(context, backend)(foreign_key)
+    entities[name] = relation
+  }
 
-  for (const edge of context.edges) {
+  for (const edge of context.edges.filter(is_valid_edge(backend))) {
     entities[edge.name] = cast_edge_relation(context, backend)(edge)
   }
   return entities
