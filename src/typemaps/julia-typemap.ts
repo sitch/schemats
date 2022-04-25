@@ -1,5 +1,6 @@
 import type { ColumnDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
+import { DataSource, DataSourceEnum } from '../config'
 import type { UDTTypeMap } from '../coreference'
 
 export type JuliaType = string
@@ -155,6 +156,15 @@ export const POSTGRES_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
 export const JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   ...MYSQL_TO_JULIA_TYPEMAP,
   ...POSTGRES_TO_JULIA_TYPEMAP,
+}
+
+export const DATA_SOURCE_JULIA_TYPEMAP: Record<DataSource, UDTTypeMap<JuliaType>> = {
+  [DataSourceEnum.neo4j]: {
+    ...MYSQL_TO_JULIA_TYPEMAP,
+    ...POSTGRES_TO_JULIA_TYPEMAP,
+  },
+  [DataSourceEnum.mysql]: MYSQL_TO_JULIA_TYPEMAP,
+  [DataSourceEnum.postgres]: POSTGRES_TO_JULIA_TYPEMAP,
 }
 
 //------------------------------------------------------------------------------

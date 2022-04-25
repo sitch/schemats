@@ -2,7 +2,7 @@ import { flatMap, size } from 'lodash'
 
 import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
-import { cast_typedb_coreferences } from '../coreference'
+import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
 import { cast_julia_type } from '../typemaps/julia-typemap'
 import type { BackendContext } from './base'
@@ -218,7 +218,7 @@ export const render_hydra = async (context: BuildContext) => {
     comment: '#',
     indent: '  ',
     character_line_limit: 80,
-    coreferences: cast_typedb_coreferences(context),
+    coreferences: build_type_qualified_coreferences(context, 'haskell'),
   }
 
   return lines([

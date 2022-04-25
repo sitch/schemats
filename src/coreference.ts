@@ -1,17 +1,11 @@
-import { flatMap, fromPairs, keyBy, sortBy, toPairs, uniq } from 'lodash'
+import { get, groupBy, map, mapValues, pickBy, sortBy, uniq } from 'lodash'
 
-import type {
-  ColumnName,
-  ForeignKey,
-  TableDefinition,
-  TableName,
-  UDTName,
-} from './adapters/types'
+import type { ColumnName, TableDefinition, UDTName } from './adapters/types'
 import type { BuildContext } from './compiler'
-import type { Config } from './config'
-import { ENUM_DELIMITER } from './config'
-import type { Relationship, RelationshipEdge, RelationshipNode } from './relationships'
-import { TYPEDB_TYPEMAP, TypeDBType } from './typemaps/typedb-typemap'
+import type { Backend } from './config'
+import type { RelationshipEdge, RelationshipNode } from './relationships'
+import { DATA_SOURCE_JULIA_TYPEMAP } from './typemaps/julia-typemap'
+import { DATA_SOURCE_TYPEDB_TYPEMAP } from './typemaps/typedb-typemap'
 
 //------------------------------------------------------------------------------
 
@@ -19,7 +13,13 @@ export type UDTTypeMap<T> = Record<UDTName, T>
 
 //------------------------------------------------------------------------------
 
-export type CoreferenceType = string
+export interface CoreferenceType {
+  table_name: string
+  column_name: string
+  source_type: string
+  dest_type: string | undefined
+}
+
 export type CoreferenceMap = Record<ColumnName, CoreferenceType[]>
 
 export interface Coreferences {
@@ -27,9 +27,7 @@ export interface Coreferences {
   user: CoreferenceMap
 }
 
-//------------------------------------------------------------------------------
-
-export interface TypeDBCoreferences {
+export interface TypeQualifiedCoreferences {
   all: CoreferenceMap
   error: CoreferenceMap
   warning: CoreferenceMap
@@ -37,157 +35,78 @@ export interface TypeDBCoreferences {
 
 //------------------------------------------------------------------------------
 
-export const build_coreferences = (
-  _config: Config,
-  tables: TableDefinition[],
-  foreign_keys: ForeignKey[],
-  relationships: Relationship[],
-  nodes: RelationshipNode[],
-  edges: RelationshipEdge[],
-): Coreferences => {
-  const all = attribute_overlap_grouping(
-    tables,
-    foreign_keys,
-    relationships,
-    nodes,
-    edges,
-  )
+const coreference_sorter = (records: CoreferenceType[]) => sortBy(records)
+const attribute_filter = (records: CoreferenceType[]) => records.length > 1
+const source_type_filter = (records: CoreferenceType[]) =>
+  uniq(map(records, 'source_type')).length > 1
+const dest_type_filter = (records: CoreferenceType[]) =>
+  uniq(map(records, 'dest_type')).length > 1
 
+function get_typemap({ data_source }: BuildContext, backend?: Backend) {
+  if (backend === 'typedb') {
+    return DATA_SOURCE_TYPEDB_TYPEMAP[data_source]
+  }
+  if (backend === 'julia') {
+    return DATA_SOURCE_JULIA_TYPEMAP[data_source]
+  }
+  return {}
+}
+
+function entity_parts(
+  entity: TableDefinition | RelationshipNode | RelationshipEdge,
+  typemap?: Record<string, string>,
+): CoreferenceType[] {
+  return entity.columns.map(column => ({
+    table_name: entity.name,
+    column_name: column.name,
+    source_type: column.udt_name,
+    dest_type: get(typemap, column.udt_name),
+  }))
+}
+
+function build_mapping(context: BuildContext, backend?: Backend) {
+  const typemap = get_typemap(context, backend)
+  const records = [...context.tables, ...context.nodes, ...context.edges].flatMap(
+    entity => entity_parts(entity, typemap),
+  )
+  return groupBy(records, 'column_name')
+}
+
+const attribute_overlaps = (mapping: CoreferenceMap): CoreferenceMap => {
+  return pickBy(mapping, attribute_filter)
+}
+
+const source_type_overlaps = (mapping: CoreferenceMap): CoreferenceMap => {
+  return pickBy(mapping, source_type_filter)
+}
+
+const dest_type_overlaps = (mapping: CoreferenceMap): CoreferenceMap => {
+  return pickBy(mapping, dest_type_filter)
+}
+
+function sorter(mapping: CoreferenceMap): CoreferenceMap {
+  return mapValues(mapping, coreference_sorter)
+}
+
+export function build_coreferences(
+  context: BuildContext,
+  backend?: Backend,
+): Coreferences {
+  const mapping = build_mapping(context, backend)
   return {
-    all,
+    all: sorter(attribute_overlaps(mapping)),
     user: {},
   }
 }
 
-function inferType<T>(types: UDTTypeMap<T>, udt_name: UDTName): T {
-  return types[udt_name]
-  // return types[udt_name] || udt_name
-}
-
-const find_table_column_type = (
-  tables: TableDefinition[],
-  table_name: TableName,
-  columnName: ColumnName,
-) => {
-  const table_map = keyBy(tables, 'name')
-
-  const table = table_map[table_name]
-  const column = table.columns.find(({ name }) => name === columnName)
-  return column?.udt_name
-}
-
-const find_edge_property_type = (
-  edges: RelationshipEdge[],
-  table_name: TableName,
-  columnName: ColumnName,
-) => {
-  const edge_map = keyBy(edges, 'name')
-
-  const edge = edge_map[table_name]
-  const column = edge.properties.find(({ name }) => name === columnName)
-  return column?.udt_name
-}
-
-const attribute_grouping_pairs = (table_list: TableDefinition[]) => {
-  const table_column_names = uniq(
-    flatMap(table_list.map(({ columns }) => columns.map(({ name }) => name))),
-  )
-  const pairs = table_column_names.map(columnName => {
-    const tables = table_list.filter(({ columns }) =>
-      columns.map(({ name }) => name).includes(columnName),
-    )
-    const table_names = tables.map(({ name }) =>
-      [find_table_column_type(table_list, name, columnName), name].join(ENUM_DELIMITER),
-    )
-    return [columnName, table_names]
-  })
-  return sortBy(pairs, ([_key, values]) => values.length)
-}
-
-const property_grouping_pairs = (edges: RelationshipEdge[]) => {
-  const edge_property_names = uniq(
-    flatMap(edges.map(({ properties }) => properties.map(({ name }) => name))),
-  )
-  const pairs = edge_property_names.map(columnName => {
-    const tables = edges.filter(({ properties }) =>
-      properties.map(({ name }) => name).includes(columnName),
-    )
-    const table_names = tables.map(({ name }) =>
-      [find_edge_property_type(edges, name, columnName), name].join(ENUM_DELIMITER),
-    )
-    return [columnName, table_names]
-  })
-  return sortBy(pairs, ([_key, values]) => values.length)
-}
-
-const attribute_overlap_grouping = (
-  tables: TableDefinition[],
-  _foreign_keys: ForeignKey[],
-  _relationships: Relationship[],
-  nodes: RelationshipNode[],
-  edges: RelationshipEdge[],
-): CoreferenceMap => {
-  const grouping_pairs = [
-    ...attribute_grouping_pairs(tables),
-    ...attribute_grouping_pairs(nodes),
-    ...property_grouping_pairs(edges),
-  ]
-  return fromPairs(grouping_pairs.filter(([_key, values]) => values.length > 1))
-}
-
-const invalid_overlaps = (overlaps: CoreferenceMap) => {
-  return fromPairs(
-    toPairs(overlaps)
-      .filter(([_key, values]) => values.length > 1)
-      .filter(
-        ([_key, values]) =>
-          uniq(values.map(value => value.split(ENUM_DELIMITER)[0])).length > 1,
-      ),
-  )
-}
-
-const with_typedb_type = (value: string): string => {
-  const [udt_name, table] = value.split(ENUM_DELIMITER)
-
-  const typedb_type = inferType<TypeDBType>(TYPEDB_TYPEMAP, udt_name)
-
-  return [typedb_type, udt_name, table].join(ENUM_DELIMITER)
-}
-
-const invalid_typedb_overlaps = (overlaps: CoreferenceMap): CoreferenceMap => {
-  return fromPairs(
-    toPairs(overlaps)
-      .filter(([_key, values]) => values.length > 1)
-      .map(([key, values]): [string, string[]] => [
-        key,
-        values.map(value => with_typedb_type(value)),
-      ])
-      .map(x => {
-        console.log(x)
-        return x
-      })
-      .filter(
-        ([_key, values]) =>
-          uniq(values.map(value => value.split(ENUM_DELIMITER)[0])).length > 1,
-      ),
-  )
-}
-
-// const apply_config_to_coreference_map = ({ config, tables }: BuildContext) => {
-//   const overlaps = attribute_overlap_grouping(tables)
-//   const user_overlaps = omit(overlaps, config.ignoreAttributeCollisions)
-//   if (config.ignoreAttributeCollisions.includes('*')) {
-//     return {}
-//   }
-//   return user_overlaps
-// }
-
-export const cast_typedb_coreferences = ({
-  coreferences: { all },
-}: BuildContext): TypeDBCoreferences => {
+export const build_type_qualified_coreferences = (
+  context: BuildContext,
+  backend: Backend,
+): TypeQualifiedCoreferences => {
+  const mapping = build_mapping(context, backend)
   return {
-    all,
-    error: invalid_typedb_overlaps(all),
-    warning: invalid_overlaps(all),
+    all: sorter(attribute_overlaps(mapping)),
+    error: sorter(dest_type_overlaps(mapping)),
+    warning: sorter(source_type_overlaps(mapping)),
   }
 }

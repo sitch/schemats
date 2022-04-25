@@ -3,7 +3,7 @@ import { flatMap, size } from 'lodash'
 
 import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
-import { cast_typedb_coreferences } from '../coreference'
+import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
 import { JULIA_CHARACTER_LINE_LIMIT, JULIA_COMMENT, JULIA_INDENT } from '../lang/julia'
 import { cast_julia_type } from '../typemaps/julia-typemap'
@@ -221,7 +221,7 @@ export const render_algebraic_julia = async (context: BuildContext) => {
     comment: JULIA_COMMENT,
     indent: JULIA_INDENT,
     character_line_limit: JULIA_CHARACTER_LINE_LIMIT,
-    coreferences: cast_typedb_coreferences(context),
+    coreferences: build_type_qualified_coreferences(context, 'julia'),
   }
 
   return lines([

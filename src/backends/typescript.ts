@@ -7,7 +7,7 @@ import type {
 } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import type { UserImport } from '../config'
-import { cast_typedb_coreferences } from '../coreference'
+import { build_type_qualified_coreferences } from '../coreference'
 import { banner, double_quote, lines, pad_lines } from '../formatters'
 import {
   is_reserved_word,
@@ -125,7 +125,7 @@ export const render_typescript = async (context: BuildContext) => {
     comment: '//',
     indent: '  ',
     character_line_limit: 80,
-    coreferences: cast_typedb_coreferences(context),
+    coreferences: build_type_qualified_coreferences(context, 'typescript'),
   }
 
   return lines([

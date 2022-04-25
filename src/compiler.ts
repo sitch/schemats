@@ -23,8 +23,6 @@ import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
 import type { Backend, Config, DataSource, UserImport } from './config'
 import { BACKENDS, get_user_imports } from './config'
-import type { Coreferences } from './coreference'
-import { build_coreferences } from './coreference'
 import type { Relationship, RelationshipEdge, RelationshipNode } from './relationships'
 import { build_relationships } from './relationships'
 import { merge_table_meta } from './tables'
@@ -44,7 +42,6 @@ export interface BuildContext {
   enums: EnumDefinition[]
   tables: TableDefinition[]
   relationships: Relationship[]
-  coreferences: Coreferences
   nodes: RelationshipNode[]
   edges: RelationshipEdge[]
 }
@@ -109,22 +106,10 @@ const compile = async (
   const relationships = build_relationships(config, tables)
   config.log('[build] Compiled relationships', relationships)
 
-  const coreferences = build_coreferences(
-    config,
-    tables,
-    foreign_keys,
-    relationships,
-    [],
-    [],
-  )
-  config.log('[build] Compiled coreferences', coreferences)
-
-  sortBy
   return {
     data_source,
     schema,
     config,
-    coreferences,
     user_imports: user_imports,
     enums: sortBy(enums, 'name'),
     tables: sortBy(tables, 'name'),

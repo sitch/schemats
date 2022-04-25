@@ -111,6 +111,7 @@
           "prod": false,
           "ref": false,
           "params": false,
+          "dest": false,
           "prev": false,
           "j": {
             // Fix Neo4J -> Neo4Index

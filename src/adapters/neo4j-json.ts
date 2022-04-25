@@ -5,7 +5,6 @@ import { groupBy, trimEnd, trimStart } from 'lodash'
 import type { ColumnDefinition, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import type { Config } from '../config'
-import { build_coreferences } from '../coreference'
 import type {
   Neo4jReflection,
   Neo4jReflectionEdge,
@@ -65,7 +64,7 @@ function cast_edge_list(table_map: Record<string, TableDefinition[]>) {
         name: cast_edge_name(type),
         domain: table_map[cast_node_name(fromTypeId)]![0]!,
         codomain: table_map[cast_node_name(toTypeId)]![0]!,
-        properties: properties.map(property => cast_property(property)),
+        columns: properties.map(property => cast_property(property)),
       }),
     )
   }
@@ -91,7 +90,6 @@ export function build_context(config: Config, spec: Neo4jReflection): BuildConte
     tables: [],
     edges,
     nodes,
-    coreferences: build_coreferences(config, [], [], [], nodes, edges),
   }
 }
 

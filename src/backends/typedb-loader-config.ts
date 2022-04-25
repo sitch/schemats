@@ -2,7 +2,7 @@ import sortJson from 'sort-json'
 
 import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
-import { cast_typedb_coreferences } from '../coreference'
+import { build_type_qualified_coreferences } from '../coreference'
 import { inflect, pretty } from '../formatters'
 import type {
   Configuration,
@@ -82,7 +82,7 @@ function cast_edge_relation(context: BuildContext, backend: BackendContext) {
       data: data_paths(context, edge),
       insert: {
         relation: inflect(edge.name, 'pascal'),
-        ownerships: edge.properties
+        ownerships: edge.columns
           .filter(is_valid_attribute(backend))
           .map(table => cast_definition_attribute(table)),
         players: [],
@@ -153,7 +153,7 @@ const cast_relations = (context: BuildContext, backend: BackendContext) => {
     const name = Relation.name(context, foreign_key)
     const relation = cast_foreign_key_relation(context, backend)(foreign_key)
 
-    console.info(name, relation.insert.players)
+    console.info('cast_relations', name, 'players', relation.insert.players)
     // TODO: Fix
     // entities[name] = relation
   }
@@ -171,7 +171,7 @@ const build = (prev_context: BuildContext): Configuration => {
     comment: '#',
     indent: '  ',
     character_line_limit: 80,
-    coreferences: cast_typedb_coreferences(prev_context),
+    coreferences: build_type_qualified_coreferences(prev_context, 'typedb'),
   }
   const context = postprocess_context(prev_context, backend)
 

@@ -2,7 +2,7 @@ import { flatMap, size } from 'lodash'
 
 import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
-import { cast_typedb_coreferences } from '../coreference'
+import { build_type_qualified_coreferences } from '../coreference'
 import { code_section, lines, pad_lines } from '../formatters'
 import type { RelationshipEdge } from '../relationships'
 import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
@@ -61,7 +61,7 @@ export function verify_node_or_table(backend: BackendContext) {
 
 export function verify_edge(backend: BackendContext) {
   return (edge: RelationshipEdge) => {
-    const properties = edge.properties.filter(property => {
+    const properties = edge.columns.filter(property => {
       const valid = is_valid_attribute(backend)(property)
       if (!valid) {
         console.error(`Skipping edge: ${edge.name}`, property)
@@ -213,18 +213,18 @@ const cast_relation =
 const cast_edge =
   (context: BuildContext, _backend: BackendContext) => (record: RelationshipEdge) => {
     const { config } = context
-    const { domain, codomain, properties } = record
+    const { domain, codomain, columns } = record
 
     const name = Edge.name(context, record)
     const type = Edge.type(context, record)
     const comment = Edge.comment(context, record)
 
     const relations = [
-      ...properties.map(({ name }) => `, owns ${config.formatAttributeName(name)}`),
+      ...columns.map(({ name }) => `, owns ${config.formatAttributeName(name)}`),
       `, relates ${config.formatEntityName(domain.name)}`,
       `, relates ${config.formatEntityName(codomain.name)}`,
     ]
-    const attributes = properties.map(cast_attribute(context))
+    const attributes = columns.map(cast_attribute(context))
 
     return lines([
       comment,
@@ -256,7 +256,7 @@ export const render_typedb = async (prev_context: BuildContext) => {
     comment: TYPEDB_COMMENT,
     indent: TYPEDB_INDENT,
     character_line_limit: 80,
-    coreferences: cast_typedb_coreferences(prev_context),
+    coreferences: build_type_qualified_coreferences(prev_context, 'typedb'),
   }
 
   const context = postprocess_context(prev_context, backend)
@@ -272,6 +272,7 @@ export const render_typedb = async (prev_context: BuildContext) => {
   return lines([
     header(context, backend),
     pragma(context),
+    coreference_banner(context, backend),
     coreference_banner(prev_context, backend),
     ...section('Nodes', size(nodes), node_content),
     ...section('Edges', size(edges), edge_content),

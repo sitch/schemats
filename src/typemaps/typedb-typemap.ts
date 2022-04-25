@@ -170,6 +170,18 @@ export const DATA_SOURCE_TYPEDB_TYPEMAP: Record<DataSource, UDTTypeMap<TypeDBTyp
 
 //------------------------------------------------------------------------------
 
+export const lookup_typedb_type = (
+  column: ColumnDefinition,
+  data_source: DataSource,
+): TypeDBType => {
+  const { udt_name } = column
+  const type = DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name.toLowerCase()]
+  if (type && !['unknown'].includes(type)) {
+    return type
+  }
+  return 'unknown'
+}
+
 export const cast_typedb_type = (
   { data_source, config, enums }: BuildContext,
   column: ColumnDefinition,
