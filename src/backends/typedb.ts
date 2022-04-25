@@ -11,7 +11,6 @@ import { coreference_banner, header } from './base'
 
 export const TYPEDB_COMMENT = '#'
 export const TYPEDB_INDENT = '  '
-// export const TYPEDB_CHARACTER_LINE_LIMIT = 92
 export const TYPEDB_CHARACTER_LINE_LIMIT = 80
 
 //------------------------------------------------------------------------------
@@ -25,7 +24,7 @@ const prefix = (context: BuildContext) => {
 
 //------------------------------------------------------------------------------
 
-const Attribute = {
+export const Attribute = {
   comment: (_context: BuildContext, _column: ColumnDefinition): string => {
     return ``
   },
@@ -38,7 +37,7 @@ const Attribute = {
   },
 }
 
-const Entity = {
+export const NodeOrEntity = {
   comment: (_context: BuildContext, _table: TableDefinition): string => {
     return ``
   },
@@ -50,7 +49,7 @@ const Entity = {
   },
 }
 
-const Relation = {
+export const Relation = {
   comment: ({ config }: BuildContext, { constraint }: ForeignKey): string => {
     return `# Source: '${config.schema}.${constraint}'`
   },
@@ -72,7 +71,7 @@ const Relation = {
   },
 }
 
-const Edge = {
+export const Edge = {
   comment: (_context: BuildContext, { comment }: RelationshipEdge): string => {
     return comment ? `# ${comment}` : ''
   },
@@ -118,9 +117,9 @@ const cast_field =
 
 const cast_node_or_entity =
   (context: BuildContext, backend: BackendContext) => (record: TableDefinition) => {
-    const name = Entity.name(context, record)
-    const type = Entity.type(context, record)
-    const comment = Entity.comment(context, record)
+    const name = NodeOrEntity.name(context, record)
+    const type = NodeOrEntity.type(context, record)
+    const comment = NodeOrEntity.comment(context, record)
 
     const columns = record.columns.filter(
       ({ name }) => !(name in backend.coreferences.error),
