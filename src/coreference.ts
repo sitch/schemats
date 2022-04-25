@@ -92,7 +92,6 @@ const attribute_grouping_pairs = (table_list: TableDefinition[]) => {
   const table_column_names = uniq(
     flatMap(table_list.map(({ columns }) => columns.map(({ name }) => name))),
   )
-
   const pairs = table_column_names.map(columnName => {
     const tables = table_list.filter(({ columns }) =>
       columns.map(({ name }) => name).includes(columnName),
@@ -102,7 +101,6 @@ const attribute_grouping_pairs = (table_list: TableDefinition[]) => {
     )
     return [columnName, table_names]
   })
-
   return sortBy(pairs, ([_key, values]) => values.length)
 }
 
@@ -110,7 +108,6 @@ const property_grouping_pairs = (edges: RelationshipEdge[]) => {
   const edge_property_names = uniq(
     flatMap(edges.map(({ properties }) => properties.map(({ name }) => name))),
   )
-
   const pairs = edge_property_names.map(columnName => {
     const tables = edges.filter(({ properties }) =>
       properties.map(({ name }) => name).includes(columnName),
@@ -120,7 +117,6 @@ const property_grouping_pairs = (edges: RelationshipEdge[]) => {
     )
     return [columnName, table_names]
   })
-
   return sortBy(pairs, ([_key, values]) => values.length)
 }
 
@@ -152,9 +148,10 @@ const invalid_overlaps = (overlaps: CoreferenceMap) => {
 
 const with_typedb_type = (value: string): string => {
   const [udt_name, table] = value.split(ENUM_DELIMITER)
-  return [inferType<TypeDBType>(TYPEDB_TYPEMAP, udt_name), udt_name, table].join(
-    ENUM_DELIMITER,
-  )
+
+  const typedb_type = inferType<TypeDBType>(TYPEDB_TYPEMAP, udt_name)
+
+  return [typedb_type, , udt_name, table].join(ENUM_DELIMITER)
 }
 
 const invalid_typedb_overlaps = (overlaps: CoreferenceMap): CoreferenceMap => {
@@ -165,6 +162,10 @@ const invalid_typedb_overlaps = (overlaps: CoreferenceMap): CoreferenceMap => {
         key,
         values.map(value => with_typedb_type(value)),
       ])
+      .map(x => {
+        console.log(x)
+        return x
+      })
       .filter(
         ([_key, values]) =>
           uniq(values.map(value => value.split(ENUM_DELIMITER)[0])).length > 1,
