@@ -27,6 +27,10 @@ function cast_udt_name([type, ...types]: string[]) {
   return type
 }
 
+function is_array(types: string[]) {
+  return types.map(type => type.toLowerCase()).some(type => type.includes('array'))
+}
+
 function cast_property({
   name,
   types,
@@ -38,7 +42,7 @@ function cast_property({
     is_nullable: !mandatory,
     has_default: false,
     default_value: undefined,
-    is_array: types[0] === 'StringArray',
+    is_array: is_array(types),
   }
 }
 
