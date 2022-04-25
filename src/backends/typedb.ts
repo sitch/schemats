@@ -237,7 +237,7 @@ const cast_edge =
 
 //------------------------------------------------------------------------------
 
-export function preprocess_context(
+export function postprocess_context(
   context: BuildContext,
   backend: BackendContext,
 ): BuildContext {
@@ -258,7 +258,9 @@ export const render_typedb = async (context: BuildContext) => {
     character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
-  const { nodes, edges, tables, foreign_keys } = preprocess_context(context, backend)
+
+  context = postprocess_context(context, backend)
+  const { nodes, edges, tables, foreign_keys } = context
 
   const node_content = flatMap(nodes, cast_node_or_entity(context, backend))
   const edge_content = flatMap(edges, cast_edge(context, backend))

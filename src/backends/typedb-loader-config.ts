@@ -17,7 +17,7 @@ import {
   is_valid_attribute,
   is_valid_foreign_key,
   normalize_name,
-  preprocess_context,
+  postprocess_context,
   Relation,
 } from './typedb'
 
@@ -173,7 +173,7 @@ const build = (context: BuildContext): Configuration => {
     character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
-  context = preprocess_context(context, backend)
+  context = postprocess_context(context, backend)
 
   if (!context.config.typedbSchema) {
     throw new Error('Missing TypedbSchema')
