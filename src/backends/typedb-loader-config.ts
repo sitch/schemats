@@ -50,10 +50,7 @@ function cast_definition_attribute({
   }
 }
 
-export function data_paths(
-  context: BuildContext,
-  record: AbstractTypedbDataType,
-): string[] {
+function data_paths(context: BuildContext, record: AbstractTypedbDataType): string[] {
   if (context.config.overrideCsvPath) {
     return [context.config.overrideCsvPath]
   }
@@ -61,7 +58,7 @@ export function data_paths(
   return [`${context.config.csvDir}/${context.config.database}/${filename}.csv`]
 }
 
-export function cast_table_entity(context: BuildContext, backend: BackendContext) {
+function cast_table_entity(context: BuildContext, backend: BackendContext) {
   return (table: TableDefinition) => {
     return {
       data: data_paths(context, table),
@@ -75,7 +72,7 @@ export function cast_table_entity(context: BuildContext, backend: BackendContext
   }
 }
 
-export function cast_node_entity(context: BuildContext, backend: BackendContext) {
+function cast_node_entity(context: BuildContext, backend: BackendContext) {
   return (node: RelationshipNode) => {
     return {
       data: data_paths(context, node),
@@ -89,7 +86,7 @@ export function cast_node_entity(context: BuildContext, backend: BackendContext)
   }
 }
 
-export function cast_edge_relation(context: BuildContext, backend: BackendContext) {
+function cast_edge_relation(context: BuildContext, backend: BackendContext) {
   return (edge: RelationshipEdge) => {
     return {
       data: data_paths(context, edge),
@@ -132,10 +129,7 @@ function cast_foreign_key_relation_players({
   ]
 }
 
-export function cast_foreign_key_relation(
-  context: BuildContext,
-  _backend: BackendContext,
-) {
+function cast_foreign_key_relation(context: BuildContext, _backend: BackendContext) {
   return (foreign_key: ForeignKey): GeneratorRelation => {
     return {
       data: data_paths(context, foreign_key),
@@ -148,7 +142,7 @@ export function cast_foreign_key_relation(
   }
 }
 
-export const cast_entities = (context: BuildContext, backend: BackendContext) => {
+const cast_entities = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorEntity> = {}
 
   for (const table of context.tables) {
@@ -160,16 +154,16 @@ export const cast_entities = (context: BuildContext, backend: BackendContext) =>
   return entities
 }
 
-export const cast_relations = (context: BuildContext, backend: BackendContext) => {
+const cast_relations = (context: BuildContext, backend: BackendContext) => {
   const entities: Record<string, GeneratorRelation> = {}
 
-  for (const foreign_key of context.foreign_keys.filter(
-    is_valid_foreign_key(backend),
-  )) {
-    const name = Relation.name(context, foreign_key)
-    const relation = cast_foreign_key_relation(context, backend)(foreign_key)
-    entities[name] = relation
-  }
+  // for (const foreign_key of context.foreign_keys.filter(
+  //   is_valid_foreign_key(backend),
+  // )) {
+  //   const name = Relation.name(context, foreign_key)
+  //   const relation = cast_foreign_key_relation(context, backend)(foreign_key)
+  //   entities[name] = relation
+  // }
 
   for (const edge of context.edges.filter(is_valid_edge(backend))) {
     entities[edge.name] = cast_edge_relation(context, backend)(edge)
@@ -177,7 +171,7 @@ export const cast_relations = (context: BuildContext, backend: BackendContext) =
   return entities
 }
 
-export const build = (context: BuildContext): Configuration => {
+const build = (context: BuildContext): Configuration => {
   const backend: BackendContext = {
     backend: 'typedb',
     comment: '#',
