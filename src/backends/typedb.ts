@@ -1,4 +1,4 @@
-import { flatMap, size } from 'lodash'
+import { flatMap, partition, size } from 'lodash'
 
 import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
@@ -68,14 +68,9 @@ export function postprocess_edge(backend: BackendContext) {
   const validator = is_valid_attribute(backend)
 
   return (edge: RelationshipEdge) => {
-    const properties = edge.columns.filter(column => {
-      const valid = validator(column)
-      if (!valid) {
-        console.error(`Skipping edge: ${edge.name}`, column)
-      }
-      return valid
-    })
-    return [{ ...edge, properties }]
+    const [columns, skipped] = partition(edge.columns, validator)
+    for (const column of skipped) console.error(`Skipping edge: ${edge.name}`, column)
+    return [{ ...edge, columns }]
   }
 }
 //------------------------------------------------------------------------------
