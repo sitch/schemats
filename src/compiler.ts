@@ -14,7 +14,7 @@ import type {
   TableCommentDefinition,
   TableDefinition,
 } from './adapters/types'
-import { DataSource, render } from './backends'
+import { apply_backend, BackendName, DataSource } from './backends'
 import { Config, get_user_imports, UserImport } from './config'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
@@ -107,6 +107,10 @@ const compile = async (
     nodes: [],
     edges: [],
   }
+}
+
+export async function render(context: BuildContext, backend: BackendName) {
+  return apply_backend(backend)(context)
 }
 
 export async function generate(

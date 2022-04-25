@@ -36,33 +36,33 @@ export type BackendName = keyof typeof BackendEnum
 
 //------------------------------------------------------------------------------
 
-export const render = async (context: BuildContext, backend: BackendName) => {
+export const apply_backend = (backend: BackendName) => {
   if (backend === 'typescript') {
-    return await render_typescript(context)
+    return render_typescript
   }
   if (backend === 'json') {
-    return await render_json(context)
+    return render_json
   }
   if (backend === 'typedb') {
-    return await render_typedb(context)
+    return render_typedb
   }
   if (backend === 'julia') {
-    return await render_julia(context)
+    return render_julia
   }
   if (backend === 'algebraic_julia') {
-    return await render_algebraic_julia(context)
+    return render_algebraic_julia
   }
   if (backend === 'julia_genie') {
-    return await render_julia_genie(context)
+    return render_julia_genie
   }
   if (backend === 'julia_octo') {
-    return await render_julia_octo(context)
+    return render_julia_octo
   }
   if (backend === 'hydra') {
-    return await render_hydra(context)
+    return render_hydra
   }
   if (backend === 'typedb_loader_config') {
-    return await render_typedb_loader_config(context)
+    return render_typedb_loader_config
   }
   throw `Invalid backend: ${backend} must be one of: ${Object.values(BackendEnum).join(
     ',',
