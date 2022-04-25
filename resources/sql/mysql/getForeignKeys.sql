@@ -31,10 +31,10 @@
 --
 --
 SELECT
-    kcu.TABLE_NAME AS "primary_table"
-    , kcu.COLUMN_NAME AS "primary_column"
-    , kcu.REFERENCED_TABLE_NAME AS "foreign_table"
-    , kcu.REFERENCED_COLUMN_NAME AS "foreign_column"
+    kcu.TABLE_NAME AS "source_table"
+    , kcu.COLUMN_NAME AS "source_column"
+    , kcu.REFERENCED_TABLE_NAME AS "target_table"
+    , kcu.REFERENCED_COLUMN_NAME AS "target_column"
     , kcu.CONSTRAINT_NAME AS "constraint"
 FROM
     information_schema.key_column_usage AS kcu

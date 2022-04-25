@@ -1,6 +1,6 @@
 SELECT
-    kcu.table_name AS "table"
-    , kcu.column_name AS "column"
+    kcu.table_name AS "source_table"
+    , kcu.column_name AS "source_column"
     , tco.constraint_name AS "constraint"
     , kcu.ordinal_position AS "ordinal_position"
     , (kcu.position_in_unique_constraint IS NOT NULL) AS "is_unique"

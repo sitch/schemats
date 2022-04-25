@@ -1,6 +1,10 @@
 import { flatMap, size } from 'lodash'
 
-import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
+import type {
+  ForeignKeyDefinition,
+  PropertyDefinition,
+  TableDefinition,
+} from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
@@ -26,20 +30,20 @@ const normalize_name = (name: string): string => {
 
 //------------------------------------------------------------------------------
 
-const Attribute = {
-  comment: (_context: BuildContext, _column: ColumnDefinition): string => {
+const HydraAttribute = {
+  comment: (_context: BuildContext, _column: PropertyDefinition): string => {
     return ''
   },
-  name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
+  name: ({ config }: BuildContext, { name }: PropertyDefinition): string => {
     return normalize_name(config.formatAttributeName(name))
   },
-  type: (context: BuildContext, column: ColumnDefinition): string => {
+  type: (context: BuildContext, column: PropertyDefinition): string => {
     // return translate_type(context, column)
     return cast_julia_type(context, column)
   },
 }
 
-const Entity = {
+const HydraEntity = {
   comment: (_context: BuildContext, _table: TableDefinition): string => {
     return ''
   },
@@ -48,35 +52,35 @@ const Entity = {
   },
 }
 
-const Relation = {
+const HydraRelation = {
   comment: (
     _context: BuildContext,
     {
-      primary_table,
-      primary_column,
-      foreign_table,
-      foreign_column,
+      source_table,
+      source_column,
+      target_table,
+      target_column,
       constraint,
-    }: ForeignKey,
+    }: ForeignKeyDefinition,
   ): string => {
     return lines([
       constraint && `# Constraint: ${constraint}`,
-      `# Relation: ${primary_table}.${primary_column} => ${foreign_table}.${foreign_column}`,
+      `# HydraRelation: ${source_table}.${source_column} => ${target_table}.${target_column}`,
     ])
   },
-  name: ({ config }: BuildContext, { primary_column }: ForeignKey): string => {
+  name: ({ config }: BuildContext, { source_column }: ForeignKeyDefinition): string => {
     // TODO: improve global suffix handling
-    const relation = primary_column.replace(/_id$/, '').replace(/_?I[Dd]$/, '')
+    const relation = source_column.replace(/_id$/, '').replace(/_?I[Dd]$/, '')
     return normalize_name(config.formatRelationName(relation))
   },
-  type: (context: BuildContext, foreign_key: ForeignKey): string => {
-    const column = { name: foreign_key.foreign_table, columns: [] }
-    const name = Entity.name(context, column)
+  type: (context: BuildContext, foreign_key: ForeignKeyDefinition): string => {
+    const column = { name: foreign_key.target_table, columns: [] }
+    const name = HydraEntity.name(context, column)
     return `Nullable{${name}}`
   },
-  relation: (context: BuildContext, foreign_key: ForeignKey): string => {
-    const column = { name: foreign_key.foreign_table, columns: [] }
-    const name = Entity.name(context, column)
+  relation: (context: BuildContext, foreign_key: ForeignKeyDefinition): string => {
+    const column = { name: foreign_key.target_table, columns: [] }
+    const name = HydraEntity.name(context, column)
     return `Nullable{${name}}`
   },
 }
@@ -85,11 +89,11 @@ const Relation = {
 
 const cast_attribute =
   (context: BuildContext, record: TableDefinition) =>
-  (column: ColumnDefinition): string => {
-    const ob = Entity.name(context, record)
-    const name = Attribute.name(context, column)
-    const type = Attribute.type(context, column)
-    const comment = Attribute.comment(context, column)
+  (column: PropertyDefinition): string => {
+    const ob = HydraEntity.name(context, record)
+    const name = HydraAttribute.name(context, column)
+    const type = HydraAttribute.type(context, column)
+    const comment = HydraAttribute.comment(context, column)
 
     const line = `${ob}_${name}::Attr(${ob}, ${type})`
     return lines([comment, line])
@@ -98,11 +102,11 @@ const cast_attribute =
 //------------------------------------------------------------------------------
 
 const cast_ob = (context: BuildContext) => {
-  // const relations_map = groupBy(context.foreign_keys, 'primary_table')
+  // const relations_map = groupBy(context.foreign_keys, 'source_table')
 
   return (record: TableDefinition) => {
-    const name = Entity.name(context, record)
-    const comment = Entity.comment(context, record)
+    const name = HydraEntity.name(context, record)
+    const comment = HydraEntity.comment(context, record)
 
     const fields = record.columns.map(cast_attribute(context, record)).sort()
 
@@ -112,13 +116,13 @@ const cast_ob = (context: BuildContext) => {
 
 //------------------------------------------------------------------------------
 
-const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
-  const ob = Relation.name(context, record)
-  // const name = Relation.name(context, record)
-  // const relation = Relation.relation(context, record)
-  const comment = Relation.comment(context, record)
-  const ob1 = record.primary_table
-  const ob2 = record.foreign_table
+const cast_relation = (context: BuildContext) => (record: ForeignKeyDefinition) => {
+  const ob = HydraRelation.name(context, record)
+  // const name = HydraRelation.name(context, record)
+  // const relation = HydraRelation.relation(context, record)
+  const comment = HydraRelation.comment(context, record)
+  const ob1 = record.source_table
+  const ob2 = record.target_table
 
   return lines([
     comment,
@@ -132,11 +136,11 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
 }
 
 // const cast_ob_and_types = (context: BuildContext) => {
-//   const relations_map = groupBy(context.foreign_keys, 'primary_table')
+//   const relations_map = groupBy(context.foreign_keys, 'source_table')
 
 //   return (record: TableDefinition) => {
-//     const name = Entity.name(context, record)
-//     const comment = Entity.comment(context, record)
+//     const name = HydraEntity.name(context, record)
+//     const comment = HydraEntity.comment(context, record)
 
 //     const foreign_keys = get(relations_map, record.name, [])
 
@@ -183,7 +187,7 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
 //   `
 // }
 
-// const cast_presentation = (context: BuildContext) => (record: ForeignKey) => {
+// const cast_presentation = (context: BuildContext) => (record: ForeignKeyDefinition) => {
 //   const schema = 'AACTSchema'
 
 //   const tables = tables.map(cast_data_table)
@@ -197,7 +201,7 @@ const cast_relation = (context: BuildContext) => (record: ForeignKey) => {
 //   # Data tables
 //   ${tables}
 
-//   # Relation tables
+//   # HydraRelation tables
 //   ${relations}
 //   end;
 //   `

@@ -2,20 +2,19 @@ import { groupBy } from 'lodash'
 import { Client } from 'pg'
 
 import type { Config } from '../config'
+import type { EntityStatistics, PropertyStatistics } from '../statistics'
 import { read_sql } from '../utils'
 import type {
-  ColumnComment,
+  ColumnCommentDefinition,
   ColumnName,
-  ColumnStatistics,
   Database,
   EnumDefinition,
-  ForeignKey,
-  PrimaryKey,
+  ForeignKeyDefinition,
+  PrimaryKeyDefinition,
   SchemaName,
-  TableComment,
+  TableCommentDefinition,
   TableDefinition,
   TableName,
-  TableStatistics,
   UDTName,
 } from './types'
 
@@ -78,21 +77,25 @@ export class PostgresDatabase implements Database {
   }
 
   // https://dataedo.com/kb/query/postgresql/list-all-primary-keys-and-their-columns
-  public async getPrimaryKeys(schema: SchemaName): Promise<PrimaryKey[]> {
-    return await this.query<PrimaryKey>(Queries.getPrimaryKeys, [schema])
+  public async getPrimaryKeys(schema: SchemaName): Promise<PrimaryKeyDefinition[]> {
+    return await this.query<PrimaryKeyDefinition>(Queries.getPrimaryKeys, [schema])
   }
 
   // See https://stackoverflow.com/a/10950402/388951
-  public async getForeignKeys(schema: SchemaName): Promise<ForeignKey[]> {
-    return await this.query<ForeignKey>(Queries.getForeignKeys, [schema])
+  public async getForeignKeys(schema: SchemaName): Promise<ForeignKeyDefinition[]> {
+    return await this.query<ForeignKeyDefinition>(Queries.getForeignKeys, [schema])
   }
 
-  public async getTableComments(schema: SchemaName): Promise<TableComment[]> {
-    return await this.query<TableComment>(Queries.getTableComments, [schema])
+  public async getTableComments(schema: SchemaName): Promise<TableCommentDefinition[]> {
+    return await this.query<TableCommentDefinition>(Queries.getTableComments, [schema])
   }
 
-  public async getColumnComments(schema: SchemaName): Promise<ColumnComment[]> {
-    return await this.query<ColumnComment>(Queries.getColumnComments, [schema])
+  public async getColumnComments(
+    schema: SchemaName,
+  ): Promise<ColumnCommentDefinition[]> {
+    return await this.query<ColumnCommentDefinition>(Queries.getColumnComments, [
+      schema,
+    ])
   }
 
   public async getEnums(schema: SchemaName): Promise<EnumDefinition[]> {
@@ -133,8 +136,8 @@ export class PostgresDatabase implements Database {
   public async getTableStatistics(
     schema: SchemaName,
     table: TableName,
-  ): Promise<TableStatistics> {
-    const result = await this.query<TableStatistics>(Queries.getTableStatistics, [
+  ): Promise<EntityStatistics> {
+    const result = await this.query<EntityStatistics>(Queries.getTableStatistics, [
       schema,
       table,
     ])
@@ -147,8 +150,8 @@ export class PostgresDatabase implements Database {
   public async getColumnStatistics(
     schema: SchemaName,
     table: TableName,
-  ): Promise<ColumnStatistics[]> {
-    return await this.query<ColumnStatistics>(Queries.getColumnStatistics, [
+  ): Promise<PropertyStatistics[]> {
+    return await this.query<PropertyStatistics>(Queries.getColumnStatistics, [
       schema,
       table,
     ])

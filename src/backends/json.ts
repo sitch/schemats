@@ -5,15 +5,8 @@ import { build_type_qualified_coreferences } from '../coreference'
 import { pretty } from '../formatters'
 
 export const build = (context: BuildContext) => {
-  const {
-    config: { version, timestamp },
-    ...rest
-  } = context
-
   return {
-    version,
-    timestamp,
-    ...rest,
+    context,
     coreferences: build_type_qualified_coreferences(context, context.config.backend),
   }
 }

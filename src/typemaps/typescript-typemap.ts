@@ -1,4 +1,4 @@
-import type { ColumnDefinition } from '../adapters/types'
+import type { PropertyDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import type { UDTTypeMap } from '../coreference'
 
@@ -111,7 +111,7 @@ export const TYPESCRIPT_TYPEMAP = {
 
 export const cast_typescript_type = (
   { config, enums }: BuildContext,
-  { udt_name }: ColumnDefinition,
+  { udt_name }: PropertyDefinition,
 ): TypescriptType => {
   const type = TYPESCRIPT_TYPEMAP[udt_name]
   if (type && !['unknown'].includes(type)) {
@@ -134,7 +134,7 @@ export const cast_typescript_type = (
 
 export const translate_type = (
   context: BuildContext,
-  record: ColumnDefinition,
+  record: PropertyDefinition,
 ): TypescriptType => {
   let type = cast_typescript_type(context, record)
   if (record.is_array) {

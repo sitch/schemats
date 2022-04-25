@@ -2,7 +2,7 @@
 
 import { groupBy, trimEnd, trimStart } from 'lodash'
 
-import type { ColumnDefinition, TableDefinition } from '../adapters/types'
+import type { PropertyDefinition, TableDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import type { Config } from '../config'
 import type {
@@ -12,12 +12,12 @@ import type {
   Neo4jReflectionNode,
   Neo4jReflectionProperty,
 } from '../lang/neo4j'
-import type { RelationshipEdge, RelationshipEdgeName } from '../relationships'
+import type { EdgeDefinition, EdgeName } from './types'
 
 const cast_node_name = (typeId: Neo4jReflectionNameSymbol): string =>
   trimEnd(trimStart(typeId, ':`'), '`')
 
-const cast_edge_name = (type: string): RelationshipEdgeName => type
+const cast_edge_name = (type: string): EdgeName => type
 
 function cast_udt_name([type, ...types]: string[]) {
   if (types.length > 0) {
@@ -34,7 +34,7 @@ function cast_property({
   name,
   types,
   mandatory,
-}: Neo4jReflectionProperty): ColumnDefinition {
+}: Neo4jReflectionProperty): PropertyDefinition {
   return {
     name,
     udt_name: cast_udt_name(types),
@@ -60,10 +60,10 @@ function cast_node({
 function cast_edge_list(table_map: Record<string, TableDefinition[]>) {
   return ({ type, paths, properties }: Neo4jReflectionEdge) => {
     return paths.map(
-      ({ fromTypeId, toTypeId }): RelationshipEdge => ({
+      ({ fromTypeId, toTypeId }): EdgeDefinition => ({
         name: cast_edge_name(type),
-        domain: table_map[cast_node_name(fromTypeId)]![0]!,
-        codomain: table_map[cast_node_name(toTypeId)]![0]!,
+        source: table_map[cast_node_name(fromTypeId)]![0]!,
+        target: table_map[cast_node_name(toTypeId)]![0]!,
         columns: properties.map(property => cast_property(property)),
       }),
     )
@@ -86,7 +86,6 @@ export function build_context(config: Config, spec: Neo4jReflection): BuildConte
     table_comments: [],
     column_comments: [],
     enums: [],
-    relationships: [],
     tables: [],
     edges,
     nodes,

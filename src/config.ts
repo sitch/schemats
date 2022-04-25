@@ -33,7 +33,7 @@ export enum BackendEnum {
   haskell = 'haskell',
   typedb_loader_config = 'typedb_loader_config',
 }
-export type Backend = keyof typeof BackendEnum
+export type BackendName = keyof typeof BackendEnum
 
 //------------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ export interface ConfigValues {
 
   schema: string
   typedbSchema?: string
-  backend: Backend
+  backend: BackendName
   database: string
   connection: string
   enums?: boolean

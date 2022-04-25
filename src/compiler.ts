@@ -3,13 +3,15 @@
 import { isEmpty, sortBy } from 'lodash'
 
 import type {
-  ColumnComment,
+  ColumnCommentDefinition,
   Database,
+  EdgeDefinition,
   EnumDefinition,
-  ForeignKey,
-  PrimaryKey,
+  ForeignKeyDefinition,
+  NodeDefinition,
+  PrimaryKeyDefinition,
   SchemaName,
-  TableComment,
+  TableCommentDefinition,
   TableDefinition,
 } from './adapters/types'
 import { render_algebraic_julia } from './backends/algebraic-julia'
@@ -21,9 +23,7 @@ import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
-import { Backend, Config, DataSource, get_user_imports, UserImport } from './config'
-import type { Relationship, RelationshipEdge, RelationshipNode } from './relationships'
-import { build_relationships } from './relationships'
+import { BackendName, Config, DataSource, get_user_imports, UserImport } from './config'
 import { merge_table_meta } from './tables'
 import { validate_coreferences, validate_enums, validate_tables } from './validators'
 
@@ -34,15 +34,15 @@ export interface BuildContext {
   schema: SchemaName
   config: Config
   user_imports: UserImport[]
-  primary_keys: PrimaryKey[]
-  foreign_keys: ForeignKey[]
-  table_comments: TableComment[]
-  column_comments: ColumnComment[]
+  primary_keys: PrimaryKeyDefinition[]
+  foreign_keys: ForeignKeyDefinition[]
+  table_comments: TableCommentDefinition[]
+  column_comments: ColumnCommentDefinition[]
   enums: EnumDefinition[]
   tables: TableDefinition[]
-  relationships: Relationship[]
-  nodes: RelationshipNode[]
-  edges: RelationshipEdge[]
+  // relationships: Relationship[]
+  nodes: NodeDefinition[]
+  edges: EdgeDefinition[]
 }
 
 //------------------------------------------------------------------------------
@@ -102,8 +102,8 @@ const compile = async (
   const user_imports = get_user_imports(config, tables)
   config.log('[build] Compiled user_imports', user_imports)
 
-  const relationships = build_relationships(config, tables)
-  config.log('[build] Compiled relationships', relationships)
+  // const relationships = build_relationships(config, tables)
+  // config.log('[build] Compiled relationships', relationships)
 
   return {
     data_source,
@@ -113,8 +113,8 @@ const compile = async (
     enums: sortBy(enums, 'name'),
     tables: sortBy(tables, 'name'),
     primary_keys: sortBy(primary_keys, 'table'),
-    foreign_keys: sortBy(foreign_keys, 'primary_table'),
-    relationships: sortBy(relationships, 'foreign.name'),
+    foreign_keys: sortBy(foreign_keys, 'source_table'),
+    // relationships: sortBy(relationships, 'foreign.name'),
     table_comments: sortBy(table_comments, 'table'),
     column_comments: sortBy(column_comments, 'column'),
     nodes: [],
@@ -122,7 +122,7 @@ const compile = async (
   }
 }
 
-export const render = async (context: BuildContext, backend: Backend) => {
+export const render = async (context: BuildContext, backend: BackendName) => {
   validate_coreferences(context, backend)
 
   if (backend === 'typescript') {

@@ -3,7 +3,7 @@ import sortJson from 'sort-json'
 
 import { version } from '../../package.json'
 import type { BuildContext } from '../compiler'
-import type { Backend } from '../config'
+import type { BackendName } from '../config'
 import type {
   CoreferenceMap,
   CoreferenceType,
@@ -15,7 +15,7 @@ export type CommentDelimiter = string
 export type IndentDelimiter = string
 
 export interface BackendContext {
-  backend: Backend
+  backend: BackendName
   comment: CommentDelimiter
   indent: IndentDelimiter
   character_line_limit: number

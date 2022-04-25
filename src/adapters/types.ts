@@ -1,3 +1,5 @@
+import type { EntityStatistics, PropertyStatistics } from '../statistics'
+
 export type SchemaName = string
 export type TableName = string
 export type ColumnName = string
@@ -5,18 +7,123 @@ export type Comment = string
 export type EnumName = string
 export type UDTName = string
 export type ConstraintName = string
+export type NodeLabel = string
+
+export type EdgeName = string
+export type RelationName = string
+
+//------------------------------------------------------------------------------
+// Entities
+//------------------------------------------------------------------------------
+
+export interface EntityDefinition {
+  name: TableName
+  columns: PropertyDefinition[]
+  comment?: Comment | undefined
+  entity_statistics?: EntityStatistics
+}
+export interface TableDefinition extends EntityDefinition {
+  primary_keys?: PrimaryKeyDefinition[]
+  foreign_keys?: ForeignKeyDefinition[]
+}
+
+export interface NodeDefinition extends EntityDefinition {
+  labels?: NodeLabel[]
+  relationships?: NodeRelationship[]
+}
+
+export type NodeRelationship = never
+
+// export type EntityDefinition = TableDefinition | NodeDefinition
+// export type EntityLikeDefinition = TableDefinition | NodeDefinition | EdgeDefinition
+
+//------------------------------------------------------------------------------
+// Relations
+//------------------------------------------------------------------------------
+
+export interface RelationDefinition {
+  name: RelationName
+  source: EntityDefinition
+  target: EntityDefinition
+  comment?: Comment | undefined
+  // relation_statistics?: RelationStatistics
+}
+
+export interface EdgeDefinition extends RelationDefinition {
+  columns: PropertyDefinition[]
+  statistics?: EntityStatistics
+  comment?: string
+}
+
+//------------------------------------------------------------------------------
+// Properties
+//------------------------------------------------------------------------------
+
+export interface PropertyDefinition {
+  name: ColumnName
+  udt_name: UDTName
+  // primary_key?: PrimaryKeyDefinition;
+  // foreign_key?: ForeignKeyDefinition;
+  is_array: boolean
+  has_default: boolean
+  is_nullable: boolean
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  default_value: any
+  comment?: Comment | undefined
+  // statistics?: PropertyStatistics
+}
+
+export interface ColumnDefinition extends PropertyDefinition {
+  // name: ColumnName
+  // udt_name: UDTName
+  // // primary_key?: PrimaryKeyDefinition;
+  // // foreign_key?: ForeignKeyDefinition;
+  // is_array: boolean
+  // has_default: boolean
+  // is_nullable: boolean
+  // // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // default_value: any
+  // comment?: Comment | undefined
+  statistics?: PropertyStatistics
+}
 
 //------------------------------------------------------------------------------
 
-// export type PrimaryKeyMap = Record<TableName, PrimaryKey[]>;
-// export type ForeignKeyMap = Record<TableName, ForeignKey[]>;
-// export type TableDefinitionMap = Record<TableName, TableDefinition>;
-// export type ColumnCommentMap = Record<ColumnName, ColumnComment>;
-// export type ColumnDefinitionMap = Record<ColumnName, ColumnDefinition>;
+export interface TableCommentDefinition {
+  table: TableName
+  comment: Comment
+}
+
+export interface ColumnCommentDefinition {
+  table: TableName
+  column: ColumnName
+  comment: Comment
+}
 
 //------------------------------------------------------------------------------
+// Relational Keys
+//------------------------------------------------------------------------------
 
-export interface ParameterizedEnumDefinition<T> {
+export interface RelationalKey {
+  source_table: TableName
+  source_column: ColumnName
+  constraint: ConstraintName
+}
+
+export interface PrimaryKeyDefinition extends RelationalKey {
+  is_unique: boolean
+  ordinal_position: number
+}
+
+export interface ForeignKeyDefinition extends RelationalKey {
+  target_table: TableName
+  target_column: ColumnName
+}
+
+//------------------------------------------------------------------------------
+// Enum
+//------------------------------------------------------------------------------
+interface ParameterizedEnumDefinition<T> {
   name: EnumName
   values: T[]
   table?: TableName
@@ -30,150 +137,6 @@ export type EnumDefinition = ParameterizedEnumDefinition<string>
 
 //------------------------------------------------------------------------------
 
-export interface TableDefinition {
-  name: TableName
-  columns: ColumnDefinition[]
-  comment?: Comment | undefined
-  primary_keys?: PrimaryKey[]
-  foreign_keys?: ForeignKey[]
-  statistics?: TableStatistics
-}
-
-export interface ColumnDefinition {
-  name: ColumnName
-  udt_name: UDTName
-  comment?: Comment | undefined
-  // primary_key?: PrimaryKey;
-  // foreign_key?: ForeignKey;
-  is_array: boolean
-  has_default: boolean
-  is_nullable: boolean
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  default_value: any
-  statistics?: ColumnStatistics
-}
-
-//------------------------------------------------------------------------------
-export interface TableStatistics {
-  cardinality: number
-  statistics?: ColumnStatistics[]
-}
-
-export interface CategoryStatistics<T> {
-  label: string
-  value: T | null
-  frequency: number
-  relative_frequency: number
-}
-
-export enum InferredPTypeEnum {
-  boolean = 'boolean',
-  categorical = 'categorical',
-  date = 'date',
-  float = 'float',
-  integer = 'integer',
-  string = 'string',
-}
-
-// export type InferredPType =
-//   | InferredPTypeEnum.boolean
-//   | InferredPTypeEnum.categorical
-//   | InferredPTypeEnum.date
-//   | InferredPTypeEnum.float
-//   | InferredPTypeEnum.integer
-//   | InferredPTypeEnum.string
-
-export type InferredPType = keyof typeof InferredPTypeEnum
-
-interface PType<T> {
-  inferred_ptype: InferredPType
-  anomalous_values: InferredPType[]
-  missing_values: InferredPType[]
-  normal_values: T[]
-}
-interface DefaultColumnStatistics<T> {
-  cardinality: number
-  is_null_present: boolean
-  categories: CategoryStatistics<T>[]
-  ptype: PType<T>
-}
-
-export interface NumericalColumnStatistics extends DefaultColumnStatistics<number> {
-  mean: number
-  median: number
-  minimum: number
-  maximum: number
-  range: number
-  standard_deviation: number
-  variance: number
-  q1: number
-  q3: number
-  iqr: number
-  skewness: number
-  mode: number
-}
-
-export interface TextColumnStatistics extends DefaultColumnStatistics<string> {
-  minimum_length: number
-  maximum_length: number
-  range: number
-  standard_deviation: number
-  variance: number
-  q1: number
-  q3: number
-  iqr: number
-  skewness: number
-  mode: number
-}
-
-type BooleanColumnStatistics = DefaultColumnStatistics<boolean>
-
-export type ColumnStatistics =
-  | NumericalColumnStatistics
-  | TextColumnStatistics
-  | BooleanColumnStatistics
-
-//------------------------------------------------------------------------------
-
-export interface TableComment {
-  table: TableName
-  comment: Comment
-}
-
-export interface ColumnComment {
-  table: TableName
-  column: ColumnName
-  comment: Comment
-}
-
-//------------------------------------------------------------------------------
-
-export interface PrimaryKey {
-  table: TableName
-  column: ColumnName
-  constraint: ConstraintName
-  is_unique: boolean
-  ordinal_position: number
-}
-
-//------------------------------------------------------------------------------
-
-// export interface TableColumnVector {
-//   table: TableName;
-//   column: ColumnName;
-// }
-export interface ForeignKey {
-  // source: TableColumnVector;
-  // dest: TableColumnVector;
-  primary_table: TableName
-  primary_column: ColumnName
-  foreign_table: TableName
-  foreign_column: ColumnName
-  constraint: ConstraintName
-}
-
-//------------------------------------------------------------------------------
-
 export interface Database {
   version: string
   getConnectionString(): string
@@ -181,14 +144,17 @@ export interface Database {
   close(): Promise<void>
   getDefaultSchema(): Promise<SchemaName>
   getTableNames(schema: SchemaName): Promise<TableName[]>
-  getPrimaryKeys(schema: SchemaName): Promise<PrimaryKey[]>
-  getForeignKeys(schema: SchemaName): Promise<ForeignKey[]>
-  getTableComments(schema: SchemaName): Promise<TableComment[]>
-  getColumnComments(schema: SchemaName): Promise<ColumnComment[]>
+  getPrimaryKeys(schema: SchemaName): Promise<PrimaryKeyDefinition[]>
+  getForeignKeys(schema: SchemaName): Promise<ForeignKeyDefinition[]>
+  getTableComments(schema: SchemaName): Promise<TableCommentDefinition[]>
+  getColumnComments(schema: SchemaName): Promise<ColumnCommentDefinition[]>
   getEnums(schema: SchemaName): Promise<EnumDefinition[]>
   getTable(schema: SchemaName, table: TableName): Promise<TableDefinition>
-  getTableStatistics(schema: SchemaName, table: TableName): Promise<TableStatistics>
-  getColumnStatistics(schema: SchemaName, table: TableName): Promise<ColumnStatistics[]>
+  getTableStatistics(schema: SchemaName, table: TableName): Promise<EntityStatistics>
+  getColumnStatistics(
+    schema: SchemaName,
+    table: TableName,
+  ): Promise<PropertyStatistics[]>
 }
 
 //------------------------------------------------------------------------------

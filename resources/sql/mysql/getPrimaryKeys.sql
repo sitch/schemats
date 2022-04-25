@@ -17,8 +17,8 @@
 --
 --
 SELECT
-    tab.TABLE_NAME AS "table"
-    , sta.COLUMN_NAME AS "column"
+    tab.TABLE_NAME AS "source_table"
+    , sta.COLUMN_NAME AS "source_column"
     , sta.INDEX_NAME AS "constraint"
     , sta.SEQ_IN_INDEX AS "ordinal_position"
     , (NOT sta.NON_UNIQUE) AS "is_unique"

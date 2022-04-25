@@ -1,4 +1,4 @@
-import type { ColumnDefinition } from '../adapters/types'
+import type { PropertyDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { DataSource, DataSourceEnum } from '../config'
 import type { UDTTypeMap } from '../coreference'
@@ -174,7 +174,7 @@ Nullable{T} = Union{Nothing,T}
 `
 export const cast_julia_type = (
   { config, enums }: BuildContext,
-  { udt_name }: ColumnDefinition,
+  { udt_name }: PropertyDefinition,
 ): JuliaType => {
   const type = JULIA_TYPEMAP[udt_name]
   if (type && !['unknown'].includes(type)) {
@@ -197,7 +197,7 @@ export const cast_julia_type = (
 
 export const translate_type = (
   context: BuildContext,
-  record: ColumnDefinition,
+  record: PropertyDefinition,
 ): JuliaType => {
   let type = cast_julia_type(context, record)
   if (record.is_array) {
@@ -212,7 +212,7 @@ export const translate_type = (
 
 export const translate_relation_name = (
   context: BuildContext,
-  record: ColumnDefinition,
+  record: PropertyDefinition,
 ): JuliaType => {
   let type = cast_julia_type(context, record)
   if (record.is_array) {

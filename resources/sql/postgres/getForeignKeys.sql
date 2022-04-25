@@ -1,8 +1,8 @@
 SELECT
-    cl2.relname AS "primary_table"
-    , att2.attname AS "primary_column"
-    , cl.relname AS "foreign_table"
-    , att.attname AS "foreign_column"
+    cl2.relname AS "source_table"
+    , att2.attname AS "source_column"
+    , cl.relname AS "target_table"
+    , att.attname AS "target_column"
     , conname AS "constraint"
 FROM (
     SELECT

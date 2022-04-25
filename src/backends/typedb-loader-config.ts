@@ -1,8 +1,19 @@
 import sortJson from 'sort-json'
 
-import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
+import type {
+  EdgeDefinition,
+  ForeignKeyDefinition,
+  NodeDefinition,
+  PropertyDefinition,
+  TableDefinition,
+} from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
+import {
+  is_valid_attribute,
+  is_valid_foreign_key,
+  postprocess_context,
+} from '../coreference-resolution'
 import { inflect, pretty } from '../formatters'
 import type {
   Configuration,
@@ -11,28 +22,21 @@ import type {
   GeneratorEntity,
   GeneratorRelation,
 } from '../lang/typedb-loader-config'
-import type { RelationshipEdge, RelationshipNode } from '../relationships'
 import type { BackendContext } from './base'
-import {
-  is_valid_attribute,
-  is_valid_foreign_key,
-  normalize_name,
-  postprocess_context,
-  Relation,
-} from './typedb'
+import { normalize_name, TypedbRelation } from './typedb'
 
 type AbstractTypedbDataType =
   | TableDefinition
-  | RelationshipEdge
-  | RelationshipNode
-  | ForeignKey
+  | EdgeDefinition
+  | NodeDefinition
+  | ForeignKeyDefinition
 
 //-----------------------------------------------------------------------
 
 function cast_definition_attribute({
   name,
   is_nullable,
-}: ColumnDefinition): DefinitionAttribute {
+}: PropertyDefinition): DefinitionAttribute {
   return {
     attribute: normalize_name(name),
     column: name,
@@ -44,7 +48,7 @@ function data_paths(context: BuildContext, record: AbstractTypedbDataType): stri
   if (context.config.overrideCsvPath) {
     return [context.config.overrideCsvPath]
   }
-  const filename = 'name' in record ? record.name : Relation.name(context, record)
+  const filename = 'name' in record ? record.name : TypedbRelation.name(context, record)
   return [`${context.config.csvDir}/${context.config.database}/${filename}.csv`]
 }
 
@@ -63,7 +67,7 @@ function cast_table_entity(context: BuildContext, backend: BackendContext) {
 }
 
 function cast_node_entity(context: BuildContext, backend: BackendContext) {
-  return (node: RelationshipNode) => {
+  return (node: NodeDefinition) => {
     return {
       data: data_paths(context, node),
       insert: {
@@ -77,7 +81,7 @@ function cast_node_entity(context: BuildContext, backend: BackendContext) {
 }
 
 function cast_edge_relation(context: BuildContext, backend: BackendContext) {
-  return (edge: RelationshipEdge) => {
+  return (edge: EdgeDefinition) => {
     return {
       data: data_paths(context, edge),
       insert: {
@@ -92,27 +96,27 @@ function cast_edge_relation(context: BuildContext, backend: BackendContext) {
 }
 
 function cast_foreign_key_relation_players({
-  primary_table,
-  primary_column,
-  foreign_table,
-  foreign_column,
-}: ForeignKey): DefinitionPlayer[] {
+  source_table,
+  source_column,
+  target_table,
+  target_column,
+}: ForeignKeyDefinition): DefinitionPlayer[] {
   return [
     {
-      role: primary_table,
+      role: source_table,
       match: {
-        type: primary_column,
+        type: source_column,
         attribute: {
-          column: primary_column,
+          column: source_column,
         },
       },
     },
     {
-      role: foreign_table,
+      role: target_table,
       match: {
-        type: foreign_column,
+        type: target_column,
         attribute: {
-          column: foreign_column,
+          column: target_column,
         },
       },
     },
@@ -120,11 +124,11 @@ function cast_foreign_key_relation_players({
 }
 
 function cast_foreign_key_relation(context: BuildContext, _backend: BackendContext) {
-  return (foreign_key: ForeignKey): GeneratorRelation => {
+  return (foreign_key: ForeignKeyDefinition): GeneratorRelation => {
     return {
       data: data_paths(context, foreign_key),
       insert: {
-        relation: Relation.name(context, foreign_key),
+        relation: TypedbRelation.name(context, foreign_key),
         ownerships: [],
         players: cast_foreign_key_relation_players(foreign_key),
       },
@@ -150,7 +154,7 @@ const cast_relations = (context: BuildContext, backend: BackendContext) => {
   for (const foreign_key of context.foreign_keys.filter(
     is_valid_foreign_key(backend),
   )) {
-    const name = Relation.name(context, foreign_key)
+    const name = TypedbRelation.name(context, foreign_key)
     const relation = cast_foreign_key_relation(context, backend)(foreign_key)
 
     console.info('cast_relations', name, 'players', relation.insert.players)

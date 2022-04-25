@@ -2,7 +2,7 @@ import { difference, size, uniqWith } from 'lodash'
 
 import type { EnumDefinition, TableDefinition } from './adapters/types'
 import type { BuildContext } from './compiler'
-import type { Backend, Config } from './config'
+import type { BackendName, Config } from './config'
 import { pretty } from './formatters'
 import { json_equal } from './utils'
 
@@ -38,7 +38,7 @@ export const validate_tables = (config: Config, tables: TableDefinition[]): bool
 
 export const validate_coreferences = (
   _context: BuildContext,
-  _backend: Backend,
+  _backend: BackendName,
 ): boolean => {
   return true
 }

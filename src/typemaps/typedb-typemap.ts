@@ -1,4 +1,4 @@
-import type { ColumnDefinition } from '../adapters/types'
+import type { PropertyDefinition } from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { DataSource, DataSourceEnum } from '../config'
 import type { UDTTypeMap } from '../coreference'
@@ -171,7 +171,7 @@ export const DATA_SOURCE_TYPEDB_TYPEMAP: Record<DataSource, UDTTypeMap<TypeDBTyp
 //------------------------------------------------------------------------------
 
 export const lookup_typedb_type = (
-  column: ColumnDefinition,
+  column: PropertyDefinition,
   data_source: DataSource,
 ): TypeDBType => {
   const { udt_name } = column
@@ -184,7 +184,7 @@ export const lookup_typedb_type = (
 
 export const cast_typedb_type = (
   { data_source, config, enums }: BuildContext,
-  column: ColumnDefinition,
+  column: PropertyDefinition,
 ): TypeDBType => {
   const { udt_name } = column
   const type = DATA_SOURCE_TYPEDB_TYPEMAP[data_source][udt_name.toLowerCase()]

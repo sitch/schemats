@@ -1,10 +1,16 @@
-import { flatMap, partition, size } from 'lodash'
+import { flatMap, size } from 'lodash'
 
-import type { ColumnDefinition, ForeignKey, TableDefinition } from '../adapters/types'
+import type {
+  EdgeDefinition,
+  EntityDefinition,
+  ForeignKeyDefinition,
+  PropertyDefinition,
+  TableDefinition,
+} from '../adapters/types'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
+import { postprocess_context } from '../coreference-resolution'
 import { code_section, lines, pad_lines } from '../formatters'
-import type { RelationshipEdge } from '../relationships'
 import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
 import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
@@ -24,71 +30,20 @@ const prefix = (context: BuildContext) => {
 
 //------------------------------------------------------------------------------
 
-// TODO: eliminate this
-// Filter out error coreference values
-export function is_valid_attribute(backend: BackendContext) {
-  return ({ name }: ColumnDefinition) =>
-    !(name.toLowerCase() in backend.coreferences.error)
-}
-
-export function is_valid_foreign_key(backend: BackendContext) {
-  return ({ primary_column, foreign_column }: ForeignKey) =>
-    !(primary_column.toLowerCase() in backend.coreferences.error) &&
-    !(foreign_column.toLowerCase() in backend.coreferences.error)
-}
-
-export function postprocess_foreign_key(backend: BackendContext) {
-  const validator = is_valid_foreign_key(backend)
-
-  return (foreign_key: ForeignKey) => {
-    if (validator(foreign_key)) {
-      return [foreign_key]
-    }
-    console.error('Skipping table foreign_key', foreign_key)
-    return []
-  }
-}
-
-export function postprocess_node_or_table(backend: BackendContext) {
-  const validator = is_valid_attribute(backend)
-
-  return (table: TableDefinition) => {
-    const columns = table.columns.filter(column => {
-      const valid = validator(column)
-      if (!valid) {
-        console.error(`Skipping table: ${table.name}`, column)
-      }
-      return valid
-    })
-    return [{ ...table, columns }]
-  }
-}
-
-export function postprocess_edge(backend: BackendContext) {
-  const validator = is_valid_attribute(backend)
-
-  return (edge: RelationshipEdge) => {
-    const [columns, skipped] = partition(edge.columns, validator)
-    for (const column of skipped) console.error(`Skipping edge: ${edge.name}`, column)
-    return [{ ...edge, columns }]
-  }
-}
-//------------------------------------------------------------------------------
-
-export const Attribute = {
-  comment: (_context: BuildContext, _column: ColumnDefinition): string => {
+export const TypedbAttribute = {
+  comment: (_context: BuildContext, _column: PropertyDefinition): string => {
     return ``
   },
-  name: ({ config }: BuildContext, { name }: ColumnDefinition): string => {
+  name: ({ config }: BuildContext, { name }: PropertyDefinition): string => {
     return normalize_name(config.formatAttributeName(name))
   },
-  type: (_context: BuildContext, _record: ColumnDefinition): string => {
+  type: (_context: BuildContext, _record: PropertyDefinition): string => {
     // return `${prefix(context)}attribute`
     return 'attribute'
   },
 }
 
-export const NodeOrEntity = {
+export const TypedbEntity = {
   comment: (_context: BuildContext, _table: TableDefinition): string => {
     return ``
   },
@@ -100,53 +55,53 @@ export const NodeOrEntity = {
   },
 }
 
-export const Relation = {
-  comment: ({ config }: BuildContext, { constraint }: ForeignKey): string => {
+export const TypedbRelation = {
+  comment: ({ config }: BuildContext, { constraint }: ForeignKeyDefinition): string => {
     return `${TYPEDB_COMMENT} Source: '${config.schema}.${constraint}'`
   },
   name: (
     { config }: BuildContext,
-    { primary_table, primary_column, foreign_table, foreign_column }: ForeignKey,
+    { source_table, source_column, target_table, target_column }: ForeignKeyDefinition,
   ): string => {
-    const table_source = config.formatRelationName(primary_table)
-    const attribute_source = config.formatRelationName(primary_column)
-    const table_destination = config.formatRelationName(foreign_table)
-    const attribute_destination = config.formatRelationName(foreign_column)
+    const table_source = config.formatRelationName(source_table)
+    const attribute_source = config.formatRelationName(source_column)
+    const table_destination = config.formatRelationName(target_table)
+    const attribute_destination = config.formatRelationName(target_column)
 
     return normalize_name(
       `${table_source}-${attribute_source}-${table_destination}-${attribute_destination}`,
     )
   },
-  type: (context: BuildContext, _foreign_key: ForeignKey): string => {
+  type: (context: BuildContext, _foreign_key: ForeignKeyDefinition): string => {
     return `${prefix(context)}relation`
   },
 }
 
-export const Edge = {
-  comment: (_context: BuildContext, { comment }: RelationshipEdge): string => {
+export const TypedbEdge = {
+  comment: (_context: BuildContext, { comment }: EdgeDefinition): string => {
     return comment ? `${TYPEDB_COMMENT} ${comment}` : ''
   },
   name: (
     { config }: BuildContext,
-    { name, domain, codomain }: RelationshipEdge,
+    { name, source, target }: EdgeDefinition,
   ): string => {
-    const domain_name = config.formatRelationName(domain.name)
-    const codomain_name = config.formatRelationName(codomain.name)
+    const domain_name = config.formatRelationName(source.name)
+    const codomain_name = config.formatRelationName(target.name)
 
     return normalize_name(`${domain_name}-${name}-${codomain_name}`)
   },
-  type: (context: BuildContext, _foreign_key: RelationshipEdge): string => {
+  type: (context: BuildContext, _foreign_key: EdgeDefinition): string => {
     return `${prefix(context)}relation`
   },
 }
 
 //------------------------------------------------------------------------------
 
-const cast_attribute = (context: BuildContext) => (column: ColumnDefinition) => {
-  const name = Attribute.name(context, column)
-  const type = Attribute.type(context, column)
+const cast_attribute = (context: BuildContext) => (column: PropertyDefinition) => {
+  const name = TypedbAttribute.name(context, column)
+  const type = TypedbAttribute.type(context, column)
   const value = cast_typedb_type(context, column)
-  const comment = Attribute.comment(context, column)
+  const comment = TypedbAttribute.comment(context, column)
 
   const line = `${name} sub ${type}, value ${value};`
   return lines([comment, line])
@@ -156,26 +111,23 @@ const cast_attribute = (context: BuildContext) => (column: ColumnDefinition) => 
 
 const cast_field =
   (context: BuildContext) =>
-  (column: ColumnDefinition): string => {
-    const name = Attribute.name(context, column)
-    const comment = Attribute.comment(context, column)
+  (column: PropertyDefinition): string => {
+    const name = TypedbAttribute.name(context, column)
+    const comment = TypedbAttribute.comment(context, column)
 
     return lines([comment, `, owns ${name}`])
   }
 
 //------------------------------------------------------------------------------
 
-const cast_node_or_entity =
-  (context: BuildContext, backend: BackendContext) => (record: TableDefinition) => {
-    const name = NodeOrEntity.name(context, record)
-    const type = NodeOrEntity.type(context, record)
-    const comment = NodeOrEntity.comment(context, record)
+const cast_entity =
+  (context: BuildContext, _backend: BackendContext) => (record: EntityDefinition) => {
+    const name = TypedbEntity.name(context, record)
+    const type = TypedbEntity.type(context, record)
+    const comment = TypedbEntity.comment(context, record)
 
-    const columns = record.columns.filter(
-      ({ name }) => !(name in backend.coreferences.error),
-    )
-    const fields = columns.map(cast_field(context))
-    const attributes = columns.map(cast_attribute(context))
+    const fields = record.columns.map(cast_field(context))
+    const attributes = record.columns.map(cast_attribute(context))
 
     return lines([
       comment,
@@ -189,19 +141,20 @@ const cast_node_or_entity =
 //------------------------------------------------------------------------------
 
 const cast_relation =
-  (context: BuildContext, _backend: BackendContext) => (record: ForeignKey) => {
+  (context: BuildContext, _backend: BackendContext) =>
+  (record: ForeignKeyDefinition) => {
     const { config } = context
-    const { primary_table, primary_column, foreign_table, foreign_column } = record
+    const { source_table, source_column, target_table, target_column } = record
 
-    const name = Relation.name(context, record)
-    const type = Relation.type(context, record)
-    const comment = Relation.comment(context, record)
+    const name = TypedbRelation.name(context, record)
+    const type = TypedbRelation.type(context, record)
+    const comment = TypedbRelation.comment(context, record)
 
     const relations = [
-      `, owns ${config.formatAttributeName(primary_column)}`,
-      `, owns ${config.formatAttributeName(foreign_column)}`,
-      `, relates ${config.formatEntityName(primary_table)}`,
-      `, relates ${config.formatEntityName(foreign_table)}`,
+      `, owns ${config.formatAttributeName(source_column)}`,
+      `, owns ${config.formatAttributeName(target_column)}`,
+      `, relates ${config.formatEntityName(source_table)}`,
+      `, relates ${config.formatEntityName(target_table)}`,
     ]
 
     return lines([
@@ -213,18 +166,18 @@ const cast_relation =
   }
 
 const cast_edge =
-  (context: BuildContext, _backend: BackendContext) => (record: RelationshipEdge) => {
+  (context: BuildContext, _backend: BackendContext) => (record: EdgeDefinition) => {
     const { config } = context
-    const { domain, codomain, columns } = record
+    const { source, target, columns } = record
 
-    const name = Edge.name(context, record)
-    const type = Edge.type(context, record)
-    const comment = Edge.comment(context, record)
+    const name = TypedbEdge.name(context, record)
+    const type = TypedbEdge.type(context, record)
+    const comment = TypedbEdge.comment(context, record)
 
     const relations = [
       ...columns.map(({ name }) => `, owns ${config.formatAttributeName(name)}`),
-      `, relates ${config.formatEntityName(domain.name)}`,
-      `, relates ${config.formatEntityName(codomain.name)}`,
+      `, relates ${config.formatEntityName(source.name)}`,
+      `, relates ${config.formatEntityName(target.name)}`,
     ]
     const attributes = columns.map(cast_attribute(context))
 
@@ -238,18 +191,6 @@ const cast_edge =
   }
 
 //------------------------------------------------------------------------------
-
-export function postprocess_context(
-  context: BuildContext,
-  backend: BackendContext,
-): BuildContext {
-  const nodes = context.nodes.flatMap(postprocess_node_or_table(backend))
-  const edges = context.edges.flatMap(postprocess_edge(backend))
-  const tables = context.tables.flatMap(postprocess_node_or_table(backend))
-  const foreign_keys = context.foreign_keys.flatMap(postprocess_foreign_key(backend))
-
-  return { ...context, nodes, edges, tables, foreign_keys }
-}
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const render_typedb = async (prev_context: BuildContext) => {
@@ -264,9 +205,9 @@ export const render_typedb = async (prev_context: BuildContext) => {
   const context = postprocess_context(prev_context, backend)
   const { nodes, edges, tables, foreign_keys } = context
 
-  const node_content = flatMap(nodes, cast_node_or_entity(context, backend))
+  const node_content = flatMap(nodes, cast_entity(context, backend))
   const edge_content = flatMap(edges, cast_edge(context, backend))
-  const entity_content = flatMap(tables, cast_node_or_entity(context, backend))
+  const entity_content = flatMap(tables, cast_entity(context, backend))
   const relation_content = flatMap(foreign_keys, cast_relation(context, backend))
 
   const section = code_section(backend)

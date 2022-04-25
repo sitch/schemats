@@ -1,9 +1,14 @@
 import { get, groupBy, map, mapValues, pickBy, sortBy, uniq } from 'lodash'
 
-import type { ColumnName, TableDefinition, UDTName } from './adapters/types'
+import type {
+  ColumnName,
+  EdgeDefinition,
+  NodeDefinition,
+  TableDefinition,
+  UDTName,
+} from './adapters/types'
 import type { BuildContext } from './compiler'
-import type { Backend } from './config'
-import type { RelationshipEdge, RelationshipNode } from './relationships'
+import type { BackendName } from './config'
 import { DATA_SOURCE_JULIA_TYPEMAP } from './typemaps/julia-typemap'
 import { DATA_SOURCE_TYPEDB_TYPEMAP } from './typemaps/typedb-typemap'
 
@@ -38,12 +43,12 @@ export interface TypeQualifiedCoreferences {
 
 function get_typemap(
   { data_source }: BuildContext,
-  backend?: Backend,
+  backend_name?: BackendName,
 ): AbstractTypeMap {
-  if (backend === 'typedb') {
+  if (backend_name === 'typedb') {
     return DATA_SOURCE_TYPEDB_TYPEMAP[data_source]
   }
-  if (backend === 'julia') {
+  if (backend_name === 'julia') {
     return DATA_SOURCE_JULIA_TYPEMAP[data_source]
   }
   return {}
@@ -56,7 +61,7 @@ function lookup_typemap(source_type: string, typemap?: AbstractTypeMap) {
 //------------------------------------------------------------------------------
 
 function entity_parts(
-  entity: TableDefinition | RelationshipNode | RelationshipEdge,
+  entity: TableDefinition | NodeDefinition | EdgeDefinition,
   typemap?: Record<string, string>,
 ): CoreferenceType[] {
   return entity.columns.map(column => ({
@@ -76,7 +81,7 @@ const source_type_filter = (records: CoreferenceType[]) =>
 const dest_type_filter = (records: CoreferenceType[]) =>
   uniq(map(records, 'dest_type_key')).length > 1
 
-function build_mapping(context: BuildContext, backend?: Backend) {
+function build_mapping(context: BuildContext, backend?: BackendName) {
   const typemap = get_typemap(context, backend)
   const records = [...context.tables, ...context.nodes, ...context.edges].flatMap(
     entity => entity_parts(entity, typemap),
@@ -102,7 +107,7 @@ function sorter(mapping: CoreferenceMap): CoreferenceMap {
 
 export function build_coreferences(
   context: BuildContext,
-  backend?: Backend,
+  backend?: BackendName,
 ): Coreferences {
   const mapping = build_mapping(context, backend)
   return {
@@ -113,7 +118,7 @@ export function build_coreferences(
 
 export const build_type_qualified_coreferences = (
   context: BuildContext,
-  backend: Backend,
+  backend: BackendName,
 ): TypeQualifiedCoreferences => {
   const mapping = build_mapping(context, backend)
   return {

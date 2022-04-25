@@ -1,8 +1,8 @@
 import { flatMap, size } from 'lodash'
 
 import type {
-  ColumnDefinition,
   EnumDefinition,
+  PropertyDefinition,
   TableDefinition,
 } from '../adapters/types'
 import type { BuildContext } from '../compiler'
@@ -72,10 +72,13 @@ const Interface = {
   name: ({ config }: BuildContext, { name }: TableDefinition): string => {
     return normalize_name(config.formatTableName(name))
   },
-  key: ({ config }: BuildContext, { name, is_nullable }: ColumnDefinition): string => {
+  key: (
+    { config }: BuildContext,
+    { name, is_nullable }: PropertyDefinition,
+  ): string => {
     return `${normalize_name(config.formatColumnName(name))}${is_nullable ? '?' : ''}`
   },
-  value: (context: BuildContext, record: ColumnDefinition): string => {
+  value: (context: BuildContext, record: PropertyDefinition): string => {
     return translate_type(context, record)
   },
 }
