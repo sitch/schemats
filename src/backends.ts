@@ -10,12 +10,29 @@ import { render_typescript } from './backends/typescript'
 import type { BuildContext } from './compiler'
 import type { TypeQualifiedCoreferences } from './coreference'
 
+//------------------------------------------------------------------------------
+
+export type CommentDelimiter = string
+export type IndentDelimiter = string
+
+export interface BackendContext {
+  backend: BackendName
+  comment: CommentDelimiter
+  indent: IndentDelimiter
+  character_line_limit: number
+  coreferences: TypeQualifiedCoreferences
+}
+
+//------------------------------------------------------------------------------
+
 export enum DataSourceEnum {
   neo4j = 'neo4j',
   postgres = 'postgres',
   mysql = 'mysql',
 }
 export type DataSource = keyof typeof DataSourceEnum
+
+//------------------------------------------------------------------------------
 
 export enum BackendEnum {
   typescript = 'typescript',
@@ -30,23 +47,6 @@ export enum BackendEnum {
   typedb_loader_config = 'typedb_loader_config',
 }
 export type BackendName = keyof typeof BackendEnum
-
-export type CommentDelimiter = string
-export type IndentDelimiter = string
-
-export interface BackendContext {
-  backend: BackendName
-  comment: CommentDelimiter
-  indent: IndentDelimiter
-  character_line_limit: number
-  coreferences: TypeQualifiedCoreferences
-}
-
-export interface ConfigLike {
-  version?: string
-  timestamp?: string
-  command_from_cli?: string
-}
 
 //------------------------------------------------------------------------------
 
