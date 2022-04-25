@@ -7,7 +7,6 @@ import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
-import type { BuildContext } from './compiler'
 
 //------------------------------------------------------------------------------
 
