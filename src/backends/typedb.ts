@@ -158,8 +158,7 @@ const cast_field =
     const name = Attribute.name(context, column)
     const comment = Attribute.comment(context, column)
 
-    const line = `, owns ${name}`
-    return lines([comment, line])
+    return lines([comment, `, owns ${name}`])
   }
 
 //------------------------------------------------------------------------------
@@ -176,10 +175,9 @@ const cast_node_or_entity =
     const fields = columns.map(cast_field(context))
     const attributes = columns.map(cast_attribute(context))
 
-    const line = `${name} sub ${type}`
     return lines([
       comment,
-      line,
+      `${name} sub ${type}`,
       pad_lines(lines(fields), '  '),
       ';',
       lines(attributes),
@@ -197,7 +195,6 @@ const cast_relation =
     const type = Relation.type(context, record)
     const comment = Relation.comment(context, record)
 
-    const line = `${name} sub ${type}`
     const relations = [
       `, owns ${config.formatAttributeName(primary_column)}`,
       `, owns ${config.formatAttributeName(foreign_column)}`,
@@ -205,7 +202,12 @@ const cast_relation =
       `, relates ${config.formatEntityName(foreign_table)}`,
     ]
 
-    return lines([comment, line, pad_lines(lines(relations), '  '), ';'])
+    return lines([
+      comment,
+      `${name} sub ${type}`,
+      pad_lines(lines(relations), '  '),
+      ';',
+    ])
   }
 
 const cast_edge =
@@ -217,7 +219,6 @@ const cast_edge =
     const type = Edge.type(context, record)
     const comment = Edge.comment(context, record)
 
-    const line = `${name} sub ${type}`
     const relations = [
       ...properties.map(({ name }) => `, owns ${config.formatAttributeName(name)}`),
       `, relates ${config.formatEntityName(domain.name)}`,
@@ -227,7 +228,7 @@ const cast_edge =
 
     return lines([
       comment,
-      line,
+      `${name} sub ${type}`,
       pad_lines(lines(relations), '  '),
       ';',
       lines(attributes),
