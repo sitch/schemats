@@ -116,17 +116,17 @@ export function cast_foreign_key_relation(
         relation: cast_foreign_key_name(foreign_key),
         ownerships: [],
         players: [
-          // export interface DefinitionPlayer {
-          //   role?: string
-          //   required?: boolean
-          //   match?: DefinitionThing
-          // }
-
           {
-            role: `${foreign_key.primary_table}:${foreign_key.primary_column}`,
+            role: foreign_key.primary_table,
+            match: {
+              type: foreign_key.primary_column,
+              attribute: {
+                column: foreign_key.primary_column,
+              },
+            },
           },
           {
-            role: `${foreign_key.foreign_table}:${foreign_key.foreign_column}`,
+            role: foreign_key.foreign_table,
           },
         ],
       },
