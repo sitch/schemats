@@ -1,6 +1,12 @@
 import { flatMap, fromPairs, keyBy, sortBy, toPairs, uniq } from 'lodash'
 
-import type { ColumnName, TableDefinition, TableName, UDTName } from './adapters/types'
+import type {
+  ColumnName,
+  ForeignKey,
+  TableDefinition,
+  TableName,
+  UDTName,
+} from './adapters/types'
 import type { BuildContext } from './compiler'
 import type { Config } from './config'
 import { ENUM_DELIMITER } from './config'
@@ -34,11 +40,18 @@ export interface TypeDBCoreferences {
 export const build_coreferences = (
   _config: Config,
   tables: TableDefinition[],
+  foreign_keys: ForeignKey[],
   relationships: Relationship[],
   nodes: RelationshipNode[],
   edges: RelationshipEdge[],
 ): Coreferences => {
-  const all = attribute_overlap_grouping(tables, relationships, nodes, edges)
+  const all = attribute_overlap_grouping(
+    tables,
+    foreign_keys,
+    relationships,
+    nodes,
+    edges,
+  )
 
   return {
     all,
@@ -113,7 +126,7 @@ const property_grouping_pairs = (edges: RelationshipEdge[]) => {
 
 const attribute_overlap_grouping = (
   tables: TableDefinition[],
-
+  _foreign_keys: ForeignKey[],
   _relationships: Relationship[],
   nodes: RelationshipNode[],
   edges: RelationshipEdge[],

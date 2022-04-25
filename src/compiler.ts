@@ -109,7 +109,14 @@ const compile = async (
   const relationships = build_relationships(config, tables)
   config.log('[build] Compiled relationships', relationships)
 
-  const coreferences = build_coreferences(config, tables, relationships, [], [])
+  const coreferences = build_coreferences(
+    config,
+    tables,
+    foreign_keys,
+    relationships,
+    [],
+    [],
+  )
   config.log('[build] Compiled coreferences', coreferences)
 
   sortBy

@@ -91,7 +91,7 @@ export function build_context(config: Config, spec: Neo4jReflection): BuildConte
     tables: [],
     edges,
     nodes,
-    coreferences: build_coreferences(config, [], [], nodes, edges),
+    coreferences: build_coreferences(config, [], [], [], nodes, edges),
   }
 }
 
