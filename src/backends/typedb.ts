@@ -245,7 +245,7 @@ export function postprocess_context(
   const nodes = context.nodes.flatMap(verify_node_or_table(backend))
   const edges = context.edges.flatMap(verify_edge(backend))
   const tables = context.tables.flatMap(verify_node_or_table(backend))
-  const foreign_keys = context.foreign_keys.flat().flatMap(verify_foreign_key(backend))
+  const foreign_keys = context.foreign_keys.flatMap(verify_foreign_key(backend))
 
   return { ...context, nodes, edges, tables, foreign_keys }
 }
