@@ -165,15 +165,15 @@ const cast_relations = (context: BuildContext, backend: BackendContext) => {
   return entities
 }
 
-const build = (previous_context: BuildContext): Configuration => {
+const build = (prev_context: BuildContext): Configuration => {
   const backend: BackendContext = {
     backend: 'typedb',
     comment: '#',
     indent: '  ',
     character_line_limit: 80,
-    coreferences: cast_typedb_coreferences(previous_context),
+    coreferences: cast_typedb_coreferences(prev_context),
   }
-  const context = postprocess_context(previous_context, backend)
+  const context = postprocess_context(prev_context, backend)
 
   if (!context.config.typedbSchema) {
     throw new Error('Missing TypedbSchema')

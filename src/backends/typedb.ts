@@ -250,16 +250,16 @@ export function postprocess_context(
 }
 
 // eslint-disable-next-line @typescript-eslint/require-await
-export const render_typedb = async (previous_context: BuildContext) => {
+export const render_typedb = async (prev_context: BuildContext) => {
   const backend: BackendContext = {
     backend: 'typedb',
     comment: TYPEDB_COMMENT,
     indent: TYPEDB_INDENT,
     character_line_limit: 80,
-    coreferences: cast_typedb_coreferences(previous_context),
+    coreferences: cast_typedb_coreferences(prev_context),
   }
 
-  const context = postprocess_context(previous_context, backend)
+  const context = postprocess_context(prev_context, backend)
   const { nodes, edges, tables, foreign_keys } = context
 
   const node_content = flatMap(nodes, cast_node_or_entity(context, backend))
@@ -272,7 +272,7 @@ export const render_typedb = async (previous_context: BuildContext) => {
   return lines([
     header(context, backend),
     pragma(context),
-    coreference_banner(context, backend),
+    coreference_banner(prev_context, backend),
     ...section('Nodes', size(nodes), node_content),
     ...section('Edges', size(edges), edge_content),
     ...section('Entities', size(tables), entity_content),
