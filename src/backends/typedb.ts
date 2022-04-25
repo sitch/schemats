@@ -27,13 +27,14 @@ const prefix = (context: BuildContext) => {
 // TODO: eliminate this
 // Filter out error coreference values
 export function is_valid_attribute(backend: BackendContext) {
-  return ({ name }: ColumnDefinition) => !(name in backend.coreferences.error)
+  return ({ name }: ColumnDefinition) =>
+    !(name.toLowerCase() in backend.coreferences.error)
 }
 
 export function is_valid_foreign_key(backend: BackendContext) {
   return ({ primary_column, foreign_column }: ForeignKey) =>
-    !(primary_column in backend.coreferences.error) &&
-    !(foreign_column in backend.coreferences.error)
+    !(primary_column.toLowerCase() in backend.coreferences.error) &&
+    !(foreign_column.toLowerCase() in backend.coreferences.error)
 }
 
 export function verify_foreign_key(backend: BackendContext) {
