@@ -1,6 +1,5 @@
 import type { PropertyDefinition } from '../adapters/types'
-import type { BuildContext } from '../compiler'
-import { DataSource, DataSourceEnum } from '../compiler'
+import { BuildContext, DataSource, DataSourceEnum } from '../compiler'
 import type { UDTTypeMap } from '../coreference'
 
 export type JuliaType = string
