@@ -6,7 +6,6 @@ import type {
   PropertyDefinition,
   TableDefinition,
 } from '../adapters/types'
-import type { BackendContext } from '../backends'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines } from '../formatters'
@@ -24,6 +23,7 @@ import {
 } from '../lang/julia'
 import { cast_julia_type, translate_type } from '../typemaps/julia-typemap'
 import { identifier_like } from '../utils'
+import type { BackendContext } from './base'
 import { header } from './base'
 
 const normalize_name = (name: string): string => {

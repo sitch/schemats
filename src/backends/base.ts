@@ -2,16 +2,37 @@ import { mapValues, size } from 'lodash'
 import sortJson from 'sort-json'
 
 import { version } from '../../package.json'
-import type { BackendContext } from '../backends'
+import type { BackendName } from '../backends'
 import type { BuildContext } from '../compiler'
-import type { CoreferenceMap, CoreferenceType } from '../coreference'
+import type {
+  CoreferenceMap,
+  CoreferenceType,
+  TypeQualifiedCoreferences,
+} from '../coreference'
 import { pad_lines, pretty } from '../formatters'
+
+//------------------------------------------------------------------------------
+
+export type CommentDelimiter = string
+export type IndentDelimiter = string
+
+export interface BackendContext {
+  backend: BackendName
+  comment: CommentDelimiter
+  indent: IndentDelimiter
+  character_line_limit: number
+  coreferences: TypeQualifiedCoreferences
+}
+
+//------------------------------------------------------------------------------
 
 interface ConfigLike {
   version?: string
   timestamp?: string
   command_from_cli?: string
 }
+
+//------------------------------------------------------------------------------
 
 const render_header_body = (config: ConfigLike = {}) =>
   `###############################################################################

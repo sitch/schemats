@@ -6,12 +6,12 @@ import type {
   PropertyDefinition,
   TableDefinition,
 } from '../adapters/types'
-import type { BackendContext } from '../backends'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
 import { JULIA_CHARACTER_LINE_LIMIT, JULIA_COMMENT, JULIA_INDENT } from '../lang/julia'
 import { cast_julia_type } from '../typemaps/julia-typemap'
+import type { BackendContext } from './base'
 import { header } from './base'
 
 //------------------------------------------------------------------------------

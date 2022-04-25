@@ -5,7 +5,6 @@ import type {
   PropertyDefinition,
   TableDefinition,
 } from '../adapters/types'
-import type { BackendContext } from '../backends'
 import type { BuildContext } from '../compiler'
 import type { UserImport } from '../config'
 import { build_type_qualified_coreferences } from '../coreference'
@@ -15,6 +14,7 @@ import {
   pragma,
   translate_type,
 } from '../typemaps/typescript-typemap'
+import type { BackendContext } from './base'
 import { header } from './base'
 
 //------------------------------------------------------------------------------

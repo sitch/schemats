@@ -8,20 +8,6 @@ import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
 import type { BuildContext } from './compiler'
-import type { TypeQualifiedCoreferences } from './coreference'
-
-//------------------------------------------------------------------------------
-
-export type CommentDelimiter = string
-export type IndentDelimiter = string
-
-export interface BackendContext {
-  backend: BackendName
-  comment: CommentDelimiter
-  indent: IndentDelimiter
-  character_line_limit: number
-  coreferences: TypeQualifiedCoreferences
-}
 
 //------------------------------------------------------------------------------
 

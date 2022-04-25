@@ -7,12 +7,12 @@ import type {
   PropertyDefinition,
   TableDefinition,
 } from '../adapters/types'
-import type { BackendContext } from '../backends'
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { postprocess_context } from '../coreference-resolution'
 import { code_section, lines, pad_lines } from '../formatters'
 import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
+import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
 
 export const TYPEDB_COMMENT = '#'
