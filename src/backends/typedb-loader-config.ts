@@ -106,37 +106,45 @@ export function cast_edge_relation(context: BuildContext, backend: BackendContex
   }
 }
 
+function cast_players({
+  primary_table,
+  primary_column,
+  foreign_table,
+  foreign_column,
+}: ForeignKey): DefinitionPlayer[] {
+  return [
+    {
+      role: primary_table,
+      match: {
+        type: primary_column,
+        attribute: {
+          column: primary_column,
+        },
+      },
+    },
+    {
+      role: foreign_table,
+      match: {
+        type: foreign_column,
+        attribute: {
+          column: foreign_column,
+        },
+      },
+    },
+  ]
+}
+
 export function cast_foreign_key_relation(
   context: BuildContext,
   _backend: BackendContext,
 ) {
   return (foreign_key: ForeignKey): GeneratorRelation => {
-    const { primary_table, primary_column, foreign_table, foreign_column } = foreign_key
     return {
       data: data_paths(context, foreign_key),
       insert: {
         relation: cast_foreign_key_name(foreign_key),
         ownerships: [],
-        players: [
-          {
-            role: primary_table,
-            match: {
-              type: primary_column,
-              attribute: {
-                column: primary_column,
-              },
-            },
-          },
-          {
-            role: foreign_table,
-            match: {
-              type: foreign_column,
-              attribute: {
-                column: foreign_column,
-              },
-            },
-          },
-        ],
+        players: cast_players(foreign_key),
       },
     }
   }
