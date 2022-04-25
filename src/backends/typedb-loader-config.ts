@@ -183,23 +183,20 @@ export const build = (context: BuildContext): Configuration => {
     character_line_limit: 80,
     coreferences: cast_typedb_coreferences(context),
   }
-
-  const entities = cast_entities(context, backend)
-
-  // const attributes =  cast_attributes(context, backend)
-  // const relations =  cast_relations(context, backend)
-
+  if (!context.config.typedbSchema) {
+    throw new Error('Missing TypedbSchema')
+  }
   return {
     globalConfig: {
       separator: ',',
       rowsPerCommit: 50,
       parallelisation: 24,
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      schema: context.config.typedbSchema!,
+      schema: context.config.typedbSchema,
     },
-    entities,
-    // attributes,
-    // relations,
+    // attributes: cast_attributes(context, backend),
+    entities: cast_entities(context, backend),
+    relations: cast_relations(context, backend),
   }
 }
 
