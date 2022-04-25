@@ -58,7 +58,7 @@ export const neo4j = (program: Command, argv: string[]) => {
         const context = build_context(config, spec3)
 
         const binary =
-          backend === 'julia-octo'
+          backend === 'julia_octo'
             ? render_julia_octo_neo4j_json(config, spec1, spec2, spec3)
             : await render(context, backend)
 

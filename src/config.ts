@@ -21,20 +21,19 @@ export const ENUM_DELIMITER = '::'
 
 //------------------------------------------------------------------------------
 
-export const BACKENDS = [
-  'typescript',
-  'json',
-  'typedb',
-  'julia',
-  'algebraic-julia',
-  'hydra',
-  'julia-genie',
-  'julia-octo',
-  'typedb-loader-config',
-] as const
-export type Backends = typeof BACKENDS
-// export type Backend = "typescript" | "json" | "typedb" | "julia";
-export type Backend = string
+export enum BackendEnum {
+  typescript = 'typescript',
+  json = 'json',
+  typedb = 'typedb',
+  julia = 'julia',
+  algebraic_julia = 'algebraic_julia',
+  hydra = 'hydra',
+  julia_genie = 'julia_genie',
+  julia_octo = 'julia_octo',
+  haskell = 'haskell',
+  typedb_loader_config = 'typedb_loader_config',
+}
+export type Backend = keyof typeof BackendEnum
 
 //------------------------------------------------------------------------------
 
@@ -56,7 +55,7 @@ export interface ConfigValues {
 
   schema: string
   typedbSchema?: string
-  backend: string
+  backend: Backend
   database: string
   connection: string
   enums?: boolean

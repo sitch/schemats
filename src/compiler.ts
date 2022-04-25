@@ -21,8 +21,7 @@ import { render_julia_octo } from './backends/julia-octo'
 import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
-import type { Backend, Config, DataSource, UserImport } from './config'
-import { BACKENDS, get_user_imports } from './config'
+import { Backend, Config, DataSource, get_user_imports, UserImport } from './config'
 import type { Relationship, RelationshipEdge, RelationshipNode } from './relationships'
 import { build_relationships } from './relationships'
 import { merge_table_meta } from './tables'
@@ -138,24 +137,24 @@ export const render = async (context: BuildContext, backend: Backend) => {
   if (backend === 'julia') {
     return await render_julia(context)
   }
-  if (backend === 'algebraic-julia') {
+  if (backend === 'algebraic_julia') {
     return await render_algebraic_julia(context)
   }
-  if (backend === 'julia-genie') {
+  if (backend === 'julia_genie') {
     return await render_julia_genie(context)
   }
-  if (backend === 'julia-octo') {
+  if (backend === 'julia_octo') {
     return await render_julia_octo(context)
   }
   if (backend === 'hydra') {
     return await render_hydra(context)
   }
-  if (backend === 'typedb-loader-config') {
+  if (backend === 'typedb_loader_config') {
     return await render_typedb_loader_config(context)
   }
 
-  const backends = BACKENDS.join(', ')
-  throw `Invalid backend: ${backend} must be one of: ${backends}`
+  // throw `Invalid backend: ${backend} must be one of: ${BackendEnum}`
+  throw `Invalid backend: ${backend}`
 }
 
 export async function generate(

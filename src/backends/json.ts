@@ -1,7 +1,7 @@
 import sortJson from 'sort-json'
 
 import type { BuildContext } from '../compiler'
-import { build_coreferences } from '../coreference'
+import { build_type_qualified_coreferences } from '../coreference'
 import { pretty } from '../formatters'
 
 export const build = (context: BuildContext) => {
@@ -14,7 +14,7 @@ export const build = (context: BuildContext) => {
     version,
     timestamp,
     ...rest,
-    coreferences: build_coreferences(context),
+    coreferences: build_type_qualified_coreferences(context, context.config.backend),
   }
 }
 
