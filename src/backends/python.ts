@@ -1,5 +1,4 @@
 import { flatMap, size } from 'lodash'
-import { config } from 'process'
 
 import type {
   EdgeDefinition,
@@ -119,6 +118,8 @@ function cast_default_value(column: PropertyDefinition) {
       .filter(Boolean)
       .map(String)
       .filter(name => !name.startsWith('nextval('))
+      .map(name => (name === 'false' ? 'False' : name))
+      .map(name => (name === 'true' ? 'True' : name))
       .map(name => ` = ${name}`)
       .shift() || ''
   )
