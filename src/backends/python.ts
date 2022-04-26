@@ -1,4 +1,5 @@
 import { flatMap, size } from 'lodash'
+import { config } from 'process'
 
 import type {
   EdgeDefinition,
@@ -112,13 +113,23 @@ export const PythonEdge = {
 
 //------------------------------------------------------------------------------
 
+function cast_default_value(column: PropertyDefinition) {
+  return (
+    [column.default_value]
+      .filter(Boolean)
+      .filter(String)
+      .filter(name => !name.startsWith('nextval('))
+      .map(name => ` = ${name}`)
+      .shift() || ''
+  )
+}
+
 const cast_field = (context: BuildContext) => (column: PropertyDefinition) => {
   const name = PythonAttribute.name(context, column)
   const type = PythonAttribute.type(context, column)
   const comment = PythonAttribute.comment(context, column)
-  const default_value = column.default_value ? ` = ${String(column.default_value)}` : ''
 
-  const line = `${name}: ${type}${default_value}`
+  const line = `${name}: ${type}${cast_default_value(column)}`
   return lines([comment, line])
 }
 
