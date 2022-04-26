@@ -117,12 +117,12 @@ export const cast_python_type = (
   { config, enums, data_source }: BuildContext,
   { udt_name }: PropertyDefinition,
 ): PythonType => {
-  const type = DATA_SOURCE_PYTHON_TYPEMAP[data_source][udt_name]
+  const type = DATA_SOURCE_PYTHON_TYPEMAP[data_source][udt_name.toLowerCase()]
   if (type && !['unknown'].includes(type)) {
     return type
   }
 
-  const enum_definition = enums.find(({ name }) => name === udt_name)
+  const enum_definition = enums.find(({ name }) => name === udt_name.toLowerCase())
   if (enum_definition) {
     const enum_type = config.formatEnumName(enum_definition.name)
     return `String; # enum: ${enum_type}`
