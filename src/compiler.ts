@@ -20,6 +20,7 @@ import { render_json } from './backends/json'
 import { render_julia } from './backends/julia'
 import { render_julia_genie } from './backends/julia-genie'
 import { render_julia_octo } from './backends/julia-octo'
+import { render_python } from './backends/python'
 import { render_typedb } from './backends/typedb'
 import { render_typedb_loader_config } from './backends/typedb-loader-config'
 import { render_typescript } from './backends/typescript'
@@ -124,15 +125,16 @@ function NOT_IMPLEMENTED(_context: BuildContext): Promise<string> {
 type ApplyBackend = (context: BuildContext) => Promise<string>
 
 const dispatch: Record<BackendName, ApplyBackend> = {
-  [BackendEnum.typescript]: render_typescript,
-  [BackendEnum.json]: render_json,
-  [BackendEnum.typedb]: render_typedb,
-  [BackendEnum.julia]: render_julia,
   [BackendEnum.algebraic_julia]: render_algebraic_julia,
+  [BackendEnum.hydra]: render_hydra,
+  [BackendEnum.json]: render_json,
   [BackendEnum.julia_genie]: render_julia_genie,
   [BackendEnum.julia_octo]: render_julia_octo,
-  [BackendEnum.hydra]: render_hydra,
+  [BackendEnum.julia]: render_julia,
+  [BackendEnum.python]: render_python,
   [BackendEnum.typedb_loader_config]: render_typedb_loader_config,
+  [BackendEnum.typedb]: render_typedb,
+  [BackendEnum.typescript]: render_typescript,
   // Not implemented
   [BackendEnum.haskell]: NOT_IMPLEMENTED,
 }

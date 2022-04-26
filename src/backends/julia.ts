@@ -8,7 +8,7 @@ import type {
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
-import { JULIA_CHARACTER_LINE_LIMIT } from '../lang/julia'
+import { renderer_context } from '../lang/julia'
 import { pragma, translate_type } from '../typemaps/julia-typemap'
 import type { BackendContext } from './base'
 import { header } from './base'
@@ -134,10 +134,8 @@ export const render_julia = async (context: BuildContext) => {
   // const relations = flatMap(foreign_keys, cast_relation(context));
 
   const backend: BackendContext = {
-    backend: 'julia',
-    comment: '#',
-    indent: '  ',
-    character_line_limit: JULIA_CHARACTER_LINE_LIMIT,
+    ...renderer_context,
+
     coreferences: build_type_qualified_coreferences(context, 'julia'),
   }
 

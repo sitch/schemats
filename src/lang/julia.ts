@@ -1,5 +1,6 @@
 import { get, groupBy, uniq } from 'lodash'
 
+import type { RendererContext } from '../backends/base'
 import type { BuildContext } from '../compiler'
 import { banner, lines, pad_lines } from '../formatters'
 import { cast_julia_type } from '../typemaps/julia-typemap'
@@ -10,6 +11,75 @@ export const JULIA_INDENT = '    '
 
 export const COMMENT_LINE = divider_line('-', 0)
 export const INDENT_COMMENT_LINE = divider_line('-', 1)
+
+export const JULIA_RESERVED_WORDS = new Set<string>([
+  '__dot__',
+  '_cmd',
+  '_str',
+  '@doc_str',
+  'abstract',
+  'bitstype',
+  'block',
+  'call',
+  'catch',
+  'cell1d',
+  'comparison',
+  'const',
+  'curly',
+  'do',
+  'end',
+  'memq',
+  'eqv',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'global',
+  'if',
+  'kw',
+  'line',
+  'local',
+  'macro',
+  'macrocall',
+  'memv',
+  'module',
+  'mutable',
+  'none',
+  'parameters',
+  'primitive',
+  'quote',
+  'ref',
+  'return',
+  'row',
+  'string',
+  'struct',
+  'toplevel',
+  'true',
+  'try',
+  'tuple',
+  'type',
+  'typealias',
+  'typed_comprehension',
+  'typed_hcat',
+  'typed_vcat',
+  'vect',
+  'where',
+])
+
+export const is_reserved_word = (name: string): boolean =>
+  JULIA_RESERVED_WORDS.has(name)
+
+//------------------------------------------------------------------------------
+
+export const renderer_context: RendererContext = {
+  backend: 'julia',
+  comment: JULIA_COMMENT,
+  indent: JULIA_INDENT,
+  reserved_words: JULIA_RESERVED_WORDS,
+  character_line_limit: JULIA_CHARACTER_LINE_LIMIT,
+}
+
+//------------------------------------------------------------------------------
 
 export function divider_line(char = '-', indentation = 0) {
   return `${JULIA_COMMENT}${char.repeat(

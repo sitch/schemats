@@ -3,7 +3,7 @@ import chalk from 'chalk'
 
 import { version } from '../package.json'
 import type { TableDefinition } from './adapters/types'
-import type { BackendName } from './enums'
+import type { BackendName, InflectionFormat } from './enums'
 import { inflect, pretty } from './formatters'
 import { caller_relative_path } from './utils'
 
@@ -38,9 +38,9 @@ export interface ConfigValues {
   connection: string
   enums?: boolean
   ignoreAttributeCollisions?: string[]
-  enumFormatter?: string
-  tableFormatter?: string
-  columnFormatter?: string
+  enumFormatter?: InflectionFormat
+  tableFormatter?: InflectionFormat
+  columnFormatter?: InflectionFormat
 
   csvDir: string
   overrideCsvPath?: string

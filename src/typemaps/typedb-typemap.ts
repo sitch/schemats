@@ -7,55 +7,6 @@ export type TypeDBType = string
 
 //------------------------------------------------------------------------------
 
-export const TYPEDB_RESERVED_WORDS = new Set([
-  // datatypes
-  'boolean',
-  'datetime',
-  'double',
-  'long',
-  'string',
-
-  // 	"COUNT",
-  // "MAX",
-  // "MEAN",
-  // "MEDIAN",
-  // "MIN",
-  // "STD",
-  // "SUM",
-
-  'type',
-
-  // query
-  'match',
-  'get',
-  'define',
-  'undefine',
-  'delete',
-  'compute',
-  'insert',
-
-  'abstract',
-  'sub',
-  'attribute',
-  'entity',
-  'relation',
-  'thing',
-  'role',
-  'rule',
-
-  'owns',
-  'relates',
-  'plays',
-
-  'value',
-  'isa',
-])
-
-export const is_reserved_word = (name: string): boolean =>
-  TYPEDB_RESERVED_WORDS.has(name)
-
-//------------------------------------------------------------------------------
-
 export const MYSQL_TO_TYPEDB_TYPEMAP: UDTTypeMap<TypeDBType> = {
   char: 'string',
   varchar: 'string',

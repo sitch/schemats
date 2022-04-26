@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 import { toGenericStruct, toGraphQLTypeDefs } from '@neo4j/introspector'
 import fs from 'fs'
 import { mkdirpSync } from 'fs-extra'
@@ -32,6 +34,7 @@ const outputPaths = ({ dir, database }: Credentials) => ({
 const buildDriver = ({ database, port, protocol, username, password }: Credentials) => {
   if (!database || !port || !protocol) {
     logger.error('Missing :database, :port, or :protocol')
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit(1)
   }
 
@@ -65,10 +68,10 @@ async function main({ readonly }: Credentials) {
   mkdirpSync(path.dirname(genericStructPath))
 
   logger.info('Introspecting Schema...')
-  const typeDefs = await toGraphQLTypeDefs(sessionFactory, readonly)
+  const typedefs = await toGraphQLTypeDefs(sessionFactory, readonly)
 
   logger.info(`Writing Schema types to: ${schemaPath}`)
-  fs.writeFileSync(schemaPath, typeDefs)
+  fs.writeFileSync(schemaPath, typedefs)
 
   logger.info('Introspecting GenericStruct...')
   const genericStruct = await toGenericStruct(sessionFactory)

@@ -22,6 +22,7 @@ import type {
   GeneratorEntity,
   GeneratorRelation,
 } from '../lang/typedb-loader-config'
+import { renderer_context } from '../lang/typeql'
 import type { BackendContext } from './base'
 import { normalize_name, TypedbRelation } from './typedb'
 
@@ -171,10 +172,7 @@ const cast_relations = (context: BuildContext, backend: BackendContext) => {
 
 const build = (prev_context: BuildContext): Configuration => {
   const backend: BackendContext = {
-    backend: 'typedb',
-    comment: '#',
-    indent: '  ',
-    character_line_limit: 80,
+    ...renderer_context,
     coreferences: build_type_qualified_coreferences(prev_context, 'typedb'),
   }
   const context = postprocess_context(prev_context, backend)

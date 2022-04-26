@@ -11,15 +11,13 @@ import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines } from '../formatters'
 import {
   INDENT_COMMENT_LINE,
-  JULIA_CHARACTER_LINE_LIMIT,
-  JULIA_COMMENT,
-  JULIA_INDENT,
   render_module,
   render_module_export,
   render_octo_definitions,
   render_octo_import,
   render_struct,
   render_using_pragma,
+  renderer_context,
 } from '../lang/julia'
 import { cast_julia_type, translate_type } from '../typemaps/julia-typemap'
 import { identifier_like } from '../utils'
@@ -179,10 +177,8 @@ export const render_julia_octo = async (context: BuildContext) => {
   // const relations = flatMap(foreign_keys, cast_relation(context))
 
   const backend: BackendContext = {
-    backend: 'julia',
-    comment: JULIA_COMMENT,
-    indent: JULIA_INDENT,
-    character_line_limit: JULIA_CHARACTER_LINE_LIMIT,
+    ...renderer_context,
+
     coreferences: build_type_qualified_coreferences(context, 'julia'),
   }
 

@@ -7,65 +7,6 @@ export type JuliaType = string
 
 //------------------------------------------------------------------------------
 
-export const JULIA_RESERVED_WORDS = new Set([
-  '__dot__',
-  '_cmd',
-  '_str',
-  '@doc_str',
-  'abstract',
-  'bitstype',
-  'block',
-  'call',
-  'catch',
-  'cell1d',
-  'comparison',
-  'const',
-  'curly',
-  'do',
-  'end',
-  'memq',
-  'eqv',
-  'false',
-  'finally',
-  'for',
-  'function',
-  'global',
-  'if',
-  'kw',
-  'line',
-  'local',
-  'macro',
-  'macrocall',
-  'memv',
-  'module',
-  'mutable',
-  'none',
-  'parameters',
-  'primitive',
-  'quote',
-  'ref',
-  'return',
-  'row',
-  'string',
-  'struct',
-  'toplevel',
-  'true',
-  'try',
-  'tuple',
-  'type',
-  'typealias',
-  'typed_comprehension',
-  'typed_hcat',
-  'typed_vcat',
-  'vect',
-  'where',
-])
-
-export const is_reserved_word = (name: string): boolean =>
-  JULIA_RESERVED_WORDS.has(name)
-
-//------------------------------------------------------------------------------
-
 export const MYSQL_TO_JULIA_TYPEMAP: UDTTypeMap<JuliaType> = {
   char: 'String',
   varchar: 'String',

@@ -4,10 +4,17 @@ import { castArray, isString } from 'lodash'
 import sortJson, { VisitOptions } from 'sort-json'
 
 import type { BackendContext } from './backends/base'
+import type { InflectionFormat } from './enums'
+
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 
 const DEFAULT_SORT_JSON_OPTIONS = {
   depth: Number.POSITIVE_INFINITY,
 }
+
+//------------------------------------------------------------------------------
 
 export const is_only_whitespace = (line: string) => /^\s*$/.test(line)
 
@@ -21,7 +28,7 @@ export const pretty = (
   return JSON.stringify(sorted, undefined, 2)
 }
 
-export const inflect = (name: string, format: string | undefined): string => {
+export const inflect = (name: string, format: InflectionFormat | undefined): string => {
   if (!format) {
     return name
   }

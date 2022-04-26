@@ -16,11 +16,15 @@ import { pad_lines, pretty } from '../formatters'
 export type CommentDelimiter = string
 export type IndentDelimiter = string
 
-export interface BackendContext {
+export interface RendererContext {
   backend: BackendName
   comment: CommentDelimiter
   indent: IndentDelimiter
+  reserved_words: Set<string>
   character_line_limit: number
+}
+
+export interface BackendContext extends RendererContext {
   coreferences: TypeQualifiedCoreferences
 }
 

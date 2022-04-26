@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 import PgManyToManyPlugin from '@graphile-contrib/pg-many-to-many'
 import simplifyInflectorPlugin from '@graphile-contrib/pg-simplify-inflector'
 import { mkdirpSync } from 'fs-extra'

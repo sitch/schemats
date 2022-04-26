@@ -11,13 +11,10 @@ import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { postprocess_context } from '../coreference-resolution'
 import { code_section, lines, pad_lines } from '../formatters'
-import { cast_typedb_type, is_reserved_word, pragma } from '../typemaps/typedb-typemap'
+import { is_reserved_word, renderer_context } from '../lang/typeql'
+import { cast_typedb_type, pragma } from '../typemaps/typedb-typemap'
 import type { BackendContext } from './base'
 import { coreference_banner, header } from './base'
-
-export const TYPEDB_COMMENT = '#'
-export const TYPEDB_INDENT = '  '
-export const TYPEDB_CHARACTER_LINE_LIMIT = 80
 
 //------------------------------------------------------------------------------
 
@@ -57,7 +54,7 @@ export const TypedbEntity = {
 
 export const TypedbRelation = {
   comment: ({ config }: BuildContext, { constraint }: ForeignKeyDefinition): string => {
-    return `${TYPEDB_COMMENT} Source: '${config.schema}.${constraint}'`
+    return `${renderer_context.comment} Source: '${config.schema}.${constraint}'`
   },
   name: (
     { config }: BuildContext,
@@ -79,7 +76,7 @@ export const TypedbRelation = {
 
 export const TypedbEdge = {
   comment: (_context: BuildContext, { comment }: EdgeDefinition): string => {
-    return comment ? `${TYPEDB_COMMENT} ${comment}` : ''
+    return comment ? `${renderer_context.comment} ${comment}` : ''
   },
   name: (
     { config }: BuildContext,
@@ -132,7 +129,7 @@ const cast_entity =
     return lines([
       comment,
       `${name} sub ${type}`,
-      pad_lines(lines(fields), TYPEDB_INDENT),
+      pad_lines(lines(fields), renderer_context.indent),
       ';',
       lines(attributes),
     ])
@@ -160,7 +157,7 @@ const cast_relation =
     return lines([
       comment,
       `${name} sub ${type}`,
-      pad_lines(lines(relations), TYPEDB_INDENT),
+      pad_lines(lines(relations), renderer_context.indent),
       ';',
     ])
   }
@@ -186,7 +183,7 @@ const cast_edge =
     return lines([
       comment,
       `${name} sub ${type}`,
-      pad_lines(lines(relations), TYPEDB_INDENT),
+      pad_lines(lines(relations), renderer_context.indent),
       ';',
       lines(attributes),
     ])
@@ -197,10 +194,7 @@ const cast_edge =
 function build_context(prev_context: BuildContext) {
   const prev_coreferences = build_type_qualified_coreferences(prev_context, 'typedb')
   const prev_backend: BackendContext = {
-    backend: 'typedb',
-    comment: TYPEDB_COMMENT,
-    indent: TYPEDB_INDENT,
-    character_line_limit: 80,
+    ...renderer_context,
     coreferences: prev_coreferences,
   }
   const next_context = postprocess_context(prev_context, prev_backend)

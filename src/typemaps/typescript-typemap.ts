@@ -8,18 +8,6 @@ export type TypescriptType = string
 
 //------------------------------------------------------------------------------
 
-export const TYPESCRIPT_RESERVED_WORDS = new Set([
-  // primatives
-  'string',
-  'number',
-  'package',
-])
-
-export const is_reserved_word = (name: string): boolean =>
-  TYPESCRIPT_RESERVED_WORDS.has(name)
-
-//------------------------------------------------------------------------------
-
 const MYSQL_TO_TYPESCRIPT_TYPEMAP: UDTTypeMap<TypescriptType> = {
   char: 'string',
   varchar: 'string',

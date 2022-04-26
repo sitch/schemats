@@ -9,11 +9,8 @@ import type { BuildContext } from '../compiler'
 import type { UserImport } from '../config'
 import { build_type_qualified_coreferences } from '../coreference'
 import { banner, double_quote, lines, pad_lines } from '../formatters'
-import {
-  is_reserved_word,
-  pragma,
-  translate_type,
-} from '../typemaps/typescript-typemap'
+import { is_reserved_word, renderer_context } from '../lang/typescript'
+import { pragma, translate_type } from '../typemaps/typescript-typemap'
 import type { BackendContext } from './base'
 import { header } from './base'
 
@@ -124,10 +121,7 @@ export const render_typescript = async (context: BuildContext) => {
   const entities = flatMap(context.tables, cast_entity(context))
 
   const backend: BackendContext = {
-    backend: 'typescript',
-    comment: '//',
-    indent: '  ',
-    character_line_limit: 80,
+    ...renderer_context,
     coreferences: build_type_qualified_coreferences(context, 'typescript'),
   }
 

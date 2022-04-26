@@ -8,6 +8,7 @@ import type {
 import type { BuildContext } from '../compiler'
 import { build_type_qualified_coreferences } from '../coreference'
 import { banner, lines, pad_lines } from '../formatters'
+import { renderer_context } from '../lang/haskell'
 import { cast_julia_type } from '../typemaps/julia-typemap'
 import type { BackendContext } from './base'
 import { header } from './base'
@@ -218,10 +219,7 @@ export const render_hydra = async (context: BuildContext) => {
   const relations = flatMap(foreign_keys, cast_relation(context))
 
   const backend: BackendContext = {
-    backend: 'haskell',
-    comment: '#',
-    indent: '  ',
-    character_line_limit: 80,
+    ...renderer_context,
     coreferences: build_type_qualified_coreferences(context, 'haskell'),
   }
 
