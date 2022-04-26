@@ -27,7 +27,13 @@ export const normalize_name = (name: string): string =>
 //------------------------------------------------------------------------------
 
 function pragma(_context: BuildContext) {
-  return lines(['from dataclasses import dataclass'])
+  return lines([
+    'from dataclasses import dataclass',
+    'from datetimes import date',
+    'from datetimes import datetime',
+    'from datetimes import time',
+    'import UUID',
+  ])
 }
 
 //------------------------------------------------------------------------------
