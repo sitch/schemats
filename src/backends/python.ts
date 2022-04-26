@@ -117,7 +117,7 @@ function cast_default_value(column: PropertyDefinition) {
   return (
     [column.default_value]
       .filter(Boolean)
-      .filter(String)
+      .map(String)
       .filter(name => !name.startsWith('nextval('))
       .map(name => ` = ${name}`)
       .shift() || ''
