@@ -94,16 +94,34 @@ export const POSTGRES_TO_PYTHON_TYPEMAP: UDTTypeMap<PythonType> = {
   // point: "{ x: number, y: number }",
 }
 
+export const NEO4J_TO_PYTHON_TYPEMAP: UDTTypeMap<PythonType> = {
+  boolean: 'bool',
+
+  long: 'int',
+  integer: 'int',
+  float: 'float',
+  double: 'float',
+
+  string: 'str',
+  stringarray: 'str',
+
+  date: 'date',
+  time: 'time',
+  datetime: 'datetime',
+  localtime: 'datetime',
+  localdatetime: 'datetime',
+
+  // duration: 'datetime',
+  // point: 'point',
+}
+
 // export const PYTHON_TYPEMAP: UDTTypeMap<PythonType> = {
 //   ...MYSQL_TO_PYTHON_TYPEMAP,
 //   ...POSTGRES_TO_PYTHON_TYPEMAP,
 // }
 
 export const DATA_SOURCE_PYTHON_TYPEMAP: Record<DataSource, UDTTypeMap<PythonType>> = {
-  [DataSourceEnum.neo4j]: {
-    ...MYSQL_TO_PYTHON_TYPEMAP,
-    ...POSTGRES_TO_PYTHON_TYPEMAP,
-  },
+  [DataSourceEnum.neo4j]: NEO4J_TO_PYTHON_TYPEMAP,
   [DataSourceEnum.mysql]: MYSQL_TO_PYTHON_TYPEMAP,
   [DataSourceEnum.postgres]: POSTGRES_TO_PYTHON_TYPEMAP,
 }
