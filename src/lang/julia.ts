@@ -8,6 +8,7 @@ import { cast_julia_type } from '../typemaps/julia-typemap'
 export const JULIA_CHARACTER_LINE_LIMIT = 92
 export const JULIA_COMMENT = '#'
 export const JULIA_INDENT = '    '
+export const JULIA_SEPARATOR = '\n'
 
 export const COMMENT_LINE = divider_line('-', 0)
 export const INDENT_COMMENT_LINE = divider_line('-', 1)
@@ -75,6 +76,7 @@ export const renderer_context: RendererContext = {
   backend: 'julia',
   comment: JULIA_COMMENT,
   indent: JULIA_INDENT,
+  separator: JULIA_SEPARATOR,
   reserved_words: JULIA_RESERVED_WORDS,
   character_line_limit: JULIA_CHARACTER_LINE_LIMIT,
 }

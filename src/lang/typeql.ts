@@ -2,6 +2,7 @@ import type { RendererContext } from '../backends/base'
 
 export const TYPEQL_COMMENT = '#'
 export const TYPEQL_INDENT = '  '
+export const TYPEQL_SEPARATOR = '\n'
 export const TYPEQL_CHARACTER_LINE_LIMIT = 80
 
 export const TYPEQL_RESERVED_WORDS = new Set<string>([
@@ -57,6 +58,7 @@ export const renderer_context: RendererContext = {
   backend: 'typedb',
   comment: TYPEQL_COMMENT,
   indent: TYPEQL_INDENT,
+  separator: TYPEQL_SEPARATOR,
   reserved_words: TYPEQL_RESERVED_WORDS,
   character_line_limit: TYPEQL_CHARACTER_LINE_LIMIT,
 }

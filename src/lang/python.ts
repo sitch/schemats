@@ -3,6 +3,7 @@ import type { RendererContext } from '../backends/base'
 export const PYTHON_CHARACTER_LINE_LIMIT = 92
 export const PYTHON_COMMENT = '#'
 export const PYTHON_INDENT = '    '
+export const PYTHON_SEPARATOR = '\n\n'
 
 export const PYTHON_RESERVED_WORDS = new Set<string>(['def', 'return', 'lambda'])
 
@@ -15,6 +16,7 @@ export const renderer_context: RendererContext = {
   backend: 'python',
   comment: PYTHON_COMMENT,
   indent: PYTHON_INDENT,
+  separator: PYTHON_SEPARATOR,
   reserved_words: PYTHON_RESERVED_WORDS,
   character_line_limit: PYTHON_CHARACTER_LINE_LIMIT,
 }
