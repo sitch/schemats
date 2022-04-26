@@ -88,5 +88,8 @@ export const double_quote = (value: string): string => `"${value}"`
 export const code_section =
   (backend: BackendContext) => (name: string, count: number, content: string[]) =>
     count > 0
-      ? [banner(backend.comment, `${name} (${count})`), lines(content, '\n\n')]
+      ? [
+          banner(backend.comment, `${name} (${count})`),
+          lines(content, `\n${backend.separator}`),
+        ]
       : []
